@@ -1,0 +1,2 @@
+rm -f CMakeCache.txt
+cmake -DCMAKE_INSTALL_PREFIX=/opt/asic .

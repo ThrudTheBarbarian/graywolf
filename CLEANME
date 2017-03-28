@@ -1,0 +1,10 @@
+#!/bin/tcsh 
+#
+# Simple script to clean the tree ready for upload. We're doing an in-tree build, and cmake isn't
+# particularly good at cleaning up after itself...
+#
+
+make clean
+find . -iwholename '*cmake*' -not -name CMakeLists.txt -delete
+find . -name Makefile -delete
+rm include/config-build.h install_manifest.txt
