@@ -1,8 +1,8 @@
 This is graywolf-mac - a fork of graywolf, which in turn is a fork of TimberWolf 6.3.5
 
-The main/only difference between this tree and 
-[http://github.com/rubund/graywolf](the original) is that this code will 
-compile cleanly on the Mac.
+The main/only difference between this tree and the original
+(http://github.com/rubund/graywolf) is that this code will compile cleanly on
+the Mac due to a lot of cleanup of the older code.
 
 Pre-requisites:
  * Get and install the appropriate version of [http://macports.org](Macports)
