@@ -39,6 +39,8 @@
 
 
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
 #define LRECL 256
 #define EOS   '\0'
@@ -50,9 +52,9 @@ static char SccsId[] = "@(#) getdate.c version 1.2 5/12/90" ;
 /* this small program creates a file called date.h */
 /* which contains a define statement with the current time */
 
-main( argc , argv )
+int main( argc , argv )
 int argc ;
-char *argv ;
+char **argv ;
 {
 
 FILE        *fp ;
@@ -82,13 +84,13 @@ if( date ){
     /* get rid of newline character */
     len = strlen( date ) ;
     date[len-1] = EOS ;
-    fprintf(fp,"#define DATE \"@\(#\) Yale compilation date:%s\"\n",date);
+    fprintf(fp,"#define DATE \"@(#) Yale compilation date:%s\"\n",date);
     fclose(fp) ;
     exit(0) ;
 } 
 
 /* errors - give unknown date */
-fprintf(fp,"#define DATE \"@\(#\) Yale compilation date:unknown\"\n") ;
+fprintf(fp,"#define DATE \"@(#) Yale compilation date:unknown\"\n") ;
 fclose(fp) ;
 
 } /* end main */
