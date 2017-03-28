@@ -88,11 +88,14 @@ static char SccsId[] = "@(#) readcells.y version 1.4 5/22/92" ;
 #endif
 
 #include <string.h>
+
 #include <yalecad/base.h>
 #include <yalecad/message.h>
 #include <yalecad/debug.h>
 #include <yalecad/string.h>
-#include "globals.h"
+
+#include <globals.h>
+#include <output.h>
 
 #undef REJECT 
 #ifdef DEBUG
@@ -797,7 +800,7 @@ YYSTYPE yyvs[YYSTACKSIZE];
 /* ********************* #include "readcells_l.h" *******************/
 /* ********************* #include "readcells_l.h" *******************/
 
-readcells( fp )
+VOID readcells( fp )
 FILE *fp ;
 { 
 #ifdef YYDEBUG
@@ -816,17 +819,18 @@ FILE *fp ;
 
 } /* end readcells */
 
-yyerror(s)
+int yyerror(s)
 char    *s;
 {
     sprintf(YmsgG,"problem reading %s.cel:", cktNameG );
     M( ERRMSG, "yacc", YmsgG ) ;
     sprintf(YmsgG, "  line %d near '%s' : %s\n" ,
-	line_countS+1, yytext, s );
+	(int)(line_countS+1), yytext, s );
     M( MSG,"yacc", YmsgG ) ;
+    return 0;
 } /* end yyerror */
 
-yywrap()
+int yywrap()
 {
     return(1);
 }                      
@@ -858,7 +862,8 @@ yyparse()
     *yyssp = yystate = 0;
 
 yyloop:
-    if (yyn = yydefred[yystate]) goto yyreduce;
+    /* use ((...)) to avoid assignment as condition warning */
+    if ((yyn = yydefred[yystate])) goto yyreduce;
     if (yychar < 0)
     {
         if ((yychar = yylex()) < 0) yychar = 0;
@@ -868,8 +873,8 @@ yyloop:
             yys = 0;
             if (yychar <= YYMAXTOKEN) yys = yyname[yychar];
             if (!yys) yys = "illegal-symbol";
-            printf("yydebug: state %d, reading %d (%s)\n", yystate,
-                    yychar, yys);
+            printf("yydebug: state %d, reading %d (%s)\n", (int)yystate,
+                    (int)yychar, yys);
         }
 #endif
     }
@@ -879,7 +884,7 @@ yyloop:
 #if YYDEBUG
         if (yydebug)
             printf("yydebug: state %d, shifting to state %d\n",
-                    yystate, yytable[yyn]);
+                    (int)yystate, (int)yytable[yyn]);
 #endif
         if (yyssp >= yyss + yystacksize - 1)
         {
@@ -1012,7 +1017,7 @@ yyinrecovery:
 #if YYDEBUG
                 if (yydebug)
                     printf("yydebug: state %d, error recovery shifting\
- to state %d\n", *yyssp, yytable[yyn]);
+ to state %d\n", (int)(*yyssp), (int)yytable[yyn]);
 #endif
                 if (yyssp >= yyss + yystacksize - 1)
                 {
@@ -1027,7 +1032,7 @@ yyinrecovery:
 #if YYDEBUG
                 if (yydebug)
                     printf("yydebug: error recovery discarding state %d\n",
-                            *yyssp);
+                            (int)(*yyssp));
 #endif
                 if (yyssp <= yyss) goto yyabort;
                 --yyssp;
@@ -1045,7 +1050,7 @@ yyinrecovery:
             if (yychar <= YYMAXTOKEN) yys = yyname[yychar];
             if (!yys) yys = "illegal-symbol";
             printf("yydebug: state %d, error recovery discards token %d (%s)\n",
-                    yystate, yychar, yys);
+                    (int)yystate, (int)yychar, yys);
         }
 #endif
         yychar = (-1);
@@ -1055,7 +1060,7 @@ yyreduce:
 #if YYDEBUG
     if (yydebug)
         printf("yydebug: state %d, reducing by rule %d (%s)\n",
-                yystate, yyn, yyrule[yyn]);
+                (int)yystate, (int)yyn, yyrule[yyn]);
 #endif
     yym = yylen[yyn];
     yyval = yyvsp[1-yym];
@@ -1065,7 +1070,7 @@ case 33:
 {
 			sprintf( YmsgG,
 			"hardcell at line %d does not have any pins\n",
-			line_countS+1 ) ;
+			(int)(line_countS+1) ) ;
 			M(WARNMSG,"readcells",YmsgG ) ;
 		    }
 break;
@@ -1073,7 +1078,7 @@ case 40:
 {
 			sprintf( YmsgG,
 			"softcell at line %d does not have any pins\n",
-			line_countS+1 ) ;
+			(int)(line_countS+1) ) ;
 			M(WARNMSG,"readcells",YmsgG ) ;
 		    }
 break;
@@ -1086,7 +1091,7 @@ case 43:
 {
 			sprintf( YmsgG,
 			"pad cell at line %d does not have any pins\n",
-			line_countS+1 ) ;
+			(int)(line_countS+1) ) ;
 			M(WARNMSG,"readcells",YmsgG ) ;
 		    }
 break;
@@ -1193,7 +1198,7 @@ case 188:
 			/* convert integer to string */
 			/* this allows integers to be used as strings */
 			/* a kluge but timberwolf's old parser supported it */
-			sprintf( bufferS,"%d", yyvsp[0].ival ) ;
+			sprintf( bufferS,"%d", (int)(yyvsp[0].ival) ) ;
 			/* now clone string */
 			yyval.string = Ystrclone( bufferS ) ;
 		    }
@@ -1248,7 +1253,7 @@ break;
 #if YYDEBUG
     if (yydebug)
         printf("yydebug: after reduction, shifting from state %d \
-to state %d\n", *yyssp, yystate);
+to state %d\n", (int)(*yyssp), (int)yystate);
 #endif
     if (yyssp >= yyss + yystacksize - 1)
     {

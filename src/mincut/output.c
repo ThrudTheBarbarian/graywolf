@@ -83,16 +83,20 @@ static int total_std_cellS = 0 ;
 static char current_cellS[LRECL] ; /* the current cell name */
 static char cur_pinnameS[LRECL] ;  /* current pinname */
 static YHASHPTR netTableS ;    /* hash table for cross referencing nets */
+
+static VOID write_softpins(FILE *fp );
+
+
 /* *************************************************************** */
-init()
+VOID init(VOID)
 {
     /* get ready for parsing */
     /* make hash table for nets */
     netTableS = Yhash_table_create( EXPECTEDNUMNETS ) ;
 } /* end init */
 
-addCell( celltype, cellname )
-int celltype ;
+VOID addCell( celltype, cellname )
+INT celltype ;
 char *cellname ;
 {
 
@@ -107,7 +111,7 @@ char *cellname ;
 
 } /* end addCell */
 
-addNet( signal )
+VOID addNet( signal )
 char *signal ;
 {
     NETPTR data ;
@@ -115,7 +119,8 @@ char *signal ;
     if( strcmp( signal, "TW_PASS_THRU" ) == STRINGEQ ){
 	return ; /* not a net so return */
     }
-    if( data = (NETPTR) Yhash_search( netTableS, signal, NULL, FIND )){
+    /* use ((...)) to avoid assignment as condition warning */
+    if(( data = (NETPTR) Yhash_search( netTableS, signal, NULL, FIND ))){
 	/* this net now makes an io connection mark it as such */
 	switch( celltypeS ){
 	case HARDCELLTYPE:
@@ -148,7 +153,7 @@ char *signal ;
     }
 } /* end addNet */
 
-set_bbox( left, right, bottom, top )
+VOID set_bbox( left, right, bottom, top )
 INT left, right, bottom, top ;
 {
     DOUBLE width, height ;
@@ -162,7 +167,7 @@ INT left, right, bottom, top ;
     total_std_cellS++ ;
 } /* end set_bbox */
 
-output( fp )
+VOID output( fp )
 FILE *fp ;
 {
     INT g ;
@@ -176,7 +181,7 @@ FILE *fp ;
     core_areaS *= (row_sepS + 1.0) ;
 
     fprintf( stderr, "\n----------------------------\n" ) ;
-    fprintf( stderr, "Total stdcells     :%d\n", total_std_cellS ) ;
+    fprintf( stderr, "Total stdcells     :%d\n", (int)total_std_cellS ) ;
     fprintf( stderr, "Total cell width   :%4.2le\n", total_cell_lenS ) ;
     fprintf( stderr, "Total cell height  :%4.2le\n", total_cell_heightS ) ;
     fprintf( stderr, "Total cell area    :%4.2le\n", total_areaS ) ;
@@ -188,7 +193,7 @@ FILE *fp ;
     /* the first instance take as a rectangle - initially a square */
     g = (INT) sqrt( core_areaS ) ;
     fprintf( fp, "cluster 1 name core\n" ) ;
-    fprintf( fp, "corners 4 0 0   0 %d  %d %d   %d 0\n", g, g, g, g ) ;
+    fprintf( fp, "corners 4 0 0   0 %d  %d %d   %d 0\n", (int)g, (int)g, (int)g, (int)g ) ;
     write_softpins( fp ) ;
 
     /* for the second instance use an L shape */
@@ -197,11 +202,11 @@ FILE *fp ;
 	fprintf( fp, "instance core_L\n" ) ;
 	fprintf( fp, "corners 6 " ) ;
 	fprintf( fp, "0 0 " ) ;
-	fprintf( fp, "0 %d ", 2*g ) ;
-	fprintf( fp, "%d %d ", g, 2*g ) ;
-	fprintf( fp, "%d %d ", g, g ) ;
-	fprintf( fp, "%d %d ", 2*g, g ) ;
-	fprintf( fp, "%d 0\n", 2*g ) ;
+	fprintf( fp, "0 %d ", (int)(2*g) ) ;
+	fprintf( fp, "%d %d ", (int)g, (int)(2*g) ) ;
+	fprintf( fp, "%d %d ", (int)g, (int)g ) ;
+	fprintf( fp, "%d %d ", (int)(2*g), (int)g ) ;
+	fprintf( fp, "%d 0\n", (int)(2*g) ) ;
 	write_softpins( fp ) ;
     }
     
@@ -210,14 +215,14 @@ FILE *fp ;
     if( g > 2 ){
 	fprintf( fp, "instance core_T\n" ) ;
 	fprintf( fp, "corners 8 " ) ;
-	fprintf( fp, "%d 0 ", g ) ;
-	fprintf( fp, "%d %d ", g, g ) ;
-	fprintf( fp, "0 %d ", g ) ;
-	fprintf( fp, "0 %d ", 2*g ) ;
-	fprintf( fp, "%d %d ", 3*g, 2*g ) ;
-	fprintf( fp, "%d %d ", 3*g, g ) ;
-	fprintf( fp, "%d %d ", 2*g, g ) ;
-	fprintf( fp, "%d 0\n", 2*g ) ;
+	fprintf( fp, "%d 0 ", (int)g ) ;
+	fprintf( fp, "%d %d ", (int)g, (int)g ) ;
+	fprintf( fp, "0 %d ", (int)g ) ;
+	fprintf( fp, "0 %d ", (int)(2*g) ) ;
+	fprintf( fp, "%d %d ", (int)(3*g), (int)(2*g) ) ;
+	fprintf( fp, "%d %d ", (int)(3*g), (int)g ) ;
+	fprintf( fp, "%d %d ", (int)(2*g), (int)g ) ;
+	fprintf( fp, "%d 0\n", (int)(2*g) ) ;
 	write_softpins( fp ) ;
     }
 
@@ -228,13 +233,13 @@ FILE *fp ;
 	fprintf( fp, "instance core_U\n" ) ;
 	fprintf( fp, "corners 8 " ) ;
 	fprintf( fp, "0 0 " ) ;
-	fprintf( fp, "0 %d ", 2*g ) ;
-	fprintf( fp, "%d %d ", g, 2*g ) ;
-	fprintf( fp, "%d %d ", g, g ) ;
-	fprintf( fp, "%d %d ", 2*g, g ) ;
-	fprintf( fp, "%d %d ", 2*g, 2*g ) ;
-	fprintf( fp, "%d %d ", 3*g, 2*g ) ;
-	fprintf( fp, "%d 0\n", 3*g ) ;
+	fprintf( fp, "0 %d ", (int)(2*g) ) ;
+	fprintf( fp, "%d %d ", (int)g, (int)(2*g) ) ;
+	fprintf( fp, "%d %d ", (int)g, (int)g ) ;
+	fprintf( fp, "%d %d ", (int)(2*g), (int)g ) ;
+	fprintf( fp, "%d %d ", (int)(2*g), (int)(2*g) ) ;
+	fprintf( fp, "%d %d ", (int)(3*g), (int)(2*g) ) ;
+	fprintf( fp, "%d 0\n", (int)(3*g) ) ;
 	write_softpins( fp ) ;
     }
 #endif
@@ -245,17 +250,17 @@ FILE *fp ;
 	fprintf( fp, "instance core_L2\n" ) ;
 	fprintf( fp, "corners 6 " ) ;
 	fprintf( fp, "0 0 " ) ;
-	fprintf( fp, "0 %d ", 2*g ) ;
-	fprintf( fp, "%d %d ", 2*g, 2*g ) ;
-	fprintf( fp, "%d %d ", 2*g, g ) ;
-	fprintf( fp, "%d %d ", 3*g, g ) ;
-	fprintf( fp, "%d 0\n", 3*g ) ;
+	fprintf( fp, "0 %d ", (int)(2*g) ) ;
+	fprintf( fp, "%d %d ", (int)(2*g), (int)(2*g) ) ;
+	fprintf( fp, "%d %d ", (int)(2*g), (int)g ) ;
+	fprintf( fp, "%d %d ", (int)(3*g), (int)g ) ;
+	fprintf( fp, "%d 0\n", (int)(3*g) ) ;
 	write_softpins( fp ) ;
     }
 
 } /* end output */
 
-write_softpins( fp )
+static VOID write_softpins( fp )
 FILE *fp ;
 {
     YTABLEPTR thread ;
@@ -270,14 +275,14 @@ FILE *fp ;
 	net = (NETPTR) thread->data ;
 	if( net->io_signal ){
 	    fprintf( fp, "softpin name pin%d signal %s\n", 
-		++pin_count, net->net ) ;
+		(int)(++pin_count), net->net ) ;
 	    
 	}
     }
     fprintf( fp, "\n" ) ;
 } /* end write_softpins */
 
-read_par()
+VOID read_par(VOID)
 {
     char input[LRECL] ;
     char *bufferptr ;
@@ -290,8 +295,9 @@ read_par()
 
     found = FALSE ;
     Yreadpar_init( cktNameG, USER, TWSC, TRUE ) ;
-    while( tokens = Yreadpar_next( &bufferptr, &line, &numtokens, 
-	&onNotOff, &wildcard )){
+    /* use ((...)) to avoid assignment as condition warning */
+    while(( tokens = Yreadpar_next( &bufferptr, &line, &numtokens, 
+	&onNotOff, &wildcard ))){
 	if( numtokens == 0 ){
 	    /* skip over empty lines */
 	    continue ;
@@ -314,10 +320,10 @@ read_par()
     }
 } /* end readpar */
 
-update_stats( fp )
+VOID update_stats( fp )
 FILE *fp ;
 {
-    fprintf( fp, "tot_length:%d\n", (INT)total_cell_lenS);
+    fprintf( fp, "tot_length:%d\n", (int)total_cell_lenS);
     fprintf( fp, "num_soft:1\n" ) ;
-    fprintf( fp, "cell_height:%d\n", (INT) average_cell_heightS);
+    fprintf( fp, "cell_height:%d\n", (int) average_cell_heightS);
 } /* end update_stats */

@@ -57,19 +57,28 @@ static char SccsId[] = "@(#) main.c version 1.1 7/30/91" ;
 
 #include <stdio.h>
 #include <signal.h>
+
 #include <yalecad/base.h>
 #include <yalecad/cleanup.h>
+#include <yalecad/debug.h>
 #include <yalecad/file.h>
 #include <yalecad/message.h>
-#include <yalecad/debug.h>
-#include "globals.h"
+#include <yalecad/program.h>
+#include <yalecad/system.h>
+
+#include <globals.h>
+#include <output.h>
+#include <readcells.h>
 
 #include "config-build.h"
+
+static VOID syntax(VOID);
+static VOID yaleIntro(VOID);
 
 #define EXPECTEDMEMORY  (1024 * 1024)  /* 1M should be enough */
 #define VERSION         "v1.0"
 
-main( argc , argv )
+int main( argc , argv )
 int argc ;
 char *argv[] ;
 {
@@ -79,7 +88,6 @@ char *argv[] ;
     char command[LRECL] ;
     char *ptr ;
     int  arg_count ;
-    int  yaleIntro() ;
     int  debug ;
     FILE *fp ;
     char *twdir, *Ygetenv() ;
@@ -129,7 +137,8 @@ char *argv[] ;
     /* we can change this value in the debugger */
     YinitProgram(NOCUT, VERSION, yaleIntro) ;
 
-    if( twdir = TWFLOWDIR ){
+    /* use ((...)) to avoid assignment as condition warning */
+    if(( twdir = TWFLOWDIR )){
         sprintf(command, "awk -f %s/bin/splt_file.a %s.cel", twdir , 
 	cktNameG ) ;
     } else {
@@ -169,7 +178,7 @@ char *argv[] ;
 
 
 /* give user correct syntax */
-syntax()
+static VOID syntax(VOID)
 {
    M(ERRMSG,NULL,"\n" ) ; 
    M(MSG,NULL,"Incorrect syntax.  Correct syntax:\n");
@@ -179,7 +188,7 @@ syntax()
    YexitPgm(PGMFAIL);
 } /* end syntax */
 
-yaleIntro() 
+static VOID yaleIntro(VOID) 
 {
     int i ;
 
