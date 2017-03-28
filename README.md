@@ -1,7 +1,7 @@
 This is graywolf-mac - a fork of graywolf, which in turn is a fork of TimberWolf 6.3.5
 
 The main/only difference between this tree and 
-[https://github.com/rubund/graywolf](the original) is that this code will 
+[http://github.com/rubund/graywolf](the original) is that this code will 
 compile cleanly on the Mac.
 
 Pre-requisites:
