@@ -60,8 +60,15 @@ REVISIONS:  Dec  4, 1988 - added initialization for next compaction cycle.
 static char SccsId[] = "@(#) movestrat2.c version 7.9 5/6/91" ;
 #endif
 
-#include <compact.h>
+#include <yalecad/base.h>
 #include <yalecad/debug.h>
+#include <yalecad/quicksort.h>
+
+#include <changraph.h>
+#include <compact.h>
+#include <strategy.h>
+#include <xcompact.h>
+#include <ycompact.h>
 
 #define PICK_INT(l,u) (((l)<(u))?((acm_random() % ((u)-(l)+1))+(l)) : (l))
 #define  LEFT_EDGE       0
@@ -77,13 +84,14 @@ static INT lengthS ;
 static DOUBLE best_areaS = 1.0E30 ;
 
 
-static x_center();
-static calc_xslacks();
-static update_xslacks();
-static y_center();
-static calc_yslacks();
-static update_yslacks();
-static INT sortby_xslack();
+static VOID x_center(P1(VOID));
+static VOID calc_xslacks(P1(INT cur_cell));
+static VOID update_xslacks(P1(COMPACTPTR tptr)); 
+static VOID y_center(P1(VOID));
+static VOID calc_yslacks(P1(INT cur_cell));
+static VOID update_yslacks(P1(COMPACTPTR tptr)); 
+static INT sortby_xslack(P2(void *cellA , void *cellB));
+static INT sortby_yslack(P2(void *cellA , void *cellB));
 
 
 #define HEURISTIC1
@@ -93,7 +101,7 @@ static INT sortby_xslack();
         xSource = 0, xsink = numtilesG + 1, ysource = numtilesG + 2,
 	and ysink = numtilesG + 3 positions in the tileNode array.
     */
-BOOL move_compactx( length ) 
+VOID move_compactx( length ) 
 INT length ;
 {
     INT 	   i,
@@ -214,7 +222,7 @@ INT length ;
 
 } /* end move_compactx */
 
-static x_center()
+static VOID x_center(VOID)
 {
     INT            i,
 		   newX,
@@ -223,7 +231,6 @@ static x_center()
 		   remainder,
 		   xmin,  xmax,
 		   min, max,
-    		   sortby_xslack(),
 		   delta_move ;
     INT            newpos ;
     COMPACTPTR     boxptr ;
@@ -302,7 +309,8 @@ static x_center()
 	if( xgridG ){ /* only do if non zero */
 	    temp = newX + cptr->xoffset ;
 	    /* do individual tests only one may be zero */
-	    if( remainder = temp % xgridG ){
+	    /* Use ((...)) to avoid assignment as a condition warning */
+	    if(( remainder = temp % xgridG )){
 		/* fix x direction */
 		temp += xgridG - remainder ;
 	    }
@@ -336,7 +344,7 @@ static x_center()
 
 } /* end center_x */
 
-static calc_xslacks( cur_cell )
+static VOID calc_xslacks( INT cur_cell )
 {
     INT i ; 			/* counter */
     INT xmin ;			/* max of all the minimums of a cell */
@@ -383,7 +391,7 @@ static calc_xslacks( cur_cell )
     }
 } /* end calc_xslacks */
 
-static update_xslacks( tptr ) 
+static VOID update_xslacks( tptr ) 
 COMPACTPTR tptr ;
 {
     INT j ;			/* current tile adjacent to node */
@@ -420,8 +428,8 @@ COMPACTPTR tptr ;
 
 } /* end update_xslacks */
 
-BOOL move_compacty( length ) 
-int length ;
+VOID move_compacty( length ) 
+INT length ;
 {
     INT 	   i,
 		   newY,
@@ -541,7 +549,7 @@ int length ;
 
 } /* end move_compacty */
 
-static y_center()
+static VOID y_center(VOID)
 {
     int            i,
 		   newY,
@@ -551,7 +559,6 @@ static y_center()
 		   min,   max,
 		   ymin,  ymax,
 		   delta_move ;
-    INT		   sortby_yslack();
     INT            newpos ;
     COMPACTPTR     boxptr ;
     NODEPTR        nptr ;
@@ -630,7 +637,8 @@ static y_center()
 	if( ygridG ){ /* only do if non zero */
 	    temp = newY + cptr->yoffset ;
 	    /* do individual tests only one may be zero */
-	    if( remainder = temp % ygridG ){
+	    /* Use ((...)) to avoid assignment as a condition warning */
+	    if(( remainder = temp % ygridG )){
 		/* fix y direction */
 		temp += ygridG - remainder ;
 	    }
@@ -664,7 +672,8 @@ static y_center()
 
 } /* end y_center */
 
-static calc_yslacks( cur_cell )
+static VOID calc_yslacks( cur_cell )
+INT cur_cell;
 {
     INT i ; 			/* counter */
     INT ymin ;			/* max of all the minimums of a cell */
@@ -712,7 +721,7 @@ static calc_yslacks( cur_cell )
     }
 } /* end calc_yslacks */
 
-static update_yslacks( tptr ) 
+static VOID update_yslacks( tptr ) 
 COMPACTPTR tptr ;
 {
     INT j ;			/* current tile adjacent to node */
@@ -753,33 +762,33 @@ COMPACTPTR tptr ;
 
 /* sort by x first then y */
 static INT sortby_xslack( cellA , cellB )
-CELLBOXPTR *cellA , *cellB ;
+void *cellA , *cellB ;
 {
     INT excess_slacka, excess_slackb ;
     CELLBOXPTR  cptr ;
 
-    cptr = *cellA ;
+    cptr = * ((CELLBOXPTR *)cellA) ;
     excess_slacka = cptr->xmax - cptr->xmin ;
-    cptr = *cellB ;
+    cptr = * ((CELLBOXPTR *)cellB) ;
     excess_slackb = cptr->xmax - cptr->xmin ;
     return( excess_slacka - excess_slackb ) ;
 } /* sortby_xslack */
 
 /* sort by x first then y */
-INT sortby_yslack( cellA , cellB )
-CELLBOXPTR *cellA , *cellB ;
+static INT sortby_yslack( cellA , cellB )
+void *cellA , *cellB ;
 {
     INT excess_slacka, excess_slackb ;
     CELLBOXPTR  cptr ;
 
-    cptr = *cellA ;
+    cptr = * ((CELLBOXPTR *)cellA) ;
     excess_slacka = cptr->ymax - cptr->ymin ;
-    cptr = *cellB ;
+    cptr = * ((CELLBOXPTR *)cellB) ;
     excess_slackb = cptr->ymax - cptr->ymin ;
     return( excess_slacka - excess_slackb ) ;
 } /* sortby_yslack */
 
-BOOL test_area()
+BOOL test_area(VOID)
 {
     DOUBLE area ;
 

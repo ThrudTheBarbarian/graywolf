@@ -55,9 +55,13 @@ REVISIONS:  Apr 30, 1989 - added direction field for partitioning.
 static char SccsId[] = "@(#) io.c version 7.5 5/21/92" ;
 #endif
 
-#include <compact.h>
+#include <yalecad/base.h>
 #include <yalecad/debug.h>
 #include <yalecad/file.h>
+#include <yalecad/program.h>
+
+#include <io.h>
+#include <multi.h>
 
 static INT boxLS, boxRS, boxTS, boxBS ;  /* bounding box of tiles */
 static INT celLS, celRS, celTS, celBS ;  /* bounding box of cur cell */
@@ -81,12 +85,19 @@ static CELLBOXPTR ptrS ;                 /* pointer to current cell */
     } \
 } \
 
-setErrorFlag()
+#define ERRORABORT_X(x) \
+{ \
+    if( errorFlagS ){ \
+	return (x); /* don't do any work for errors */ \
+    } \
+} \
+
+VOID setErrorFlag(VOID)
 {
     errorFlagS = TRUE ;
 }
 /* ***************** ERROR HANDLING ****************************** */
-init( numtiles, numcells )
+VOID init( numtiles, numcells )
 INT numtiles, numcells ;
 {
     INT i ;
@@ -124,12 +135,12 @@ INT numtiles, numcells ;
 
     }
     /* allocate room for the source and sink */
-    for( numcellsG+1; i <= last_cellG; i++ ){
+    for( i=0; i <= last_cellG; i++ ){
 	cellarrayG[i] = (CELLBOXPTR) Ysafe_calloc( 1, sizeof(CELLBOX)) ;
     }
 } /* end init */
 
-final_tiles()
+VOID final_tiles(VOID)
 {
     INT i ;        		/* counter */
     INT space ;        		/* counter */
@@ -259,7 +270,7 @@ final_tiles()
 } /* end final_tiles */
 
 /* set the current cell */
-initCell( celltype, cellnum, x, y, xoffset, yoffset )
+VOID initCell( celltype, cellnum, x, y, xoffset, yoffset )
 INT celltype ;
 INT cellnum ;
 INT x, y ;
@@ -289,8 +300,8 @@ INT xoffset, yoffset ;
     multiS = 0 ;
 } /* end initCell */
 
-init_extra_tile( cell, type )
-INT cell ;
+VOID init_extra_tile( cell, type )
+INT cell,type ;
 {
     curTileS = numtilesG ;
     numtilesG++ ;
@@ -312,11 +323,11 @@ INT l, r, b, t ;
     COMPACTPTR tptr ;
     NODEPTR    temp, nptr ;
 
-    ERRORABORT() ;
+    ERRORABORT_X(0) ;
     if( ++curTileS > numtilesG ){
 	setErrorFlag() ;
 	M(ERRMSG, "addtile", "Problem with number of tiles\n" ) ;
-	return ;
+	return -1;
     }
     tptr = tileNodeG[curTileS] ;
     /* save relative positions */
@@ -355,7 +366,8 @@ INT l, r, b, t ;
     tptr->direction = NODIRECTION ;
 
     /* now add tile to the list of tiles */
-    if( temp = ptrS->tiles ){
+    /* Use ((...)) to avoid assignment as a condition warning */
+    if(( temp = ptrS->tiles )){
 	nptr = ptrS->tiles = (NODEPTR) Ysafe_malloc( sizeof(NODEBOX) ) ;
 	nptr->next = temp ;
     } else { /* initialize list */
@@ -372,7 +384,7 @@ INT l, r, b, t ;
 
 } /* end addtile */
 
-endCell()
+VOID endCell(VOID)
 {
     ERRORABORT() ;
     /* update the bounding box of the cell */
@@ -393,7 +405,7 @@ endCell()
     }
 } /* end endCell */
 
-process_tiles()
+VOID process_tiles(VOID)
 {
     INT i ;
     COMPACTPTR t ;
@@ -429,7 +441,7 @@ process_tiles()
 		t->r++ ;
 		t->r_rel++ ;
 	    }
-	    sprintf( YmsgG, "Zero width tile found for tile:%d\n", i ) ;
+	    sprintf( YmsgG, "Zero width tile found for tile:%d\n", (int)i ) ;
 	    M( MSG, "process_tiles", YmsgG ) ;
 	} 
 	if( t->b == t->t ){
@@ -440,7 +452,7 @@ process_tiles()
 		t->t++ ;
 		t->t_rel++ ;
 	    }
-	    sprintf( YmsgG, "Zero width tile found for tile:%d\n", i ) ;
+	    sprintf( YmsgG, "Zero width tile found for tile:%d\n", (int)i ) ;
 	    M( MSG, "process_tiles", YmsgG ) ;
 	} 
     }
@@ -454,7 +466,7 @@ process_tiles()
 } /* end process_tiles */
 
 /* ADD source and sink nodes to both x and y graphs */
-addSourceNSink()
+VOID addSourceNSink(VOID)
 {
     COMPACTPTR source, sink ;
     INT x ;
@@ -558,7 +570,7 @@ addSourceNSink()
 /* ***************************************************************** 
     OUTPUT routine - output the results.
    **************************************************************** */
-output()
+VOID output(VOID)
 {
     INT c ;
     INT tile ;
@@ -572,7 +584,7 @@ output()
     fp = TWOPEN( filename, "w", ABORT ) ;
 
     /* account for sink tile */
-    fprintf( fp, "numtiles:%d numcells:%d\n", numtilesG, numcellsG ) ;
+    fprintf( fp, "numtiles:%d numcells:%d\n", (int)numtilesG, (int)numcellsG ) ;
     old_cell = 0 ;
     for( tile = 1; tile <= numtilesG; tile++ ){
 	t = tileNodeG[tile] ;
@@ -585,18 +597,27 @@ output()
 	    if( cptr->type == STDCELLTYPE ){ /* partitioned stdcell */
 		/* output cell heading then tile */
 		fprintf( fp, "stdcell %d x:%d y:%d offset:%d %d\n", 
-		    cptr->cellnum, cptr->xcenter, cptr->ycenter,
-		    cptr->xoffset, cptr->yoffset ) ;
+		    (int)(cptr->cellnum), 
+		    (int)(cptr->xcenter), 
+		    (int)(cptr->ycenter),
+		    (int)(cptr->xoffset), 
+		    (int)(cptr->yoffset) ) ;
 	    } else { /* normal mc type - hard or soft cell */
 		/* output cell heading then tile */
 		fprintf( fp, "cell %d x:%d y:%d offset:%d %d\n", 
-		    cptr->cellnum, cptr->xcenter, cptr->ycenter,
-		    cptr->xoffset, cptr->yoffset ) ;
+		    (int)(cptr->cellnum), 
+		    (int)(cptr->xcenter), 
+		    (int)(cptr->ycenter),
+		    (int)(cptr->xoffset), 
+		    (int)(cptr->yoffset) ) ;
 	    }
 	}
 	/* just output tile */
-	fprintf( fp, "l:%d r:%d b:%d t:%d\n", t->l_rel, t->r_rel,
-	    t->b_rel, t->t_rel ) ;
+	fprintf( fp, "l:%d r:%d b:%d t:%d\n", 
+		(int)(t->l_rel), 
+		(int)(t->r_rel),
+	    (int)(t->b_rel), 
+	    (int)(t->t_rel) ) ;
     } /* end cell loop */
 
     TWCLOSE( fp ) ;

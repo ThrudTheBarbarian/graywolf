@@ -71,3 +71,17 @@ REVISIONS:  Thu Mar  7 01:41:07 EST 1991 - added more definitions
 #define yysindex        DRG_yysindex
 #define yylen           DRG_yylen
 #define yylhs           DRG_yylhs
+
+/* Declare prototypes if required */
+extern int yyback(P2(int *, int));
+extern int yyinput(P1(void));
+extern int yylook(P1(void));
+extern void yyoutput(P1(int));
+extern int yyracc(P1(int));
+extern int yyreject(P1(void));
+extern void yyunput(P1(int));
+extern int yylex(P1(void));
+extern int yyless(P1(int));
+extern int yywrap(P1(void));
+extern int yyparse(P1(void));
+extern int yyerror(P1(char * s));

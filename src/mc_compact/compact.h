@@ -265,7 +265,7 @@ typedef struct queue {
     To function two variables queue and botqueue must be defined in
     routine.  Currently uses safe_malloc routines but could be
     changed to memory pool if speed need. 
-/* 
+*/
 
 /* initialize queue */
 #define INITQUEUE( queue, node ) \
@@ -294,6 +294,13 @@ typedef struct queue {
 	INITQUEUE( queue, node ) ; \
     } \
 }
+
+typedef struct vertex_box {
+    INT x ;
+    INT y ;
+    INT class ;
+    struct vertex_box *next ;
+} *VERTEXPTR, VERTEX_BOX ;
 
 
 /* ******************** GLOBAL VARIABLES *********************** */

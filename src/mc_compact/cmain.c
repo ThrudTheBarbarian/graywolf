@@ -57,18 +57,31 @@ static char SccsId[] = "@(#) cmain.c (Yale) version 7.4 4/21/91" ;
 
 #include <stdio.h>
 #include <signal.h>
+
+#include <yalecad/base.h>
 #include <yalecad/cleanup.h>
+#include <yalecad/debug.h>
+#include <yalecad/draw.h>
 #include <yalecad/message.h>
 #include <yalecad/program.h>
 #include <yalecad/string.h>
-#include <yalecad/debug.h>
 
 #define COMPACT_DEFS
+#include <cdraw.h>
+#include <cgraph.h>
+#include <changraph.h>
 #include <compact.h>
+#include <compactor.h>
+#include <grid.h>
+#include <io.h>
+#include <stdmacro.h>
+#include <tiles.h>
+
+static VOID syntax(P1(VOID));
 
 #define EXPECTEDMEMORY  (256 * 1024)  /* 256k is more than enough */
 
-main( argc , argv )
+int main( argc , argv )
 int argc ;
 char *argv[] ;
 {
@@ -243,7 +256,7 @@ YexitPgm(PGMOK);
 
 
 /* give user correct syntax */
-syntax()
+static VOID syntax(VOID)
 {
    M(ERRMSG,NULL,"\n" ) ; 
    M(MSG,NULL,"Incorrect syntax.  Correct syntax:\n");

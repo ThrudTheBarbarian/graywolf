@@ -53,9 +53,17 @@ REVISIONS:  May  3, 1989 - changed to Y prefixes.
 static char SccsId[] = "@(#) stdmacro.c version 7.3 2/15/91" ;
 #endif
 
-#include <compact.h>
+#include <yalecad/base.h>
 #include <yalecad/debug.h>
+#include <yalecad/draw.h>
+#include <yalecad/quicksort.h>
 #include <yalecad/set.h>
+
+#include <cdraw.h>
+#include <compactor.h>
+#include <stdmacro.h>
+#include <strategy.h>
+#include <xcompact.h>
 
 /* --------------------------------------------------------------- 
   state   input    valid   next state
@@ -93,12 +101,12 @@ static SELECTPTR *stackArrayS ; /* members of an invalid path */
 
 
 
-static int sortbydist();
+static INT sortbydist(void *tileA , void *tileB);
+static VOID swap_nodes(P2(int node1, int node2));
 
-
-partition_compact()
+VOID partition_compact(VOID)
 {
-    ERRORPTR  violations, buildXGraph() ;
+    ERRORPTR  violations;
     int i ;
 
     /* --------------------------------------------------------------- 
@@ -147,7 +155,7 @@ partition_compact()
 	G( draw_the_data() ) ;
 
 	/* build the critical path in x direction */
-	longestxPath() ;
+	longestxPath(1) ;
 	    
 	/* do depth first search removing violations */
 	/* returns true when no violations remain */
@@ -183,7 +191,7 @@ partition_compact()
 	G( draw_the_data() ) ;
 
 	/* build the critical path in x direction */
-	longestxPath() ;
+	longestxPath(1) ;
 	    
 	/* do depth first search removing violations */
 	/* returns true when no violations remain */
@@ -202,7 +210,7 @@ partition_compact()
 
 } /* end partition_compact */
 
-BOOL depth_first_search()
+BOOL depth_first_search(VOID)
 {
     /* ------------------------------------------------------------
     Algorithm:
@@ -374,7 +382,7 @@ BOOL depth_first_search()
 } /* end depth_first_search */
 
 /* perform the swap of two nodes */
-swap_nodes( node1, node2 )
+static VOID swap_nodes( node1, node2 )
 int node1, node2 ;
 {
     COMPACTPTR tptr1 ;                 /* tile pointer */
@@ -413,8 +421,8 @@ int node1, node2 ;
 
 } /* end swap_nodes */
 
-remove_problem( source, sink )
-int source, sink ;
+BOOL remove_problem( source, sink )
+INT source, sink ;
 {
     int i ;              /* temp counter */
     int node ;
@@ -424,7 +432,6 @@ int source, sink ;
     int sourceX ;        /* position of source */
     SELECTPTR  sptr ;
     COMPACTPTR tptr ;
-    /* static int sortbydist() ; */ /* how to sort the tiles in path */
 
     /* start over putting state in stackArray */
     node = sink ; 
@@ -519,18 +526,18 @@ int source, sink ;
     }
     /* should never reach here - check is for memory problem*/
     ASSERT( TRUE, "depth_first_search", "Logic problem" ) ;
-
+	return TRUE; /* keep the compiler happy */
 } /* end remove_problem */
 
 /* sort by valid candidate first then distance left or right */
-static int sortbydist( tileA, tileB )
-SELECTPTR *tileA , *tileB ;
+static INT sortbydist( tileA, tileB )
+void *tileA , *tileB ;
 {
     SELECTPTR t1, t2 ; /* temps to make our life easier */
     int min1, min2 ;   /* the minimum of the distance for the two tiles */
 
-    t1 = *tileA ;
-    t2 = *tileB ;
+    t1 = *((SELECTPTR*) tileA) ;
+    t2 = *((SELECTPTR*) tileB) ;
     if( t1->candidate != t2->candidate ){
 	if( t1->candidate == TRUE ){
 	    return( -1 ) ;

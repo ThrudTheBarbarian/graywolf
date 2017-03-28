@@ -59,21 +59,31 @@ REVISIONS:  Sep 20, 1988 - removed excess edges from source and sink
 static char SccsId[] = "@(#) xcompact.c version 7.2 11/10/90" ;
 #endif
 
-#include <compact.h>
+#include <yalecad/base.h>
 #include <yalecad/debug.h>
+#include <yalecad/draw.h>
 #include <yalecad/message.h>
+#include <yalecad/program.h>
+#include <yalecad/quicksort.h>
 
+#include <compactor.h>
+#include <multi.h>
+#include <xcompact.h>
+#include <ycompact.h>
 
 static PICKETPTR  botPickS ;
 
-buildXGraph()
+static INT sortbyXY(P2(void *tileA , void *tileB));
+static VOID xforwardPath(P1(VOID));
+static VOID xbackwardPath(P1(VOID));
+
+VOID buildXGraph(VOID)
 {
     int i ;                    /* counter */
     int overlapx ;             /* overlap conditions in x direction */
     int overlapy ;             /* overlap conditions in y direction */
-    int sortbyXY() ;           /* sort the tiles X then Y */
-    int left, right ;          /* coordinates of tiles */
-    int bottom, top ;          /* coordinates of tiles */
+    INT left, right ;          /* coordinates of tiles */
+    INT bottom, top ;          /* coordinates of tiles */
     BOOL firstPick ;           /* TRUE if first picket which matches */
     BOOL possibleEdgetoSource; /* TRUE if this could be edge to source */
     BOOL *xancestorB ;         /* TRUE for a cell if cell has B ancestors */
@@ -225,9 +235,9 @@ buildXGraph()
 
 } /* end buildXGraph */
 
-formxEdge( fromNode, toNode ) 
-int fromNode ;
-int toNode ;
+VOID formxEdge( fromNode, toNode ) 
+INT fromNode ;
+INT toNode ;
 {
     COMPACTPTR e1, e2 ;
     ECOMPBOXPTR temp, newE ;
@@ -250,7 +260,8 @@ int toNode ;
     }
 
     /* create forward edge */
-    if( temp = e1->xadjF ){
+    /* Use ((...)) to avoid assignment as a condition warning */
+    if(( temp = e1->xadjF )){
 	newE = e1->xadjF = (ECOMPBOXPTR) Ysafe_malloc(sizeof(ECOMPBOX)) ;
 	/* hook to rest of list */
 	newE->next = temp ;
@@ -277,7 +288,8 @@ int toNode ;
     e1->xancestrB++ ;  /* update ancestor count for longest path */
 
     /* create backward edge */
-    if( temp = e2->xadjB ){
+    /* Use ((...)) to avoid assignment as a condition warning */
+    if(( temp = e2->xadjB )){
 	newE = e2->xadjB = (ECOMPBOXPTR) Ysafe_malloc(sizeof(ECOMPBOX)) ;
 	/* hook to rest of list */
 	newE->next = temp ;
@@ -298,7 +310,7 @@ int toNode ;
     ASSERT( newE->constraint >= 0, "formxEdge", YmsgG ) ;
 }
 
-initxPicket() 
+VOID initxPicket(VOID) 
 {
     COMPACTPTR sink, source, node ;
     int i ;
@@ -334,8 +346,8 @@ initxPicket()
     
 
 
-update_xpicket( i, lowerLimit, upperLimit )
-int i ;
+VOID update_xpicket( i, lowerLimit, upperLimit )
+INT i ;
 PICKETPTR lowerLimit, upperLimit ;
 {
     PICKETPTR t, temp, curPick ;
@@ -471,8 +483,8 @@ PICKETPTR lowerLimit, upperLimit ;
 }/* end picket update */
 
 /* function returns whether one cell projects onto another */
-int projectX( tile1_left, tile1_right, tile2_left, tile2_right )
-int tile1_left, tile1_right, tile2_left, tile2_right ;
+INT projectX( tile1_left, tile1_right, tile2_left, tile2_right )
+INT tile1_left, tile1_right, tile2_left, tile2_right ;
 {
     /* -----------------------------------------------------
        First check case 2nd tile larger than first 
@@ -508,8 +520,8 @@ int tile1_left, tile1_right, tile2_left, tile2_right ;
 } /* end projectX */
 
 /* function returns whether one cell projects onto another */
-int projectY( tile1_bot, tile1_top, tile2_bot, tile2_top )
-int tile1_bot, tile1_top, tile2_bot, tile2_top ;
+INT projectY( tile1_bot, tile1_top, tile2_bot, tile2_top )
+INT tile1_bot, tile1_top, tile2_bot, tile2_top ;
 {
     /* -----------------------------------------------------
        First check to see if 2nd tile larger than first 
@@ -545,19 +557,21 @@ int tile1_bot, tile1_top, tile2_bot, tile2_top ;
 }/* end projectY */
 
 /* sort by x first then y */
-sortbyXY( tileA , tileB )
-COMPACTPTR *tileA , *tileB ;
-
+static INT sortbyXY( tileA , tileB )
+void *tileA , *tileB ;
 {
-    if( (*tileA)->l != (*tileB)->l ){
-	return( (*tileA)->l - (*tileB)->l ) ;
+	COMPACTPTR *a = (COMPACTPTR *)tileA;
+	COMPACTPTR *b = (COMPACTPTR *)tileB;
+	
+    if( (*a)->l != (*b)->l ){
+	return( (*a)->l - (*b)->l ) ;
     } else {
 	/* if xmins are equal sort by ymins */
-	return( (*tileA)->b - (*tileB)->b ) ;
+	return( (*a)->b - (*b)->b ) ;
     }
 }
 
-load_ancestors( direction )
+VOID load_ancestors( direction )
 INT direction ;
 {
     INT i ;			/* counter */
@@ -588,7 +602,7 @@ INT direction ;
     }
 }
 
-static xforwardPath()
+static VOID xforwardPath(VOID)
 {
 
     INT j ;			/* current tile adjacent to node */
@@ -628,7 +642,7 @@ static xforwardPath()
     } /* end loop on queue */
 } /* end xforwardPath */
 
-static xbackwardPath()
+static VOID xbackwardPath(VOID)
 {
 
     INT j ;			/* current tile adjacent to node */
@@ -835,26 +849,27 @@ BOOL find_path ;
     return( length ) ;
 } /* end longestxPath */
 
-dxpick()
+VOID dxpick(VOID)
 {
     PICKETPTR curPick ;
     printf("Bottom to top pickets:\n" ) ;
     for( curPick=botPickS;curPick;curPick=curPick->next){
 	printf("Node:%2d cell:%2d bot:%4d top:%4d\n",
-	    curPick->node,
-	    tileNodeG[curPick->node]->cell,
-	    curPick->pt2.bot,
-	    curPick->pt1.top ) ;
+	    (int)(curPick->node),
+	    (int)(tileNodeG[curPick->node]->cell),
+	    (int)(curPick->pt2.bot),
+	    (int)(curPick->pt1.top) ) ;
     }
 }
 
 /* verify that the picket list is correct */
-BOOL dcheckPicks()
+BOOL dcheckPicks(VOID)
 {
     PICKETPTR lastpick, pick_it ;
     int forwardCount, backCount ;
 
-    if( YgetListSize(botPickS,&(botPickS->next)) != -1 ){
+    if( YgetListSize((char *)botPickS,
+    				 (char *)(&(botPickS->next))) != -1 ){
 	forwardCount = 0 ;
 	backCount = 0 ;
 	for( pick_it = botPickS;pick_it;pick_it=pick_it->next ){

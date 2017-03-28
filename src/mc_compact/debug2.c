@@ -57,7 +57,7 @@ static char SccsId[] = "@(#) debug2.c version 7.1 11/10/90" ;
 #include <yalecad/debug.h>
 #include <yalecad/file.h>
 
-dumpxGraph()
+VOID dumpxGraph(VOID)
 {
     int  i ;
     ECOMPBOXPTR eptr ;
@@ -69,11 +69,19 @@ dumpxGraph()
     fp = TWOPEN( "debug", "w", ABORT ) ;
     for( i=0;i<=last_tileG;i++){
 	fprintf( fp,"Node:%2d cell:%2d l:%5d r:%5d b:%5d t:%5d\n",
-	    tileNodeG[i]->node, tileNodeG[i]->cell, tileNodeG[i]->l,
-	    tileNodeG[i]->r, tileNodeG[i]->b, tileNodeG[i]->t ) ;
+	    (int)(tileNodeG[i]->node), 
+	    (int)(tileNodeG[i]->cell), 
+	    (int)(tileNodeG[i]->l),
+	    (int)(tileNodeG[i]->r), 
+	    (int)(tileNodeG[i]->b), 
+	    (int)(tileNodeG[i]->t) ) ;
 	fprintf( fp," xvMin:%d xvMax:%d yvMin:%d yvMax:%5d pathx:%d pathy:%d\n",
-	    tileNodeG[i]->xvalueMin, tileNodeG[i]->xvalueMax, tileNodeG[i]->yvalueMin,
-	    tileNodeG[i]->yvalueMax, tileNodeG[i]->pathx, tileNodeG[i]->pathy ) ;
+	    (int)(tileNodeG[i]->xvalueMin),
+	    (int)(tileNodeG[i]->xvalueMax), 
+	    (int)(tileNodeG[i]->yvalueMin),
+	    (int)(tileNodeG[i]->yvalueMax), 
+	    (int)(tileNodeG[i]->pathx), 
+	    (int)(tileNodeG[i]->pathy) ) ;
 	/* find window */
 	/* xmin is max of all left edges */
 	xmin = tileNodeG[i]->xvalueMin ;
@@ -86,14 +94,15 @@ dumpxGraph()
 	}
 	fprintf( fp,"xmin:%d xmax:%d\n",xmin, xmax ) ;
 	fprintf( fp," xancF:%d xancB:%d yancF:%d yancB:%d\n",
-	    tileNodeG[i]->xancestrF,
-	    tileNodeG[i]->xancestrB,
-	    tileNodeG[i]->yancestrF,
-	    tileNodeG[i]->yancestrB ) ;
-	fprintf( fp," Edges for node %d:\n", i );
+	    (int)(tileNodeG[i]->xancestrF),
+	    (int)(tileNodeG[i]->xancestrB),
+	    (int)(tileNodeG[i]->yancestrF),
+	    (int)(tileNodeG[i]->yancestrB) ) ;
+	fprintf( fp," Edges for node %d:\n", (int)i );
 	for( eptr = tileNodeG[i]->xadjB ;eptr; eptr=eptr->next){
 	    fprintf( fp,"     node %2d constraint:%d\n",
-		eptr->node, eptr->constraint ) ; 
+			(int)(eptr->node), 
+			(int)(eptr->constraint) ) ; 
 	}
 	fprintf( fp, "\n" ) ;
     }
@@ -126,16 +135,16 @@ COMPACTPTR *xGraph ;
 	}
     }
     if( fcount != bcount || fcount != fanc || bcount != banc ){
-	printf( "Forward edges:%d Backward edges:%d\n",fcount,bcount ) ;
-	printf( "Forward nodes:%d Backward nodes:%d\n",fnode,bnode ) ;
-	printf( "Forward ancestrs:%d Backward ancestrs:%d\n",fanc,banc );
+	printf( "Forward edges:%d Backward edges:%d\n",(int)fcount,(int)bcount ) ;
+	printf( "Forward nodes:%d Backward nodes:%d\n",(int)fnode,(int)bnode ) ;
+	printf( "Forward ancestrs:%d Backward ancestrs:%d\n",(int)fanc,(int)banc );
 	return(FALSE) ;
     }
     return(TRUE) ;
 
 }
 
-dumpyGraph()
+VOID dumpyGraph(VOID)
 {
     int  i ;
     ECOMPBOXPTR eptr ;
@@ -145,54 +154,67 @@ dumpyGraph()
     /****************** YGRAPH *******************************/
     /* SOURCE */
     fprintf(fp,"Node:%2d cell:%2d l:%5d r:%5d b:%5d t:%5d\n",
-	tileNodeG[numtilesG+2]->node, tileNodeG[numtilesG+2]->cell,
-	tileNodeG[numtilesG+2]->l,
-	tileNodeG[numtilesG+2]->r, tileNodeG[numtilesG+2]->b,
-	tileNodeG[numtilesG+2]->t ) ;
+		(int)(tileNodeG[numtilesG+2]->node), 
+		(int)(tileNodeG[numtilesG+2]->cell),
+		(int)(tileNodeG[numtilesG+2]->l),
+		(int)(tileNodeG[numtilesG+2]->r), 
+		(int)(tileNodeG[numtilesG+2]->b),
+		(int)(tileNodeG[numtilesG+2]->t) ) ;
     fprintf(fp," xvMin:%d xvMax:%d yvMin:%d yvMax:%5d pathx:%d pathy:%d\n",
-	tileNodeG[numtilesG+2]->xvalueMin, 
-	tileNodeG[numtilesG+2]->xvalueMax,
-	tileNodeG[numtilesG+2]->yvalueMin,
-	tileNodeG[numtilesG+2]->yvalueMax,
-	tileNodeG[numtilesG+2]->pathx, tileNodeG[numtilesG+2]->pathy ) ;
-    fprintf(fp," Edges for node %d:\n", numtilesG+2 );
+		(int)(tileNodeG[numtilesG+2]->xvalueMin), 
+		(int)(tileNodeG[numtilesG+2]->xvalueMax),
+		(int)(tileNodeG[numtilesG+2]->yvalueMin),
+		(int)(tileNodeG[numtilesG+2]->yvalueMax),
+		(int)(tileNodeG[numtilesG+2]->pathx), 
+		(int)(tileNodeG[numtilesG+2]->pathy) ) ;
+    fprintf(fp," Edges for node %d:\n", (int)(numtilesG+2) );
     for( eptr = tileNodeG[numtilesG+2]->yadjB ;eptr; eptr=eptr->next){
 	fprintf(fp,"     node %2d constraint:%d\n",
-	    eptr->node, eptr->constraint ) ; 
+	    (int)(eptr->node), (int)(eptr->constraint) ) ; 
     }
 
     for( i=1;i<=numtilesG;i++){
 	fprintf(fp,"Node:%2d cell:%2d l:%5d r:%5d b:%5d t:%5d\n",
-	    tileNodeG[i]->node, tileNodeG[i]->cell, tileNodeG[i]->l,
-	    tileNodeG[i]->r, tileNodeG[i]->b, tileNodeG[i]->t ) ;
+	    (int)(tileNodeG[i]->node), 
+	    (int)(tileNodeG[i]->cell), 
+	    (int)(tileNodeG[i]->l),
+	    (int)(tileNodeG[i]->r), 
+	    (int)(tileNodeG[i]->b), 
+	    (int)(tileNodeG[i]->t) ) ;
 	fprintf(fp," xvMin:%d xvMax:%d yvMin:%d yvMax:%5d pathx:%d pathy:%d\n",
-	    tileNodeG[i]->xvalueMin, tileNodeG[i]->xvalueMax,
-	    tileNodeG[i]->yvalueMin,
-	    tileNodeG[i]->yvalueMax, tileNodeG[i]->pathx,
-	    tileNodeG[i]->pathy ) ;
+	    (int)(tileNodeG[i]->xvalueMin), 
+	    (int)(tileNodeG[i]->xvalueMax),
+	    (int)(tileNodeG[i]->yvalueMin),
+	    (int)(tileNodeG[i]->yvalueMax), 
+	    (int)(tileNodeG[i]->pathx),
+	    (int)(tileNodeG[i]->pathy) ) ;
 	fprintf(fp," Edges for node %d:\n", i );
 	for( eptr = tileNodeG[i]->yadjB ;eptr; eptr=eptr->next){
 	    fprintf(fp,"     node %2d constraint:%d\n",
-		eptr->node, eptr->constraint ) ; 
+		(int)(eptr->node), 
+		(int)(eptr->constraint) ) ; 
 	}
     }
 
     /* SINK */
     fprintf(fp,"Node:%2d cell:%2d l:%5d r:%5d b:%5d t:%5d\n",
-	tileNodeG[numtilesG+3]->node, tileNodeG[numtilesG+3]->cell,
-	tileNodeG[numtilesG+3]->l,
-	tileNodeG[numtilesG+3]->r, tileNodeG[numtilesG+3]->b,
-	tileNodeG[numtilesG+3]->t ) ;
+		(int)(tileNodeG[numtilesG+3]->node), 
+		(int)(tileNodeG[numtilesG+3]->cell),
+		(int)(tileNodeG[numtilesG+3]->l),
+		(int)(tileNodeG[numtilesG+3]->r), 
+		(int)(tileNodeG[numtilesG+3]->b),
+		(int)(tileNodeG[numtilesG+3]->t) ) ;
     fprintf(fp," xvMin:%d xvMax:%d yvMin:%d yvMax:%5d pathx:%d pathy:%d\n",
-	tileNodeG[numtilesG+3]->xvalueMin,
-	tileNodeG[numtilesG+3]->xvalueMax,
-	tileNodeG[numtilesG+3]->yvalueMin,
-	tileNodeG[numtilesG+3]->yvalueMax,
-	tileNodeG[numtilesG+3]->pathx, tileNodeG[numtilesG+3]->pathy ) ;
+		(int)(tileNodeG[numtilesG+3]->xvalueMin),
+		(int)(tileNodeG[numtilesG+3]->xvalueMax),
+		(int)(tileNodeG[numtilesG+3]->yvalueMin),
+		(int)(tileNodeG[numtilesG+3]->yvalueMax),
+		(int)(tileNodeG[numtilesG+3]->pathx), 
+		(int)(tileNodeG[numtilesG+3]->pathy) ) ;
     fprintf(fp," Edges for node %d:\n", i );
     for( eptr = tileNodeG[numtilesG+3]->yadjB ;eptr; eptr=eptr->next){
 	fprintf(fp,"     node %2d constraint:%d\n",
-	    eptr->node, eptr->constraint ) ; 
+	    (int)(eptr->node), (int)(eptr->constraint) ) ; 
     }
     fprintf( fp, "\n" ) ;
     TWCLOSE( fp ) ;
@@ -201,8 +223,8 @@ dumpyGraph()
 
 
 ECOMPBOXPTR find_edge( node1, node2, direction )
-int node1, node2 ;
-int direction ;
+INT node1, node2 ;
+INT direction ;
 {
     ECOMPBOXPTR eptr ;
     switch( direction ){
@@ -227,55 +249,58 @@ int direction ;
     return( NULL ) ;
 }
 
-dycons()
+VOID dycons(VOID)
 {
     int  i, bcons ;
     ECOMPBOXPTR eptr, eptr2 ;
 
     /****************** YGRAPH *******************************/
     /* SOURCE */
-    printf(" Edges for node %d:\n", numtilesG+2 );
+    printf(" Edges for node %d:\n", (int)(numtilesG+2) );
     for( eptr = tileNodeG[numtilesG+2]->yadjF ;eptr; eptr=eptr->next){
 	
-	if( eptr2 = find_edge( eptr->node, numtilesG+2, YBACKWARD ) ){
+	/* Use ((...)) to avoid assignment as a condition warning */
+	if(( eptr2 = find_edge( eptr->node, numtilesG+2, YBACKWARD ) )){
 	    bcons = eptr2->constraint ;
 	} else {
 	    bcons = -1 ;
 	}
 	printf("     node %2d fconstraint:%d bconstraint:%d\n",
-	    eptr->node, eptr->constraint, bcons ) ; 
+	    (int)(eptr->node), (int)(eptr->constraint), (int)bcons ) ; 
     }
 
     for( i=1;i<=numtilesG;i++){
-	printf(" Edges for node %d:\n", i );
+	printf(" Edges for node %d:\n", (int)i );
 	for( eptr = tileNodeG[i]->yadjF ;eptr; eptr=eptr->next){
-	    if( eptr2 = find_edge( eptr->node, i, YBACKWARD ) ){
+	    /* Use ((...)) to avoid assignment as a condition warning */
+	    if(( eptr2 = find_edge( eptr->node, i, YBACKWARD ) )){
 		bcons = eptr2->constraint ;
 	    } else {
 		bcons = -1 ;
 	    }
 	    printf("     node %2d fconstraint:%d bconstraint:%d\n",
-		eptr->node, eptr->constraint, bcons ) ; 
+		(int)(eptr->node), (int)(eptr->constraint), (int)bcons ) ; 
 	}
     }
 
     /* SINK */
-    printf(" Edges for node %d:\n", i );
+    printf(" Edges for node %d:\n", (int)i );
     for( eptr = tileNodeG[numtilesG+3]->yadjF ;eptr; eptr=eptr->next){
-	if( eptr2 = find_edge( eptr->node, numtilesG+3, YBACKWARD ) ){
+	/* Use ((...)) to avoid assignment as a condition warning */
+	if(( eptr2 = find_edge( eptr->node, numtilesG+3, YBACKWARD ) )){
 	    bcons = eptr2->constraint ;
 	} else {
 	    bcons = -1 ;
 	}
 	printf("     node %2d fconstraint:%d bconstraint:%d\n",
-	    eptr->node, eptr->constraint, bcons ) ; 
+	    (int)(eptr->node), (int)(eptr->constraint), (int)bcons ) ; 
     }
 
 }
 
 
 
-dsort( numtiles, XNotY )
+VOID dsort( numtiles, XNotY )
 int numtiles ;
 BOOL XNotY ;
 {
@@ -286,7 +311,7 @@ BOOL XNotY ;
 
     ptr = tileNodeG ;
     for( i=1;i<=numtiles;i++ ){
-	fprintf(stderr, "%d:%d  ", ptr[i]->node,ptr[i]->cell ) ; 
+	fprintf(stderr, "%d:%d  ", (int)(ptr[i]->node),(int)(ptr[i]->cell) ) ; 
 	if( ( i % 10 ) == 0 ){
 	    fprintf( stderr, "\n") ;
 	}
@@ -302,7 +327,7 @@ BOOL XNotY ;
     }
 
     for( i=0;i<=last_tileG;i++ ){
-	fprintf(stderr, "%d:%d  ", ptr[i]->node,ptr[i]->cell ) ; 
+	fprintf(stderr, "%d:%d  ", (int)(ptr[i]->node),(int)(ptr[i]->cell) ) ; 
 	if( i != 0 && ( i % 10 ) == 0 ){
 	    fprintf( stderr, "\n") ;
 	}
@@ -311,25 +336,25 @@ BOOL XNotY ;
 
 }  /* end numtiles */
 
-dxancerr()
+VOID dxancerr(VOID)
 {
     int i ;
 
     for( i=0;i<=last_tileG; i++ ){
 	if( xGraphG[i]->xancestrF != 0 ){
 	    fprintf( stderr, "Tile:%d has %d forward ancestors\n",
-		xGraphG[i]->node, xGraphG[i]->xancestrF ) ;
+		(int)(xGraphG[i]->node), (int)(xGraphG[i]->xancestrF) ) ;
 	}
     }
     for( i=0;i<=last_tileG; i++ ){
 	if( xGraphG[i]->xancestrB != 0 ){
 	    fprintf( stderr, "Tile:%d has %d backward ancestors\n",
-		xGraphG[i]->node, xGraphG[i]->xancestrB ) ;
+		(int)(xGraphG[i]->node), (int)(xGraphG[i]->xancestrB) ) ;
 	}
     }
 }
 
-dump_anc()
+VOID dump_anc(VOID)
 {
     INT i ;
     INT last ;
@@ -337,11 +362,11 @@ dump_anc()
     last = YSINK ;
     fprintf( stderr, "The ancestors for the tiles:\n" ) ;
     for( i = 0; i <= last; i++ ){
-	fprintf( stderr, "\ttile:%3d ancestors:%d\n", i, ancestorG[i] ) ;
+	fprintf( stderr, "\ttile:%3d ancestors:%d\n", (int)i, (int)(ancestorG[i]) ) ;
     }
 } /* dump_anc */
 
-dslack( XNotY, center, length )
+VOID dslack( XNotY, center, length )
 BOOL XNotY ;
 BOOL center ;
 INT length ;
@@ -357,8 +382,8 @@ INT length ;
 	fprintf(stderr,"\nDumping xGraph slacks node:minslack-maxslack...\n") ;
 	for( i=1;i<=numcellsG;i++ ){
 	    cptr = slackG[i] ;
-	    fprintf(stderr, "%d:", tileNodeG[cptr->tiles->node]->cell ) ;
-	    fprintf(stderr, "%d-%d\n", cptr->xmin, cptr->xmax ) ;
+	    fprintf(stderr, "%d:", (int)(tileNodeG[cptr->tiles->node]->cell) ) ;
+	    fprintf(stderr, "%d-%d\n", (int)(cptr->xmin), (int)(cptr->xmax) ) ;
 	    count = 0 ;
 	    for( nptr = cptr->tiles; nptr; nptr = nptr->next ){
 		tptr = tileNodeG[nptr->node] ;
@@ -366,7 +391,7 @@ INT length ;
 		if( center ){
 		    value -= tptr->l_rel ;
 		}
-		fprintf(stderr, "\t%d:%d-", tptr->node, value ) ;
+		fprintf(stderr, "\t%d:%d-", (int)(tptr->node), (int)value ) ;
 
 		value = tptr->xvalueMax ;
 		if( center ){
@@ -375,7 +400,7 @@ INT length ;
 		if( length ){
 		    value = length - value ;
 		}
-		fprintf(stderr, "%d  ", value ) ;
+		fprintf(stderr, "%d  ", (int)value ) ;
 
 		if( (++count % 4) == 0 ){
 		    fprintf( stderr, "\n") ;
@@ -388,8 +413,8 @@ INT length ;
 	fprintf(stderr,"\nDumping yGraph slacks node:minslack-maxslack...\n") ;
 	for( i=1;i<=numcellsG;i++ ){
 	    cptr = slackG[i] ;
-	    fprintf(stderr, "%d:", tileNodeG[cptr->tiles->node]->cell ) ;
-	    fprintf(stderr, "%d-%d\n", cptr->ymin, cptr->ymax ) ;
+	    fprintf(stderr, "%d:", (int)(tileNodeG[cptr->tiles->node]->cell) ) ;
+	    fprintf(stderr, "%d-%d\n", (int)(cptr->ymin), (int)(cptr->ymax) ) ;
 	    count = 0 ;
 	    for( nptr = cptr->tiles; nptr; nptr = nptr->next ){
 		tptr = tileNodeG[nptr->node] ;
@@ -397,7 +422,7 @@ INT length ;
 		if( center ){
 		    value -= tptr->b_rel ;
 		}
-		fprintf(stderr, "\t%d:%d-", tptr->node, value ) ;
+		fprintf(stderr, "\t%d:%d-", (int)(tptr->node), (int)value ) ;
 
 		value = tptr->yvalueMax ;
 		if( center ){
@@ -406,7 +431,7 @@ INT length ;
 		if( length ){
 		    value = length - value ;
 		}
-		fprintf(stderr, "%d  ", value ) ;
+		fprintf(stderr, "%d  ", (int)value ) ;
 		if( (++count % 4) == 0 ){
 		    fprintf( stderr, "\n") ;
 		}
@@ -417,7 +442,7 @@ INT length ;
     }
 } /* end dslack */
 
-dedges( cell, XnotY, forwardNotBack )
+VOID dedges( cell, XnotY, forwardNotBack )
 INT cell ;
 BOOL XnotY ;
 BOOL forwardNotBack ;
@@ -440,7 +465,7 @@ BOOL forwardNotBack ;
 	    fprintf( stderr, "Y backward " ) ;
 	}
     }
-    fprintf( stderr, "edges for cell:%d :\n", cell ) ;
+    fprintf( stderr, "edges for cell:%d :\n", (int)cell ) ;
     for( nptr = cellarrayG[cell]->tiles; nptr ; nptr = nptr->next ){
 	tptr = tileNodeG[nptr->node] ;
 	if( XnotY ){
@@ -457,32 +482,32 @@ BOOL forwardNotBack ;
 	    }
 	}
 	for( ; eptr; eptr = eptr->next ){
-	    fprintf( stderr, "\t %d --> %d \n", nptr->node, eptr->node ) ;
+	    fprintf( stderr, "\t %d --> %d \n", (int)(nptr->node), (int)(eptr->node) ) ;
 	}
     }
     fprintf( stderr, "\n\n" ) ;
 }
 
-dyancerr()
+VOID dyancerr(VOID)
 {
     int i ;
 
     for( i=0;i<=last_tileG; i++ ){
 	if( yGraphG[i]->yancestrF != 0 ){
 	    fprintf( stderr, "Tile:%d has %d forward ancestors\n",
-		yGraphG[i]->node, yGraphG[i]->yancestrF ) ;
+		(int)(yGraphG[i]->node), (int)(yGraphG[i]->yancestrF) ) ;
 	}
     }
     for( i=0;i<=last_tileG; i++ ){
 	if( yGraphG[i]->yancestrB != 0 ){
 	    fprintf( stderr, "Tile:%d has %d backward ancestors\n",
-		yGraphG[i]->node, yGraphG[i]->yancestrB ) ;
+		(int)(yGraphG[i]->node), (int)(yGraphG[i]->yancestrB) ) ;
 	}
     }
 }
 
 
-check_xancestors()
+VOID check_xancestors(VOID)
 {
     INT i ;
     INT count ;
@@ -499,9 +524,9 @@ check_xancestors()
 	if( tptr->xancestrF != count ){
 	    fprintf( stderr, 
 	    "ERROR:Mismatch in forward x ancestor count for node:%d\n",
-	    tptr->node ) ;
-	    fprintf( stderr, "\tdata:%d found:%d\n\n", tptr->xancestrF,
-		count ) ;
+	    (int)(tptr->node) ) ;
+	    fprintf( stderr, "\tdata:%d found:%d\n\n", (int)(tptr->xancestrF),
+		(int)count ) ;
 	}
 	/* next check backward ancestors */
 	count = 0 ;
@@ -511,15 +536,15 @@ check_xancestors()
 	if( tptr->xancestrB != count ){
 	    fprintf( stderr, 
 	    "ERROR:Mismatch in backward x ancestor count for node:%d\n",
-	    tptr->node ) ;
-	    fprintf( stderr, "\tdata:%d found:%d\n\n", tptr->xancestrB,
-		count ) ;
+	    (int)(tptr->node) ) ;
+	    fprintf( stderr, "\tdata:%d found:%d\n\n", (int)(tptr->xancestrB),
+		(int)count ) ;
 	}
 
     }
 } /* end check_xancestors */
 
-check_yancestors()
+VOID check_yancestors(VOID)
 {
     INT i ;
     INT count ;
@@ -536,9 +561,9 @@ check_yancestors()
 	if( tptr->yancestrF != count ){
 	    fprintf( stderr, 
 	    "ERROR:Mismatch in forward y ancestor count for node:%d\n",
-	    tptr->node ) ;
-	    fprintf( stderr, "\tdata:%d found:%d\n\n", tptr->yancestrF,
-		count ) ;
+	    (int)(tptr->node) ) ;
+	    fprintf( stderr, "\tdata:%d found:%d\n\n", (int)(tptr->yancestrF),
+		(int)count ) ;
 	}
 	/* next check backward ancestors */
 	count = 0 ;
@@ -548,9 +573,9 @@ check_yancestors()
 	if( tptr->yancestrB != count ){
 	    fprintf( stderr, 
 	    "ERROR:Mismatch in backward y ancestor count for node:%d\n",
-	    tptr->node ) ;
-	    fprintf( stderr, "\tdata:%d found:%d\n\n", tptr->yancestrB,
-		count ) ;
+	    (int)(tptr->node) ) ;
+	    fprintf( stderr, "\tdata:%d found:%d\n\n", (int)(tptr->yancestrB),
+		(int)count ) ;
 	}
 
     }

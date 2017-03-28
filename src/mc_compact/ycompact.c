@@ -60,20 +60,32 @@ REVISIONS:  Sep 20, 1988 - removed excess edges from source and sink
 static char SccsId[] = "@(#) ycompact.c version 7.1 11/10/90" ;
 #endif
 
-#include <compact.h>
+#include <yalecad/base.h>
 #include <yalecad/debug.h>
+#include <yalecad/draw.h>
+#include <yalecad/program.h>
+#include <yalecad/quicksort.h>
+
+#include <compact.h>
+#include <compactor.h>
+#include <multi.h>
+#include <xcompact.h>
+#include <ycompact.h>
 
 static PICKETPTR  leftPickS ;
 
+static INT sortbyYX(P2(void *tileA , void *tileB ));
+static VOID yforwardPath(P1(VOID));
+static VOID ybackwardPath(P1(VOID));
 
-ERRORPTR buildYGraph()
+
+ERRORPTR buildYGraph(VOID)
 {
     int i ;                    /* counter */
     int overlapx ;             /* overlap conditions in x direction */
     int overlapy ;             /* overlap conditions in y direction */
-    int sortbyYX() ;           /* sort the tiles Y then X */
-    int left, right ;          /* coordinates of tiles */
-    int bottom, top ;          /* coordinates of tiles */
+    INT left, right ;          /* coordinates of tiles */
+    INT bottom, top ;          /* coordinates of tiles */
     BOOL firstPick ;           /* TRUE if first picket which matches */
     BOOL possibleEdgetoSource; /* TRUE if this could be edge to source */
     BOOL *yancestorB ;         /* TRUE for a cell if cell has B ancestors */
@@ -241,9 +253,9 @@ ERRORPTR buildYGraph()
 
 } /* end buildYGraph */
 
-formyEdge( fromNode, toNode ) 
-int fromNode ;
-int toNode ;
+VOID formyEdge( fromNode, toNode ) 
+INT fromNode ;
+INT toNode ;
 {
     COMPACTPTR e1, e2 ;
     ECOMPBOXPTR temp, newE ;
@@ -283,7 +295,8 @@ int toNode ;
     }
 
     /* create forward edge */
-    if( temp = e1->yadjF ){
+    /* Use ((...)) to avoid assignment as a condition warning */
+    if(( temp = e1->yadjF )){
 	newE = e1->yadjF = (ECOMPBOXPTR) Ysafe_malloc(sizeof(ECOMPBOX)) ;
 	/* hook to rest of list */
 	newE->next = temp ;
@@ -300,7 +313,7 @@ int toNode ;
     e1->yancestrB++ ;  /* update ancestor count for longest path */
 
     /* create backward edge */
-    if( temp = e2->yadjB ){
+    if(( temp = e2->yadjB )){
 	newE = e2->yadjB = (ECOMPBOXPTR) Ysafe_malloc(sizeof(ECOMPBOX)) ;
 	/* hook to rest of list */
 	newE->next = temp ;
@@ -318,7 +331,7 @@ int toNode ;
 
 }
 
-inityPicket( ) 
+VOID inityPicket(VOID) 
 {
     COMPACTPTR source, sink, node ;
     int i ;
@@ -354,8 +367,8 @@ inityPicket( )
     
 
 
-update_ypicket( i, lowerLimit, upperLimit )
-int i ;
+VOID update_ypicket( i, lowerLimit, upperLimit )
+INT i ;
 PICKETPTR lowerLimit, upperLimit ;
 {
     PICKETPTR t, temp, curPick ;
@@ -501,19 +514,22 @@ PICKETPTR lowerLimit, upperLimit ;
 }/* end picket update */
 
 /* sort by y first then x */
-sortbyYX( tileA , tileB )
-COMPACTPTR *tileA , *tileB ;
+static INT sortbyYX( tileA , tileB )
+void *tileA , *tileB ;
 
 {
-    if( (*tileA)->b != (*tileB)->b ){
-	return( (*tileA)->b - (*tileB)->b ) ;
+	COMPACTPTR *a = (COMPACTPTR *)tileA;
+	COMPACTPTR *b = (COMPACTPTR *)tileB;
+	
+    if( (*a)->b != (*b)->b ){
+	return( (*a)->b - (*b)->b ) ;
     } else {
 	/* if ymins are equal sort by xmins */
-	return( (*tileA)->l - (*tileB)->l ) ;
+	return( (*a)->l - (*b)->l ) ;
     }
 }
 
-static yforwardPath()
+static VOID yforwardPath(VOID)
 {
 
     INT j ;			/* current tile adjacent to node */
@@ -554,7 +570,7 @@ static yforwardPath()
 } /* end yforwardPath */
 
 
-static ybackwardPath()
+static VOID ybackwardPath(VOID)
 {
 
     INT j ;			/* current tile adjacent to node */
@@ -762,15 +778,15 @@ BOOL find_path ;
 } /* end longestyPath */
 
 
-dypick()
+VOID dypick(VOID)
 {
     PICKETPTR curPick ;
     printf("Bottom to top pickets:\n" ) ;
     for( curPick=leftPickS;curPick;curPick=curPick->next){
 	printf("Node:%2d cell:%2d left:%4d right:%4d\n",
-	    curPick->node,
-	    tileNodeG[curPick->node]->cell,
-	    curPick->pt2.lft,
-	    curPick->pt1.rght ) ;
+	    (int)(curPick->node),
+	    (int)(tileNodeG[curPick->node]->cell),
+	    (int)(curPick->pt2.lft),
+	    (int)(curPick->pt1.rght) ) ;
     }
 }

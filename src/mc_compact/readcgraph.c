@@ -63,11 +63,17 @@ static char SccsId[] = "@(#) readcgraph.y (Yale) version 1.1 2/23/91" ;
 #endif
 
 #include <string.h>
-#include <compact.h>
-#include <readcgraph.h>       /* redefine yacc and lex globals */
-#include <yalecad/message.h>  /* use message routines for errors. */
+
+#include <yalecad/base.h>  /* use message routines for errors. */
 #include <yalecad/debug.h>    /* use debug utilities. */
 #include <yalecad/file.h>     /* use message routines for errors. */
+#include <yalecad/message.h>  /* use message routines for errors. */
+#include <yalecad/program.h>  
+
+#include <changraph.h>
+#include <compact.h>
+#include <io.h>     
+#include <readcgraph.h>       /* redefine yacc and lex globals */
 
 #undef REJECT          /* undefine TWMC macro for lex's version */ 
 #define YYDEBUG  1     /* condition compile for yacc debug */
@@ -262,7 +268,7 @@ YYSTYPE yyvs[YYSTACKSIZE];
 /* ********************* #include "readcgraph_l.h" *******************/
 
 
-read_cgraph()
+VOID read_cgraph(VOID)
 { 
     char filename[LRECL] ;
 #ifdef YYDEBUG
@@ -281,18 +287,19 @@ read_cgraph()
 
 } /* end read_cgraph */
 
-yyerror(s)
+int yyerror(s)
 char    *s;
 {
     sprintf(YmsgG,"problem reading %s.mrte:", cktNameG );
     M( ERRMSG, "yacc", YmsgG ) ;
     sprintf(YmsgG, "  line %d near '%s' : %s\n" ,
-	line_countS+1, yytext, s );
+	(int)(line_countS+1), yytext, s );
     M( MSG,"yacc", YmsgG ) ;
     abortS = TRUE ;
+    return 0;
 }
 
-yywrap()
+int yywrap()
 {
     return(1);
 }                      
@@ -307,7 +314,8 @@ yyparse()
     register char *yys;
     extern char *getenv();
 
-    if (yys = getenv("YYDEBUG"))
+    /* Use ((...)) to avoid assignment as a condition warning */
+    if ((yys = getenv("YYDEBUG")))
     {
         yyn = *yys;
         if (yyn >= '0' && yyn <= '9')
@@ -324,7 +332,8 @@ yyparse()
     *yyssp = yystate = 0;
 
 yyloop:
-    if (yyn = yydefred[yystate]) goto yyreduce;
+    /* Use ((...)) to avoid assignment as a condition warning */
+    if ((yyn = yydefred[yystate])) goto yyreduce;
     if (yychar < 0)
     {
         if ((yychar = yylex()) < 0) yychar = 0;
@@ -376,7 +385,8 @@ yynewerror:
             sprintf( err_msg, "\nsyntax error - found:%s expected:",
                 yyname[yychar] ) ;
             two_or_more = 0 ;
-            if( test_state = yysindex[yystate] ){
+            /* Use ((...)) to avoid assignment as a condition warning */
+            if(( test_state = yysindex[yystate] )){
                 for( i = YYERRCODE+1; i <= YYMAXTOKEN; i++ ){
                     expect = test_state + i ;
                     if( expect <= YYTABLESIZE && yycheck[expect] == i ){
@@ -389,7 +399,8 @@ yynewerror:
                      }
                  }
              }
-            if( test_state = yyrindex[yystate] ){
+            /* Use ((...)) to avoid assignment as a condition warning */
+            if(( test_state = yyrindex[yystate] )){
                 for( i = YYERRCODE+1; i <= YYMAXTOKEN; i++ ){
                     expect = test_state + i ;
                     if( expect <= YYTABLESIZE && yycheck[expect] == i ){

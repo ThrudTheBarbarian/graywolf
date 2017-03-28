@@ -63,7 +63,10 @@ static char SccsId[] = "@(#) cdraw.c version 7.5 3/29/91" ;
 #include <yalecad/draw.h>
 #include <yalecad/colors.h>
 #include <yalecad/debug.h>
-#include <compact.h>
+
+#include <cdraw.h>
+#include <changraph.h>
+#include <io.h>
 
 #define SLEEPTIME     (unsigned) 2
 #define DATADIR       "./DATA"
@@ -92,7 +95,7 @@ static BOOL drawEdgeLabelS = FALSE ;
 static BOOL drawChanGraphS = TRUE ;
 static INT  zspanS ;
 
-init_graphics( argc, argv, windowId )
+VOID init_graphics( argc, argv, windowId )
 INT argc, windowId ;
 char *argv[] ;
 {
@@ -134,7 +137,7 @@ char *argv[] ;
     }
 }
 
-set_draw_critical( flag ) 
+VOID set_draw_critical( flag ) 
 BOOL flag ;
 {
 
@@ -147,7 +150,7 @@ BOOL flag ;
 } /* end set_draw_critical */
 
 /* draw_the_data routine draws compaction graph */
-INT draw_the_data()
+INT draw_the_data(VOID)
 {
 
     INT  i ;
@@ -162,7 +165,7 @@ INT draw_the_data()
 
     /* graphics is turned off */
     if( !graphicsG ){
-	return ;
+	return -1 ;
     }
     if( firstL && numcellsG ){
 	zspanS = ROUND( (DOUBLE) zspanS / (DOUBLE) numcellsG / 10.0 ) ;
@@ -191,7 +194,7 @@ INT draw_the_data()
 	    color = TWGREEN ;
 	}
 	if( drawLabelS ){
-	    sprintf( label, "C%d:T%d", t->cell, i ) ;
+	    sprintf( label, "C%d:T%d", (int)t->cell, (int)i ) ;
 	    labelptr = label ;
 	} else {
 	    labelptr = NIL(char *) ;
@@ -230,7 +233,7 @@ INT draw_the_data()
 	    toX = tptr->l ;
 	    toY = (tptr->b + tptr->t) / 2 ;
 	    if( drawEdgeLabelS ){
-		sprintf( label, "%d", eptr->constraint );
+		sprintf( label, "%d", (int)(eptr->constraint) );
 		labelptr = label ;
 	    } else {
 		labelptr = NIL(char *) ;
@@ -248,9 +251,9 @@ INT draw_the_data()
 		} else {
 		    toY = (blockbG + blocktG) / 2 ;
 		}
-		sprintf( label, "%d", eptr->constraint );
+		sprintf( label, "%d", (int)(eptr->constraint) );
 		if( drawEdgeLabelS ){
-		    sprintf( label, "%d", eptr->constraint );
+		    sprintf( label, "%d", (int)(eptr->constraint) );
 		    labelptr = label ;
 		} else {
 		    labelptr = NIL(char *) ;
@@ -268,7 +271,7 @@ INT draw_the_data()
 	    toY = tptr->b ;
 	    toX = (tptr->l + tptr->r) / 2 ;
 	    if( drawEdgeLabelS ){
-		sprintf( label, "%d", eptr->constraint );
+		sprintf( label, "%d", (int)(eptr->constraint) );
 		labelptr = label ;
 	    } else {
 		labelptr = NIL(char *) ;
@@ -287,7 +290,7 @@ INT draw_the_data()
 		    toX = (blocklG + blockrG) / 2 ;
 		}
 		if( drawEdgeLabelS ){
-		    sprintf( label, "%d", eptr->constraint );
+		    sprintf( label, "%d", (int)(eptr->constraint) );
 		    labelptr = label ;
 		} else {
 		    labelptr = NIL(char *) ;
@@ -304,9 +307,9 @@ INT draw_the_data()
 	    tptr = tileNodeG[eptr->node] ;
 	    toX = tptr->l ;
 	    toY = (tptr->b + tptr->t) / 2 ;
-	    sprintf( label, "%d", eptr->constraint );
+	    sprintf( label, "%d", (int)(eptr->constraint) );
 	    if( drawEdgeLabelS ){
-		sprintf( label, "%d", eptr->constraint );
+		sprintf( label, "%d", (int)(eptr->constraint) );
 		labelptr = label ;
 	    } else {
 		labelptr = NIL(char *) ;
@@ -325,7 +328,7 @@ INT draw_the_data()
 		    toY = (blockbG + blocktG) / 2 ;
 		}
 		if( drawEdgeLabelS ){
-		    sprintf( label, "%d", eptr->constraint );
+		    sprintf( label, "%d", (int)(eptr->constraint) );
 		    labelptr = label ;
 		} else {
 		    labelptr = NIL(char *) ;
@@ -343,7 +346,7 @@ INT draw_the_data()
 	    toY = tptr->t ;
 	    toX = (tptr->l + tptr->r) / 2 ;
 	    if( drawEdgeLabelS ){
-		sprintf( label, "%d", eptr->constraint );
+		sprintf( label, "%d", (int)(eptr->constraint) );
 		labelptr = label ;
 	    } else {
 		labelptr = NIL(char *) ;
@@ -362,7 +365,7 @@ INT draw_the_data()
 		    toX = (blocklG + blockrG) / 2 ;
 		}
 		if( drawEdgeLabelS ){
-		    sprintf( label, "%d", eptr->constraint );
+		    sprintf( label, "%d", (int)(eptr->constraint) );
 		    labelptr = label ;
 		} else {
 		    labelptr = NIL(char *) ;
@@ -379,11 +382,12 @@ INT draw_the_data()
 
     TWflushFrame() ;
     D( "draw_the_data", sleep( SLEEPTIME ) ) ;
-
+	return 0;
+	
 } /* end draw_the_data */
 
 /* heart of the graphic system processes user input */
-process_graphics()
+VOID process_graphics(VOID)
 {
 
     int x1, y1, x2, y2 ; /* coordinates for fixing cells and neighhds */
@@ -494,7 +498,7 @@ process_graphics()
 	case TELL_POINT:
 	    TWmessage( "Pick a point" ) ;
 	    TWgetPt( &x, &y ) ;
-	    sprintf( YmsgG,"The point is (%d,%d)",x,y ) ;
+	    sprintf( YmsgG,"The point is (%d,%d)",(int)x,(int)y ) ;
 	    TWmessage( YmsgG ) ;
 	    break ;
 	case DUMP_STATE:
@@ -504,7 +508,7 @@ process_graphics()
 	    reply = TWgetString( "Enter cell to highlite:" ) ;
 	    selectCellS = atof( reply ) ;
 	    if( selectCellS > 0 && selectCellS <= numcellsG ){
-		sprintf( YmsgG, "Selected cell is :%d", selectCellS ) ;
+		sprintf( YmsgG, "Selected cell is :%d", (int)selectCellS ) ;
 		TWmessage( YmsgG ) ;
 	    } else {
 		TWmessage( "No valid cell selected" ) ;
@@ -554,7 +558,7 @@ process_graphics()
 
 
 /* how to draw the channel graph */
-draw_changraph()
+VOID draw_changraph(VOID)
 {
     INT i ;                        /* temp counter */
     INT color ;                    /* color of edge */
@@ -571,7 +575,7 @@ draw_changraph()
 	nptr = changraphG[i] ;
 	if( drawLabelS ){
 	    label = label_buf ;
-	    sprintf( label, "N%d", i ) ;
+	    sprintf( label, "N%d", (int)i ) ;
 	} else {
 	    label = NULL ;
 	}

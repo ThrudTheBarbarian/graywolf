@@ -59,8 +59,13 @@ REVISIONS:  Oct 24, 1988 - fixed +1 error.  Now check for graph
 static char SccsId[] = "@(#) movestrat.c version 7.2 2/17/91" ;
 #endif
 
-#include <compact.h>
+#include <yalecad/base.h>
 #include <yalecad/debug.h>
+
+#include <compact.h>
+#include <strategy.h>
+#include <xcompact.h>
+#include <ycompact.h>
 
     /* -------------------------------------------------------------- 
         space requirements also include 2 sources and 2 sinks: 
@@ -69,12 +74,12 @@ static char SccsId[] = "@(#) movestrat.c version 7.2 2/17/91" ;
     */
 
 
-static int find_bound();
-static int findxerror();
-static int findyerror();
+static int find_bound(P3(COMPACTPTR tile, int avoid, int direction));
+static int findxerror(P2(COMPACTPTR *tileL_addr, COMPACTPTR *tileR_addr));
+static int findyerror(P2(COMPACTPTR *tileT_addr, COMPACTPTR *tileB_addr));
 
 
-moveStrategy( violations ) 
+VOID moveStrategy( violations ) 
 ERRORPTR violations ;
 {
     COMPACTPTR tileL, tileR, tileB, tileT ;
@@ -277,8 +282,8 @@ ERRORPTR violations ;
 } /* end moveStrategy */
 
 /* HOW to update the tiles of the cells */
-update_cell_tiles( cell, deltax, deltay ) 
-int cell, deltax, deltay ;
+VOID update_cell_tiles( cell, deltax, deltay ) 
+INT cell, deltax, deltay ;
 {
     CELLBOXPTR cellptr ;
     COMPACTPTR t ;
@@ -311,8 +316,8 @@ int cell, deltax, deltay ;
 
 } /* end update_cell_tiles */
 
-BOOL dcheck_pos( cell ) 
-int cell ;
+VOID dcheck_pos( cell ) 
+INT cell ;
 {
 
 #ifdef DEBUG
@@ -439,6 +444,10 @@ int direction ;
 	    return( tile->b - minslack ) ;
     } /* end switch */
 
+	/* should presumably never get here. Silence the warning */
+	printf("Got to end of find_bound without calculating a value [%d]", 
+			(int)direction);
+	return 0;
 } /* end find_bound */
 
 static int findxerror( tileL_addr, tileR_addr )

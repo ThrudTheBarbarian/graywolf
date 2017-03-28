@@ -66,12 +66,20 @@ REVISIONS:  Nov  5, 1988 - free violations and modified position of
 static char SccsId[] = "@(#) compactor.c version 7.3 3/29/91" ;
 #endif
 
-#include <compact.h>
+#include <yalecad/base.h>
 #include <yalecad/debug.h>
+#include <yalecad/draw.h>
 
-remove_violations()
+#include <cdraw.h>
+#include <compactor.h>
+#include <grid.h>
+#include <strategy.h>
+#include <xcompact.h>
+#include <ycompact.h>
+
+VOID remove_violations(VOID)
 {
-    ERRORPTR  violations, saveError, buildXGraph(), buildYGraph() ;
+    ERRORPTR  violations, saveError;
 
     /* --------------------------------------------------------------- 
        VIOLATION REMOVAL CYCLE - iterate till all violations are removed
@@ -112,11 +120,11 @@ remove_violations()
 } /* end remove_violations */
 
 
-compact()
+VOID compact(VOID)
 {
     INT length ;       /* length of longest path */
     INT count ;        /* number of compaction cycles */
-    ERRORPTR  violations, saveError, buildXGraph(), buildYGraph() ;
+    ERRORPTR  violations, saveError;
     BOOL compactNotSat ; /* compaction criteria is not satisfied */
     BOOL xNotY_toggle ; /* toggle between x and y compaction. */
 
@@ -202,7 +210,7 @@ compact()
 } /* end compact */
 
 
-freeGraph( direction ) 
+VOID freeGraph( direction ) 
 INT direction ;
 {
     INT i ;
@@ -319,7 +327,7 @@ INT direction ;
     }
 }
 
-cleanupGraph( direction ) 
+VOID cleanupGraph( direction ) 
 INT direction ;
 {
     INT i ;
@@ -429,7 +437,7 @@ INT direction ;
 }
 
 /* find bounding box of tiles */
-find_core( l, r, b, t )
+VOID find_core( l, r, b, t )
 INT *l, *r, *b, *t ;
 {
 

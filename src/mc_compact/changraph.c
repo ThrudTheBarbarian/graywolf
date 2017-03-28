@@ -51,12 +51,15 @@ static char SccsId[] = "@(#) changraph.c (Yale) version 1.4 5/21/92" ;
 #endif
 
 #include <stdio.h>
+
+#include <yalecad/base.h>
 #include <yalecad/message.h>
 #include <yalecad/string.h>
 #include <yalecad/debug.h>
 #include <yalecad/rbtree.h>
 #include <yalecad/set.h>
-#include <compact.h>
+
+#include <changraph.h>
 
 static INT horz_edgeS = 0 ;  /* number of distinct horizontal edges */
 static INT vert_edgeS = 0 ;  /* number of distinct vertical edges */
@@ -64,11 +67,15 @@ static YTREEPTR horz_treeS ; /* tree of horizontal edges */
 static YTREEPTR vert_treeS ; /* tree of vertical edges */
 static YSETPTR  nodesetS ;   /* keep track of active nodes */
 
+static ADJPTR findAdjPtr(P2(INT node1, INT node2));
+static INT compare_edges(P2(INFOPTR edge1, INFOPTR edge2));
+static VOID print_edge(P1(INFOPTR edge));
+
 
 /* ***************************************************************** 
     Initialize graph by adding creating memory for it.
    **************************************************************** */
-init_graph( numnodes, numedges )
+VOID init_graph( numnodes, numedges )
 INT numnodes ;
 INT numedges ;
 {
@@ -92,7 +99,7 @@ INT numedges ;
 /* ***************************************************************** 
    Build graph by first adding nodes and node information to it.
    **************************************************************** */
-addNode( node, xc, yc ) 
+VOID addNode( node, xc, yc ) 
 INT node, xc, yc ;
 {
     CHANBOXPTR nptr ;
@@ -107,14 +114,14 @@ INT node, xc, yc ;
 /* ***************************************************************** 
    Build channel adjacency list by forming undirected graph.
    **************************************************************** */
-addEdge( node1, node2, HnotV, cell_lb, cell_rt ) 
+VOID addEdge( node1, node2, HnotV, cell_lb, cell_rt ) 
 INT node1 ;
 INT node2 ;
 BOOL HnotV ;  /* TRUE if horizontal FALSE if vertical */
 INT cell_lb ; /* cell on left (bottom) for vert (horz) channel */
 INT cell_rt ; /* cell on right (top) for  vert (horz) channel */
 {
-    static edgeCountS = 0 ;  /* current number of edges */
+    static INT edgeCountS = 0 ;  /* current number of edges */
     ADJPTR newfE,  /* new forward edge */
            temp ;  /* temporary pointer to relink adjacency list */
     ADJPTR findAdjPtr() ; /* returns an edge given two nodes */
@@ -126,7 +133,9 @@ INT cell_rt ; /* cell on right (top) for  vert (horz) channel */
 	"node out of range" ) ;
     ASSERTNRETURN( 1 <= node2 && node2 <= numnodesG, "addEdge",
 	"node out of range" ) ;
-    if( temp = changraphG[node1]->adj ){
+    
+    /* Use ((...)) to avoid assignment as a condition warning */
+    if(( temp = changraphG[node1]->adj )){
 	/* insert at beginning of list */
 	newfE = changraphG[node1]->adj = (ADJPTR) 
 	    Ysafe_malloc(sizeof(ADJBOX)) ;
@@ -146,7 +155,8 @@ INT cell_rt ; /* cell on right (top) for  vert (horz) channel */
     newfE->fnode = node1 ;
     /* we only want to store one infobox record for each edge */
     /* see if forward edge was previously formed */
-    if( temp = findAdjPtr( node2, node1 )){
+    /* Use ((...)) to avoid assignment as a condition warning */
+    if(( temp = findAdjPtr( node2, node1 ))){
 	ASSERTNRETURN( temp->info, "addEdge", "iptr NULL" ) ;
 	newfE->info = iptr = temp->info ;
 	/* set the loc, start, and end fields */
@@ -200,7 +210,7 @@ INT cell_rt ; /* cell on right (top) for  vert (horz) channel */
 } /* end addEdge */
 
 /* returns the adjacency pointer(edge) given two node of channel graph */
-ADJPTR findAdjPtr( node1, node2 )
+static ADJPTR findAdjPtr( node1, node2 )
 INT node1, node2 ;
 {
     ADJPTR curEdge ;
@@ -215,7 +225,7 @@ INT node1, node2 ;
     return( NULL ) ;
 } /* end findAdjPtr */
 
-INT compare_edges( edge1, edge2 )
+static INT compare_edges( edge1, edge2 )
 INFOPTR edge1, edge2 ;
 {
     /* explicitly enumerate cases to avoid wraparound */
@@ -240,15 +250,19 @@ INFOPTR edge1, edge2 ;
     }
 } /* end compare_edges */
 
-VOID print_edge( edge )
+static VOID print_edge( edge )
 INFOPTR edge ;
 {
     fprintf( stderr, "edge %2d-%2d loc:%3d start:%3d end:%3d HnotV:%d\n",
-	edge->node1, edge->node2, *(edge->loc), *(edge->start), 
-	*(edge->end), edge->HnotV ) ;
+		(int)(edge->node1), 
+		(int)(edge->node2), 
+		(int)(*(edge->loc)),
+		(int)(*(edge->start)), 
+		(int)(*(edge->end)), 
+		(int)(edge->HnotV) ) ;
 } /* end print_edge */
 
-build_trees()
+VOID build_trees(VOID)
 {
     INT i ;
     INFOPTR eptr ;     /* current edge */
@@ -375,7 +389,7 @@ INT x, y ;
     return( closest_edge ) ;
 } /* end get_closest_edge */
 
-stretch_graph( stretch_edge, x, y )
+VOID stretch_graph( stretch_edge, x, y )
 INFOPTR stretch_edge ;
 INT x, y ;
 {

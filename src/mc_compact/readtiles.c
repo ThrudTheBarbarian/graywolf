@@ -66,11 +66,30 @@ REVISIONS:  Apr 20, 1989 - original coding.
 static char SccsId[] = "@(#) readtiles.y version 7.2 5/6/91" ;
 #endif
 
+
 #include <string.h>
-#include <compact.h>
-#include <yalecad/message.h>  /* use message routines for errors. */
-#include <yalecad/file.h>     /* file opening insert file. */
+
+#include <yalecad/base.h>     
 #include <yalecad/debug.h>    /* use debug utilities. */
+#include <yalecad/file.h>     /* file opening insert file. */
+#include <yalecad/message.h>  /* use message routines for errors. */
+
+#include <io.h>
+#include <tiles.h>
+
+/* Declare prototypes if required */
+extern int yyback(P2(int *, int));
+extern int yyinput(P1(void));
+extern int yylook(P1(void));
+extern void yyoutput(P1(int));
+extern int yyracc(P1(int));
+extern int yyreject(P1(void));
+extern void yyunput(P1(int));
+extern int yylex(P1(void));
+extern int yyless(P1(int));
+extern int yywrap(P1(void));
+extern int yyparse(P1(void));
+extern int yyerror(P1(char * s));
 
 #undef REJECT          /* undefine TWMC macro for lex's version */ 
 #define YYDEBUG  1     /* condition compile for yacc debug */
@@ -254,7 +273,7 @@ YYSTYPE yyvs[YYSTACKSIZE];
 /* ********************* #include "readtiles_l.h" *******************/
 /* ********************* #include "readtiles_l.h" *******************/
 
-readtiles()
+VOID readtiles(VOID)
 { 
     char filename[LRECL] ;
 #ifdef YYDEBUG
@@ -272,7 +291,7 @@ readtiles()
 
 } /* end readtiles */
 
-yyerror(s)
+int yyerror(s)
 char    *s;
 {
     sprintf(YmsgG,"problem reading %s.mvio:", cktNameG );
@@ -281,9 +300,10 @@ char    *s;
 	line_countS+1, yytext, s );
     M( MSG,"yacc", YmsgG ) ;
     setErrorFlag() ;
+    return 0;
 }
 
-yywrap()
+int yywrap()
 {
     return(1);
 }                      
@@ -298,7 +318,8 @@ yyparse()
     register char *yys;
     extern char *getenv();
 
-    if (yys = getenv("YYDEBUG"))
+    /* Use ((...)) to avoid assignment as a condition warning */
+    if ((yys = getenv("YYDEBUG")))
     {
         yyn = *yys;
         if (yyn >= '0' && yyn <= '9')
@@ -315,7 +336,8 @@ yyparse()
     *yyssp = yystate = 0;
 
 yyloop:
-    if (yyn = yydefred[yystate]) goto yyreduce;
+    /* Use ((...)) to avoid assignment as a condition warning */
+    if ((yyn = yydefred[yystate])) goto yyreduce;
     if (yychar < 0)
     {
         if ((yychar = yylex()) < 0) yychar = 0;
@@ -367,7 +389,8 @@ yynewerror:
             sprintf( err_msg, "\nsyntax error - found:%s expected:",
                 yyname[yychar] ) ;
             two_or_more = 0 ;
-            if( test_state = yysindex[yystate] ){
+            /* Use ((...)) to avoid assignment as a condition warning */
+            if(( test_state = yysindex[yystate] )){
                 for( i = YYERRCODE+1; i <= YYMAXTOKEN; i++ ){
                     expect = test_state + i ;
                     if( expect <= YYTABLESIZE && yycheck[expect] == i ){
@@ -380,7 +403,8 @@ yynewerror:
                      }
                  }
              }
-            if( test_state = yyrindex[yystate] ){
+            /* Use ((...)) to avoid assignment as a condition warning */
+            if(( test_state = yyrindex[yystate] )){
                 for( i = YYERRCODE+1; i <= YYMAXTOKEN; i++ ){
                     expect = test_state + i ;
                     if( expect <= YYTABLESIZE && yycheck[expect] == i ){
