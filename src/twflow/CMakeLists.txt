@@ -2,7 +2,12 @@
 
 add_executable(graywolf autoflow.c findflow.c graphics.c io.c main.c program.c readobjects.c ${CMAKE_SOURCE_DIR}/src/date/date.c)
 
-target_link_libraries(graywolf ${CMAKE_BINARY_DIR}/src/Ylib/libycadgraywolf.so)
+if (APPLE)
+  target_link_libraries(graywolf ${CMAKE_BINARY_DIR}/src/Ylib/libycadgraywolf.dylib)
+elseif (UNIX)
+  target_link_libraries(graywolf ${CMAKE_BINARY_DIR}/src/Ylib/libycadgraywolf.so)
+endif()
+
 target_link_libraries(graywolf X11)
 target_link_libraries(graywolf m)
 
