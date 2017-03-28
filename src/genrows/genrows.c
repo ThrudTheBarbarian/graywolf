@@ -85,13 +85,20 @@ static char SccsId[] = "@(#) genrows.c (Yale) version 3.24 5/14/92" ;
 #endif
 
 #include <stdio.h>
+
 #include <yalecad/base.h>
-#include <yalecad/file.h>
-#include <yalecad/debug.h>
-#include <yalecad/message.h>
 #include <yalecad/buster.h>
+#include <yalecad/debug.h>
+#include <yalecad/draw.h>
+#include <yalecad/file.h>
+#include <yalecad/grid.h>
+#include <yalecad/message.h>
+#include <yalecad/program.h>
 #include <yalecad/rbtree.h>
+
 #include <globals.h>
+#include <genrows.h>
+#include <merge.h>
 
 #define NOTOUCH    0
 #define OVERLAP1   1
@@ -117,16 +124,17 @@ static INT stdcell_lengthS ;    /* total row length of standard cells */
 static INT feed_lengthS = 0 ;       /* length of feeds */
 
 static YTREEPTR tile_memoryG ;
-static reset_tile_parameters();
-static INT compare_tiles();
+static VOID reset_tile_parameters(VOID);
+static INT compare_tiles(TILE_BOX * tile1, TILE_BOX *tile2 );
 
-#if SIZEOF_VOID_P == 64
+/*#if SIZEOF_VOID_P == 64
 #define INTSCANSTR "%ld"
 #else
 #define INTSCANSTR "%d"
 #endif
+*/
 
-init_data_structures() 
+VOID init_data_structures(VOID) 
 {
     /*static INT compare_tiles() ;*/
 
@@ -143,13 +151,13 @@ init_data_structures()
     tile_memoryG = Yrbtree_init( compare_tiles ) ;
 } /* end init_data_structures */
 
-set_feed_length( percent )
+VOID set_feed_length( percent )
 DOUBLE percent ;
 {
     feed_lengthS = (INT) ( percent / 100.0 * (DOUBLE) stdcell_lengthS ) ;
 } /* end set_feed_length */
 
-process_tiles()
+VOID process_tiles(VOID)
 {
     TILE_BOX *tptr ;
     INT llx , lly , urx , ury ;
@@ -216,7 +224,7 @@ process_tiles()
 
 } /* end process_tiles */
 
-check_tiles()
+VOID check_tiles(VOID)
 {
 
     TILE_BOX *tile1 , *tile2 ;
@@ -238,7 +246,7 @@ check_tiles()
 
 
 
-print_blk_file() 
+VOID print_blk_file(VOID) 
 {
 
     /*  output the rows; check for multiple row segments - if there
@@ -263,7 +271,7 @@ print_blk_file()
 
     sprintf( filename, "%s.blk", cktNameG ) ;
     fpb = TWOPEN( filename, "w", ABORT ) ;
-    fprintf(fpb,"rows %d\n", number_of_rows_addedS ) ;
+    fprintf(fpb,"rows %d\n", (int)number_of_rows_addedS ) ;
 
     grid_rows() ;
 
@@ -281,11 +289,11 @@ print_blk_file()
 		r = rowptr->urx - feeds_per_segG ;
 		if( r > rowptr->llx ){
 		    /* only output up to the feed to make space */
-		    fprintf(fpb,"%d %d    %d %d", rowptr->llx, rowptr->lly,
-						    r, rowptr->ury);
+		    fprintf(fpb,"%d %d    %d %d", (int)(rowptr->llx), (int)(rowptr->lly),
+						    (int)r, (int)rowptr->ury);
 		    /* go on to the next row */
 		    if( rowptr->class != 1 ){
-			fprintf(fpb,"\n class %d", rowptr->class ) ;
+			fprintf(fpb,"\n class %d", (int)(rowptr->class) ) ;
 		    }
 		    if( rowptr->mirror ){
 			fprintf(fpb,"\n mirror" ) ;
@@ -295,10 +303,10 @@ print_blk_file()
 		}
 	    } 
 	    /* no feeds to worry about */
-	    fprintf(fpb,"%d %d    %d %d", rowptr->llx, rowptr->lly,
-					    rowptr->urx, rowptr->ury);
+	    fprintf(fpb,"%d %d    %d %d", (int)(rowptr->llx), (int)(rowptr->lly),
+					    (int)(rowptr->urx), (int)(rowptr->ury));
 	    if( rowptr->class != 1 ){
-		fprintf(fpb," class %d", rowptr->class ) ;
+		fprintf(fpb," class %d", (int)(rowptr->class) ) ;
 	    }
 	    if( rowptr->mirror ){
 		fprintf(fpb," mirror" ) ;
@@ -322,11 +330,11 @@ print_blk_file()
 
 	    r = rowptr->urx - feeds_per_segG ;
 	    if( feeds_per_segG && r > last_llx ){
-		    fprintf(fpb,"%d %d    %d %d ", llx, rowptr->lly,
-						    r, rowptr->ury ) ;
+		    fprintf(fpb,"%d %d    %d %d ", (int)llx, (int)(rowptr->lly),
+						    (int)r, (int)(rowptr->ury) ) ;
 	    } else {
-		fprintf(fpb,"%d %d    %d %d ", llx, rowptr->lly,
-						urx, rowptr->ury ) ;
+		fprintf(fpb,"%d %d    %d %d ", (int)llx, (int)(rowptr->lly),
+						(int)urx, (int)(rowptr->ury) ) ;
 	    }
 	    /* now print out the exceptions */
 
@@ -350,11 +358,11 @@ print_blk_file()
 		if( save_segment ) {
 		    r = next_llx - feeds_per_segG ;
 		    if( feeds_per_segG && r > last_urx ){
-			fprintf(fpb," except %d %d", last_urx ,
-						     r ) ;
+			fprintf(fpb," except %d %d", (int)last_urx ,
+						     (int)r ) ;
 		    } else if( next_llx > last_urx ){
-			fprintf(fpb," except %d %d", last_urx ,
-						     next_llx ) ;
+			fprintf(fpb," except %d %d", (int)last_urx ,
+						     (int)next_llx ) ;
 		    }
 		    last_llx = next_llx ;
 		    next_llx = INT_MAX ;
@@ -365,7 +373,7 @@ print_blk_file()
 		}
 	    }
 	    if( rowptr->class != 1 ){
-		fprintf(fpb," class %d\n", rowptr->class ) ;
+		fprintf(fpb," class %d\n", (int)(rowptr->class) ) ;
 	    }
 	    if( rowptr->mirror ){
 		fprintf(fpb," mirror" ) ;
@@ -384,32 +392,33 @@ print_blk_file()
 	    i++ ;
 	}
     }
-    fprintf(fpb,"   numtiles %d\n", i ) ;
+    fprintf(fpb,"   numtiles %d\n",(int)i ) ;
     /* now give the positions of the tiles */
     for( tileptr=tile_listG;tileptr;tileptr=tileptr->next ){
 	if( tileptr->numrows > 0 ){
-	    fprintf(fpb,"   %d %d   %d %d\n", tileptr->llx, tileptr->lly,
-		tileptr->urx, tileptr->ury ) ;
+	    fprintf(fpb,"   %d %d   %d %d\n", (int)(tileptr->llx), (int)(tileptr->lly),
+		(int)(tileptr->urx), (int)(tileptr->ury) ) ;
 	}
     }
 
     fprintf(fpb,"\n" ) ;
-    fprintf(fpb,"   nummacros %d", num_macrosG ) ;
+    fprintf(fpb,"   nummacros %d", (int)num_macrosG ) ;
 
     /* if macros exist write them in the .gen file */
     sprintf( filename, "%s.gen", cktNameG ) ;
     fpg = TWOPEN( filename, "w", ABORT ) ;
-    fprintf( fpg, "core %d %d %d %d\n", cx1S, cy1S, cx2S, cy2S ) ;
+    fprintf( fpg, "core %d %d %d %d\n", (int)cx1S, (int)cy1S, (int)cx2S, (int)cy2S ) ;
     for( i = 1; i <= num_macrosG; i++ ){
 	mptr = macroArrayG[i] ;
-	fprintf( fpg, "%d %d %d\n", mptr->xcenter, mptr->ycenter, mptr->orient ) ;
+	fprintf( fpg, "%d %d %d\n", (int)(mptr->xcenter), (int)(mptr->ycenter), 
+								(int)(mptr->orient) ) ;
 
 	/* also write macro positions to block file */
-	fprintf(fpb,"\n   macro orient %d ", mptr->orient ) ;
+	fprintf(fpb,"\n   macro orient %d ", (int)(mptr->orient) ) ;
 	vptr = mptr->vertices ;
 	for( pt = 0 ; pt < mptr->num_vertices ; pt++ ) {
 	    pt_ptr = vptr[pt] ;
-	    fprintf(fpb,"%d %d  ", pt_ptr->x, pt_ptr->y ) ;
+	    fprintf(fpb,"%d %d  ", (int)(pt_ptr->x), (int)(pt_ptr->y) ) ;
 	}
 
     }
@@ -421,7 +430,7 @@ print_blk_file()
     return ;
 } /* end print_blk_file */
 
-print_tiles() 
+VOID print_tiles(VOID) 
 {
 
     INT i ;
@@ -430,15 +439,15 @@ print_tiles()
     i = 0 ;
     for( tileptr=tile_listG;tileptr;tileptr=tileptr->next ){
 	i++ ;
-	printf("TILE:%4d\t(%4d %4d)   (%4d %4d)\n", i ,
-					tileptr->llx , tileptr->lly , 
-					tileptr->urx , tileptr->ury ) ;
+	printf("TILE:%4d\t(%4d %4d)   (%4d %4d)\n", (int)i ,
+					(int)(tileptr->llx) , (int)(tileptr->lly) , 
+					(int)(tileptr->urx) , (int)(tileptr->ury) ) ;
     }
     printf("\n");
     return ;
 } /* end print_tiles */
 
-print_vertices()
+VOID print_vertices(VOID)
 {
     /* for debug only */
 
@@ -449,7 +458,8 @@ print_vertices()
 
     for( vertex = vertex_listS ;vertex; vertex = vertex->next ){
 	printf("x:%d    y:%d     class:%d     macro:%d\n",
-		vertex->x , vertex->y , vertex->class , vertex->macro ) ;
+		(int)(vertex->x) , (int)(vertex->y) , 
+		(int)(vertex->class) , (int)(vertex->macro)) ;
     } /* end for loop */
 
     return ;
@@ -600,6 +610,8 @@ BOOL initial ;
     /* macro [n] vertices [x][y] ... [x][y] */
     /* etc. */
 
+	int w1,w2;	/* used for scamning into 32-bit words */
+	
     VERTEX_BOX *check_vertex , *vertex ;
     MACROPTR mptr ;
     TILE_BOX *tptr ;
@@ -615,14 +627,16 @@ BOOL initial ;
 
     /* I will assume that the input data is syntactically correct */
     fscanf(fp,"%s", string ) ; /* "total_row_length" */
-    fscanf(fp, INTSCANSTR, &row_length ) ;
+    fscanf(fp, "%d", &w1 ) ;
+    row_length= w1;
+    
     if( initial ){
 	stdcell_lengthS = row_length ;
     } else {
 	if( stdcell_lengthS != row_length ){
 	    sprintf( YmsgG, 
 	    "Restart file row_length does not match:input(%d) vs restart(%d)\n",
-	    stdcell_lengthS, row_length ) ;
+	    (int)stdcell_lengthS, (int)row_length ) ;
 	    M( ERRMSG, "read_vertices", YmsgG ) ;
 	    M( ERRMSG, NULL, "\tCircuit or grid has changed.  Must abort restore state.\n\n" ) ;
 	    return( FALSE ) ;
@@ -639,20 +653,37 @@ BOOL initial ;
     }
     free_structures( TRUE ) ; /* free all points */
 
-    fscanf(fp,"%s", string ) ; /* "actual_row_height" */
-    fscanf(fp, INTSCANSTR, &actual_row_heightS ) ;
-    fscanf(fp,"%s", string ) ; /* "channel_separation" */
-    fscanf(fp, INTSCANSTR, &channel_separationS ) ;
-    fscanf(fp,"%s", string ) ; /* "min_length" */
-    fscanf(fp, INTSCANSTR, &min_lengthS ) ;
-    fscanf(fp,"%s", string ) ; /* "core" */
-    fscanf(fp, INTSCANSTR " " INTSCANSTR, &cx1S , &cy1S ) ;
-    fscanf(fp, INTSCANSTR " " INTSCANSTR, &cx2S , &cy2S ) ;
-    fscanf(fp,"%s", string ) ; /* "grid" */
-    fscanf(fp, INTSCANSTR " " INTSCANSTR, &xgrid , &ygrid ) ;
-    fscanf(fp,"%s", string ) ; /* "num_macros" */
-    fscanf(fp, INTSCANSTR, &num_macrosG ) ;
 
+    fscanf(fp,"%s", string ) ; /* "actual_row_height" */
+    fscanf(fp, "%d", &w1 ) ;
+    actual_row_heightS = w1;
+    
+    fscanf(fp,"%s", string ) ; /* "channel_separation" */
+    fscanf(fp, "%d", &w1 ) ;
+    channel_separationS = w1;
+    
+    fscanf(fp,"%s", string ) ; /* "min_length" */
+    fscanf(fp, "%d", &w1 ) ;
+    min_lengthS = w1;
+    
+    fscanf(fp,"%s", string ) ; /* "core" */
+    fscanf(fp, "%d %d", &w1 , &w2 ) ;
+    cx1S = w1;
+    cy1S = w2;
+    
+    fscanf(fp, "%d %d", &w1 , &w2 ) ;
+    cx2S = w1;
+    cy2S = w2;
+    
+    fscanf(fp,"%s", string ) ; /* "grid" */
+    fscanf(fp, "%d %d", &w1 , &w2 ) ;
+    xgrid = w1;
+    ygrid = w2;
+    
+    fscanf(fp,"%s", string ) ; /* "num_macros" */
+    fscanf(fp, "%d", &w1 ) ;
+	num_macrosG = w1;
+	
     if( stdcell_lengthS <= 0 ){
 	M( ERRMSG, "genrow", "No standard cells were found.\n" ) ;
 	M( MSG, NULL, "Make sure Mincut was executed properly.\n" ) ;
@@ -687,8 +718,12 @@ BOOL initial ;
 	/* now initialize vertices array */
 	mptr = macroArrayG[++macro] ;
 	fscanf(fp,"%s", string ) ;  /* orient */
-	fscanf(fp, INTSCANSTR, &(mptr->orient) ) ;
-	fscanf(fp, INTSCANSTR, &num_vertices ) ;
+	fscanf(fp, "%d", &w1 ) ;
+	mptr->orient = w1;
+	
+	fscanf(fp, "%d", &w1 ) ;
+	num_vertices = w1;
+	
 	fscanf(fp,"%s", string ) ; /* "vertices" */
 	mptr->vertices = (VERTEXPTR *) Ysafe_malloc( num_vertices * sizeof(VERTEXPTR));
 	mptr->num_vertices = num_vertices ;
@@ -698,13 +733,15 @@ BOOL initial ;
 	b = INT_MAX ;
 	t = INT_MIN ;
 	for( i = 0 ; i < num_vertices ; i++ ) {
-	    fscanf(fp, INTSCANSTR " " INTSCANSTR, &x , &y ) ;
-
+	    fscanf(fp, "%d %d", &w1 , &w2 ) ;
+		x = w1;
+		y = w2;
+		
 	    if( initial && (x < cx1S || x > cx2S || y < cy1S || y > cy2S) ) {
 		printf("a macro vertex lies outside the core\n");
 		printf("this is not allowed\n");
-		printf("macro:%d x:%d y:%d\n",macro,x,y ) ;
-		printf("core: l:%d r:%d b:%d t:%d\n",cx1S,cx2S,cy1S,cy2S ) ;
+		printf("macro:%d x:%d y:%d\n",(int)macro,(int)x,(int)y ) ;
+		printf("core: l:%d r:%d b:%d t:%d\n",(int)cx1S,(int)cx2S,(int)cy1S,(int)cy2S ) ;
 		if( graphicsG ){
 		    G( TWcloseGraphics() ) ;
 		}
@@ -748,6 +785,7 @@ BOOL initial ;
 BOOL restore_state( fp ) 
 FILE *fp ;
 {
+    int w1,w2,w3,w4,w5,w6,w7;	/* used for scanf of 32-bit words */
     INT i ;
     INT numtiles ;
     INT cur_numtiles ;
@@ -757,13 +795,19 @@ FILE *fp ;
     TILE_BOX *tptr ;
     TILE_BOX *newtile ;
     TILE_BOX *last_tile ;
-
+	
     /* feed_lengthS */
-    fscanf(fp,"%s " INTSCANSTR, string , &feed_lengthS ) ;
+    fscanf(fp,"%s %d", string , &w1 ) ;
+    feed_lengthS = w1;
+    
     /* spacing */
-    fscanf(fp,"%s " INTSCANSTR, string , &spacingG ) ;
+    fscanf(fp,"%s %d", string , &w1 ) ;
+    spacingG = w1;
+    
     /* numtiles */
-    fscanf(fp,"%s " INTSCANSTR, string , &numtiles ) ;
+    fscanf(fp,"%s %d", string , &w1 ) ;
+    numtiles = w1;
+    
     cur_numtiles = 0 ;
     for( tptr=tile_listG;tptr;tptr=tptr->next ){
 	/* count number of tiles for maintaining memory req. */
@@ -805,30 +849,41 @@ FILE *fp ;
     /* now read in tiles */
     for( tptr=tile_listG;tptr;tptr=tptr->next ){
 	/* 1 if this is the start tile */
-	fscanf( fp, INTSCANSTR, &start ) ;
+	fscanf( fp, "%d", &w1 ) ;
+	start = w1;
+	
 	if( start ){
 	    start_tileG = tptr ;
 	}
 	/* llx, lly, urx, ury, force, class mirror */
-	fscanf(fp, INTSCANSTR " " INTSCANSTR " " INTSCANSTR " " INTSCANSTR
-		" " INTSCANSTR " " INTSCANSTR " " INTSCANSTR,
-	    &(tptr->llx), &(tptr->lly), &(tptr->urx), &(tptr->ury),
-	    &(tptr->force), &(tptr->class), &(tptr->mirror) ) ;
-
+	fscanf(fp, "%d %d %d %d %d %d %d", &w1, &w2, &w3, &w4, &w5, &w6, &w7 ) ;
+	tptr->llx 		= w1;
+	tptr->lly 		= w2;
+	tptr->urx 		= w3;
+	tptr->ury 		= w4;
+	tptr->force		= w5;
+	tptr->class 	= w6;
+	tptr->mirror 	= w7;
+	
 	/* numrows, actual_row_height, add_no_more_than, chansep */
-	fscanf(fp, INTSCANSTR " " INTSCANSTR " " INTSCANSTR " " INTSCANSTR,
-	&(tptr->numrows), &(tptr->actual_row_height),
-	&(tptr->add_no_more_than), &(tptr->channel_separation) ) ;
+	fscanf(fp, "%d %d %d %d", &w1, &w2, &w3, &w4 ) ;
+	tptr->numrows				= w1;
+	tptr->actual_row_height		= w2;
+	tptr->add_no_more_than		= w3;
+	tptr->channel_separation	= w4;
+	
 	/* min_length, row_start, max_length, illegal */
-	fscanf(fp, INTSCANSTR " " INTSCANSTR " " INTSCANSTR " " INTSCANSTR,
-	    &(tptr->min_length), &(tptr->row_start),
-	    &(tptr->max_length), &(tptr->illegal) ) ;
+	fscanf(fp, "%d %d %d %d",  &w1, &w2, &w3, &w4 ) ;
+    tptr->min_length 	= w1;
+    tptr->row_start		= w2;
+    tptr->max_length	= w3;
+    tptr->illegal		= w4;
     } /* end tile loop */
 
     return( TRUE ) ;
 }
 
-save_state(fp)
+VOID save_state(fp)
 FILE *fp ;
 {
     INT i ;
@@ -838,31 +893,31 @@ FILE *fp ;
     MACROPTR mptr ;
     VERTEXPTR pt ;
 
-    fprintf( fp, "total_row_length %d\n", stdcell_lengthS ) ;
-    fprintf( fp, "actual_row_height %d\n", actual_row_heightS ) ;
-    fprintf( fp, "channel_separation %d\n", channel_separationS ) ;
-    fprintf( fp, "min_length %d\n", min_lengthS ) ;
-    fprintf( fp, "core %d %d %d %d\n", cx1S, cy1S, cx2S, cy2S ) ;
+    fprintf( fp, "total_row_length %d\n", (int)stdcell_lengthS ) ;
+    fprintf( fp, "actual_row_height %d\n", (int)actual_row_heightS ) ;
+    fprintf( fp, "channel_separation %d\n", (int)channel_separationS ) ;
+    fprintf( fp, "min_length %d\n", (int)min_lengthS ) ;
+    fprintf( fp, "core %d %d %d %d\n", (int)cx1S, (int)cy1S, (int)cx2S, (int)cy2S ) ;
     fprintf( fp, "grid 0 0\n" ) ;
-    fprintf( fp, "num_macro %d\n", num_macrosG ) ;
+    fprintf( fp, "num_macro %d\n", (int)num_macrosG ) ;
     for( i = 1; i <= num_macrosG; i++ ){
 	mptr = macroArrayG[i] ;
 	fprintf( fp, "macro orient %d %d vertices ", 
-	    mptr->orient, mptr->num_vertices ) ;
+	    (int)(mptr->orient), (int)(mptr->num_vertices) ) ;
 	for( vert = 0; vert < mptr->num_vertices; vert++ ){
 	    pt = mptr->vertices[vert] ;
-	    fprintf( fp, "%d %d ", pt->x, pt->y ) ;
+	    fprintf( fp, "%d %d ", (int)(pt->x), (int)(pt->y) ) ;
 	}
 	fprintf( fp, "\n" ) ;
     }
-    fprintf( fp, "feed_length %d\n", feed_lengthS ) ;
-    fprintf( fp, "spacing %d\n", spacingG ) ;
+    fprintf( fp, "feed_length %d\n", (int)feed_lengthS ) ;
+    fprintf( fp, "spacing %d\n", (int)spacingG ) ;
     cur_numtiles = 0 ;
     for( tptr=tile_listG;tptr;tptr=tptr->next ){
 	/* count number of tiles for error checking */
 	cur_numtiles++ ;
     }
-    fprintf( fp, "numtiles %d\n", cur_numtiles ) ;
+    fprintf( fp, "numtiles %d\n", (int)cur_numtiles ) ;
     for( tptr=tile_listG;tptr;tptr=tptr->next ){
 	/* 1 if this is the start tile */
 	if( tptr == start_tileG ){
@@ -872,20 +927,22 @@ FILE *fp ;
 	}
 	/* llx, lly, urx, ury, force, class mirror */
 	fprintf( fp,"%d %d %d %d %d %d %d ", 
-	    tptr->llx, tptr->lly, tptr->urx, tptr->ury, tptr->force,
-	    tptr->class, tptr->mirror ) ;
+	    (int)(tptr->llx), (int)(tptr->lly), (int)(tptr->urx), 
+	    (int)(tptr->ury), (int)(tptr->force),
+	    (int)(tptr->class), (int)(tptr->mirror) ) ;
 	/* numrows, actual_row_height, add_no_more_than, chansep*/
 	fprintf(fp,"%d %d %d %d ", 
-	    tptr->numrows, tptr->actual_row_height,
-	    tptr->add_no_more_than, tptr->channel_separation ) ;
+	    (int)(tptr->numrows), (int)(tptr->actual_row_height),
+	    (int)(tptr->add_no_more_than), (int)(tptr->channel_separation) ) ;
 	/* min_length, row_start, max_length, illegal */
 	fprintf(fp,"%d %d %d %d\n", 
-	    tptr->min_length, tptr->row_start, tptr->max_length, tptr->illegal ) ;
+	    (int)(tptr->min_length), (int)(tptr->row_start), 
+	    (int)(tptr->max_length), (int)(tptr->illegal) ) ;
     } /* end tile loop */
 
 } /* end save_state */
 
-process_vertices()
+VOID process_vertices(VOID)
 {
 
     VERTEXPTR check_vertex , vertex ;
@@ -1035,7 +1092,7 @@ process_vertices()
     return ;
 } /* end process_vertices */
 
-build_macros()
+VOID build_macros(VOID)
 {
     INT i ;
     INT j ;
@@ -1065,7 +1122,8 @@ build_macros()
 	    vptr = mptr->vertices[j] ;
 	    Ybuster_addpt( vptr->x, vptr->y ) ;
 	}
-	while( bustptr = Ybuster() ){
+	/* use ((...)) to avoid assignment as condition warning */
+	while(( bustptr = Ybuster() )){
 	    /* l = bustptr[1].x ; */
 	    /* r = bustptr[4].x ; */
 	    /* b = bustptr[1].y ; */
@@ -1087,7 +1145,7 @@ build_macros()
 } /* end build_macros */
 
 
-makerows()
+VOID makerows(VOID)
 {
 
     TILE_BOX *tileptr, *get_starting_tile() ;
@@ -1160,7 +1218,7 @@ makerows()
 	if( total_row_lengthS - row_length_so_far ){
 	    fprintf( stderr, 
 	    "Warning:Total row length requested exceeds placed row length by:%d\n",
-	    total_row_lengthS - row_length_so_far ) ;
+	    (int)(total_row_lengthS - row_length_so_far) ) ;
 	} else {
 	    fprintf( stderr, 
 	    "Total row length requested equals placed row length\n") ;
@@ -1387,7 +1445,7 @@ INT add_no_more_than ;
     return( totalw ) ;
 } /* end convert_tile_to_rows */
 
-divide_tile( tile , horiz_line ) 
+VOID divide_tile( tile , horiz_line ) 
 TILE_BOX *tile ;
 INT horiz_line ;
 {
@@ -1429,7 +1487,7 @@ INT horiz_line ;
 
 } /* end divide_tile */
 
-divide_tilelr( tile , vert_line ) 
+VOID divide_tilelr( tile , vert_line ) 
 TILE_BOX *tile ;
 INT vert_line ;
 {
@@ -1472,7 +1530,7 @@ INT vert_line ;
 
 } /* end divide_tilelr */
 
-get_core( left, bottom, right, top, tileFlag )
+VOID get_core( left, bottom, right, top, tileFlag )
 INT *left, *bottom, *right, *top ;
 BOOL tileFlag ;  /* if true include the tiles in core */
 {
@@ -1496,7 +1554,7 @@ BOOL tileFlag ;  /* if true include the tiles in core */
 	    t = MAX( t, tileptr->ury ) ;
 	}
     }
-    D( "genrows/get_core",printf( "l:%d r:%d b:%d t:%d\n", l,r,b,t ));
+    D( "genrows/get_core",printf( "l:%d r:%d b:%d t:%d\n", (int)l,(int)r,(int)b,(int)t ));
     *left = l ;
     *right = r ;
     *bottom = b ;
@@ -1504,12 +1562,12 @@ BOOL tileFlag ;  /* if true include the tiles in core */
     return ;
 } /* end get_core */
 
-ROW_BOX  *get_rowptr()
+ROW_BOX  *get_rowptr(VOID)
 {
     return( set_of_rowsS ) ;
 } /* end get_rowptr */
 
-grid_rows()
+VOID grid_rows(VOID)
 {
     ROW_BOX *rowptr , *segment ;
     INT oldX, oldY ;
@@ -1530,7 +1588,7 @@ grid_rows()
     }
 } /* end grid_rows */
 
-set_minimum_length( length )
+VOID set_minimum_length( length )
 INT length ;
 {
     TILE_BOX *tileptr ;      /* current tile */
@@ -1541,7 +1599,7 @@ INT length ;
     }
 } /* end set_minimum_length */
 
-set_row_separation( channel_sep_relative, channel_sep_absolute )
+VOID set_row_separation( channel_sep_relative, channel_sep_absolute )
 DOUBLE channel_sep_relative;
 INT channel_sep_absolute;
 {
@@ -1555,7 +1613,7 @@ INT channel_sep_absolute;
     }
 } /* end set_row_separation */
 
-set_spacing()
+VOID set_spacing(VOID)
 {
     TILE_BOX *tileptr ;      /* current tile */
 
@@ -1568,7 +1626,7 @@ set_spacing()
     }
 } /* end set_spacing */
 
-BOOL force_tiles()
+BOOL force_tiles(VOID)
 {
     TILE_BOX *tile ;      /* current tile */
 
@@ -1585,7 +1643,7 @@ BOOL force_tiles()
     return( FALSE ) ;
 } /* end force_tiles */
 
-check_user_data()
+VOID check_user_data(VOID)
 {
     if( min_lengthS < spacingG ){
 	M( ERRMSG, "check_user_errors", 
@@ -1594,7 +1652,7 @@ check_user_data()
     }
 } /* end check_user_errors */
 
-remakerows()
+VOID remakerows()
 {
     ROW_BOX *freerow, *freeseg ;      /* used to free data */
     ROW_BOX *segptr ;                 /* traverse segments freeing them */
@@ -1619,12 +1677,12 @@ remakerows()
     makerows() ;
 
     D( "genrows/numrows",
-	fprintf( stderr, "Number of rows = %d\n", number_of_rows_addedS ) ;
+	fprintf( stderr, "Number of rows = %d\n", (int)number_of_rows_addedS ) ;
     ) ;
 
 } /* end remakerows */
 
-init_vertex_list( left, bottom, right, top )
+VOID init_vertex_list( left, bottom, right, top )
 INT left, bottom, right, top ;
 {
 
@@ -1662,7 +1720,7 @@ TILE_BOX *tile ;
     Ysafe_free( tile ) ;
 } /* end free_tile */
 
-free_structures( allpts )
+VOID free_structures( allpts )
 BOOL allpts ;
 {
 
@@ -1684,7 +1742,7 @@ BOOL allpts ;
     }
 }
 
-update_tile_memory( free_flag )
+VOID update_tile_memory( free_flag )
 BOOL free_flag ;
 {
     TILE_BOX *tile ;
@@ -1701,7 +1759,7 @@ BOOL free_flag ;
     }
 } /* end update_tile_memory */
 
-recalculate( freepts )
+VOID recalculate( freepts )
 BOOL freepts ;
 {
     BOOL previous_invalid_state ;
@@ -1725,7 +1783,7 @@ BOOL freepts ;
     }
 } /* end recalculate */
 
-find_core()
+VOID find_core(VOID)
 {
     INT macro ;
     INT left, rite, bot, top ;
@@ -1791,7 +1849,7 @@ INT *l, *r, *b, *t ;
     return( TRUE ) ;
 } /* end snap_core */
 
-set_core( left, right, bottom, top )
+VOID set_core( left, right, bottom, top )
 INT left, right, bottom, top ;
 {
     cx1S = left ;
@@ -1800,7 +1858,7 @@ INT left, right, bottom, top ;
     cy2S = top ;
 } /* end set_core */
 
-check_overlap()
+VOID check_overlap(VOID)
 {
     INT macro ;
     INT match ;
@@ -1826,7 +1884,7 @@ check_overlap()
 		if( projectX( tilea->l,tilea->r,tileb->l,tileb->r )){
 
 		    sprintf( YmsgG, "Macro %d overlaps macro %d.\n",
-			macro, match ) ;
+			(int)macro, (int)match ) ;
 		    M(ERRMSG, "check_overlap", YmsgG ) ;
 		    invalidG = TRUE ;
 
@@ -1932,7 +1990,7 @@ static INT count_rows()
 } /* end count_rows */
 #endif /* NEEDED */
 
-calculate_numrows()
+VOID calculate_numrows(VOID)
 {
     INT l, r, b, t ;  /* dimensions of new core */
 
@@ -1985,7 +2043,7 @@ TILE_BOX *tile1, *tile2 ;
 } /* end compare_tiles */
 
 
-static reset_tile_parameters()
+static VOID reset_tile_parameters(VOID)
 {
 
     TILE_BOX lo ;     /* low sentinel */
@@ -2014,11 +2072,13 @@ static reset_tile_parameters()
 		/* it has already been deleted */
 		continue ;
 	    }
-	    if( overlapy = projectY( ntile->lly,ntile->ury,otile->lly-1,otile->ury+1)){
+	    /* use ((...)) to avoid assignment as condition warning */
+	    if(( overlapy = projectY( ntile->lly,ntile->ury,otile->lly-1,otile->ury+1))){
 		if( overlapy == TOUCH ){
 		    continue ;
 		}
-		if( overlapx = projectX( ntile->llx,ntile->urx,otile->llx-1,otile->urx+1 )){
+		/* use ((...)) to avoid assignment as condition warning */
+		if(( overlapx = projectX( ntile->llx,ntile->urx,otile->llx-1,otile->urx+1 ))){
 		    if( overlapx == TOUCH ){
 			continue ;
 		    }

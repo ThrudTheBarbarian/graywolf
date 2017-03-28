@@ -51,18 +51,23 @@ static char SccsId[] = "@(#) merge.c (Yale) version 3.5 5/14/92" ;
 #endif
 
 #include <stdio.h>
+
+#include <yalecad/base.h>
 #include <yalecad/debug.h>
 #include <yalecad/message.h>
+
 #include <globals.h>
+#include <genrows.h>
+#include <merge.h>
 
 
 
-static check_max_length();
-static merge_adjacent_tiles();
+static VOID check_max_length(TILE_BOX *tileptr);
+static VOID merge_adjacent_tiles(VOID);
 
 
 
-merge_tiles()
+VOID merge_tiles(VOID)
 {
     TILE_BOX *tileptr ; /* current tile */
 
@@ -73,7 +78,7 @@ merge_tiles()
     }
 } /* end merge_tiles */
 
-merge_upward( begin_tile )
+VOID merge_upward( begin_tile )
 TILE_BOX *begin_tile ;
 {
     INT left ;          /* left edge of merge tile */
@@ -224,7 +229,7 @@ TILE_BOX *begin_tile ;
 
 } /* end merge_upward */
 
-merge_downward( begin_tile )
+VOID merge_downward( begin_tile )
 TILE_BOX *begin_tile ;
 {
     INT left ;          /* left edge of merge tile */
@@ -377,7 +382,7 @@ TILE_BOX *begin_tile ;
 
 } /* end merge_downward */
 
-merge_right( begin_tile )
+VOID merge_right( begin_tile )
 TILE_BOX *begin_tile ;
 {
     INT bottom ;        /* bottom edge of merge tile */
@@ -524,7 +529,7 @@ TILE_BOX *begin_tile ;
 
 } /* end merge_right */
 
-merge_left( begin_tile )
+VOID merge_left( begin_tile )
 TILE_BOX *begin_tile ;
 {
     INT bottom ;        /* bottom edge of merge tile */
@@ -668,7 +673,7 @@ TILE_BOX *begin_tile ;
 
 } /* end merge_left */
 
-static check_max_length( tileptr )
+static VOID check_max_length( tileptr )
 TILE_BOX *tileptr ;
 {
     INT length ;              /* length of tile */
@@ -678,7 +683,7 @@ TILE_BOX *tileptr ;
 
 }/* end check_max_length */
 
-renumber_tiles()
+VOID renumber_tiles(VOID)
 {
     INT count ;              /* count the tiles */
     TILE_BOX *tileptr ;      /* current tile */
@@ -688,7 +693,7 @@ renumber_tiles()
     }
 } /* end renumber_tiles() */
 
-static merge_adjacent_tiles()
+static VOID merge_adjacent_tiles(VOID)
 {
 
     TILE_BOX *tileptr1 , *tileptr2 , *tileptr ;
@@ -732,19 +737,21 @@ REDO:
     return ;
 }/* end merge_adjacent_tiles */
 
-dtiles()
+VOID dtiles(VOID)
 {
     TILE_BOX *tptr ;      /* current tile */
 
     fprintf( stderr, "The forward tiles\n" ) ;
     for( tptr=tile_listG;tptr;tptr=tptr->next ){
 	fprintf( stderr, "\tTile:%d l:%5d b:%5d r:%5d t:%5d\n", 
-	    tptr->name, tptr->llx, tptr->lly, tptr->urx, tptr->ury ) ;
+	    (int)(tptr->name), (int)(tptr->llx), (int)(tptr->lly), 
+	    (int)(tptr->urx), (int)(tptr->ury) ) ;
     }
     fprintf( stderr, "The backward tiles\n" ) ;
     for( tptr=last_tileG;tptr;tptr=tptr->prev ){
 	fprintf( stderr, "\tTile:%d l:%5d b:%5d r:%5d t:%5d\n", 
-	    tptr->name, tptr->llx, tptr->lly, tptr->urx, tptr->ury ) ;
+	    (int)(tptr->name), (int)(tptr->llx),
+	    (int)(tptr->lly), (int)(tptr->urx), (int)(tptr->ury) ) ;
     }
     
 }

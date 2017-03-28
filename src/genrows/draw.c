@@ -73,6 +73,8 @@ static char SccsId[] = "@(#) draw.c (Yale) version 3.22 5/14/92" ;
 #endif
 
 #include <string.h>
+#include <unistd.h>
+
 #include <yalecad/base.h>
 #include <yalecad/debug.h>
 #include <globals.h>
@@ -87,6 +89,10 @@ static char SccsId[] = "@(#) draw.c (Yale) version 3.22 5/14/92" ;
 #include <yalecad/message.h>
 #include <yalecad/dialog.h>
 #include <yalecad/relpos.h>
+
+#include <draw.h>
+#include <genrows.h>
+#include <merge.h>
 
 #define FCOLOR   TWYELLOW
 
@@ -124,34 +130,33 @@ static TWDIALOGPTR macro_dialogS ;
 
 #include <menus.h>
 
-static draw_tile();
-static draw_macro();
-static draw_fs();
-static last_chance();
-static no_move_message();
-static save_for_do();
-static update_macro();
-static graphics_dump();
-static INT pick_macro();
-static TILE_BOX *pick_tile();
-static ROW_BOX *pick_row();
-static BOOL edit_tiles();
-static edit_macro();
-static update_vertices();
-static rotate_vertices();
-static find_nearest_corner();
-static highlight_corner();
-static outm();
+static VOID draw_tile(TILE_BOX *tileptr);
+static VOID draw_macro(INT macro, INT color);
+static VOID draw_fs(MACROPTR  mptr);
+static VOID last_chance(VOID);
+static VOID no_move_message(VOID);
+static VOID save_for_do(INT save);
+static VOID update_macro(VOID);
+static VOID graphics_dump(VOID);
+static INT pick_macro(char *twmsg);
+static TILE_BOX *pick_tile(char *pmsg);
+static ROW_BOX *pick_row(VOID);
+static BOOL edit_tiles(TILE_BOX *tile);
+static VOID edit_macro(INT macro, INT xoff, INT yoff);
+static VOID update_vertices(INT macro, INT newxcenter, INT newycenter);
+static VOID rotate_vertices(MACROPTR mptr, INT orient);
+static VOID find_nearest_corner(INT macro, INT x, INT y, INT *x_ret, INT *y_ret);
+static VOID highlight_corner(INT macro, INT x, INT y);
+static VOID outm(INT errtype, char *routine, char *string);
+static VOID setGraphicWindow(VOID);
+static VOID get_global_pos(INT macro, INT *l, INT *b, INT *r, INT *t );
 
-initgraphics( argc, argv, windowId )
+VOID initgraphics( argc, argv, windowId )
 INT argc, windowId ;
 char *argv[] ;
 {
-
     char *host ;
     char *Ygetenv() ;
-    extern INT draw_the_data() ;
-
 
     if( !(graphicsG) ){
 	return ;
@@ -189,7 +194,7 @@ char *argv[] ;
 
 /* how to draw the data */
 INT
-draw_the_data()
+draw_the_data(VOID)
 {
     INT      i ;            /* counter */
     INT      l, b, r, t ;   /* core dimensions */
@@ -203,7 +208,7 @@ draw_the_data()
     ROW_BOX  *get_rowptr(); /* get data structure */
 
     if( !(graphicsG) ){
-	return ;
+	return -1;
     }
     /* initialize screen */
     TWstartFrame() ;
@@ -222,9 +227,9 @@ draw_the_data()
 	for( rowptr=get_rowptr();rowptr;rowptr=rowptr->next_row ){
 
 	    if( rowptr->class ){
-		sprintf( label, "SEGMENT:%d CLASS:%d", rowptr->seg, rowptr->class);
+		sprintf( label, "SEGMENT:%d CLASS:%d", (int)(rowptr->seg), (int)(rowptr->class));
 	    } else {
-		sprintf( label, "SEGMENT:%d CLASS:1", rowptr->seg ) ;
+		sprintf( label, "SEGMENT:%d CLASS:1", (int)(rowptr->seg) ) ;
 	    }
 	    if( rowptr->mirror ){
 		strcat( label, " MIRROR" ) ;
@@ -241,9 +246,9 @@ draw_the_data()
 		    for( segment=rowptr;segment;segment=segment->next_segment){
 			if( segment->class ){
 			    sprintf( label, "SEGMENT:%d CLASS:%d",
-			    segment->seg, segment->class);
+			    (int)(segment->seg), (int)(segment->class));
 			} else {
-			    sprintf( label, "SEGMENT:%d CLASS:1", segment->seg ) ;
+			    sprintf( label, "SEGMENT:%d CLASS:1", (int)(segment->seg) ) ;
 			}
 			if( rowptr->mirror ){
 			    strcat( label, " MIRROR" ) ;
@@ -302,9 +307,9 @@ draw_the_data()
 		    for( segment=rowptr;segment;segment=segment->next_segment){
 			if( segment->class ){
 			    sprintf( label, "SEGMENT:%d CLASS:%d",
-			    segment->seg, segment->class);
+			    (int)(segment->seg), (int)(segment->class));
 			} else {
-			    sprintf( label, "SEGMENT:%d CLASS:1", segment->seg ) ;
+			    sprintf( label, "SEGMENT:%d CLASS:1", (int)(segment->seg) ) ;
 			}
 			if( rowptr->mirror ){
 			    strcat( label, " MIRROR" ) ;
@@ -345,11 +350,12 @@ draw_the_data()
     
     /* FLUSH OUTPUT BUFFER */
     TWflushFrame() ;
-
+	return 0;
+	
 } /* end draw_the_data */
 /* ***************************************************************** */
 
-static draw_tile( tileptr )
+static VOID draw_tile( tileptr )
 TILE_BOX *tileptr ;     /* current tile */
 {
     INT      color ;        /* current color */
@@ -357,7 +363,7 @@ TILE_BOX *tileptr ;     /* current tile */
     char     *labelptr ;    /* pointer to current label */
 
     if( drawLabelS ){
-	sprintf( label, "TILE:%d", tileptr->name ) ;
+	sprintf( label, "TILE:%d", (int)(tileptr->name) ) ;
 	labelptr = label ;
     } else {
 	labelptr = NULL ;
@@ -375,7 +381,7 @@ TILE_BOX *tileptr ;     /* current tile */
 		   color, labelptr ) ;
 } /* end draw_tile */
 
-static draw_macro( macro, color )
+static VOID draw_macro( macro, color )
 INT macro ;
 INT color ;
 {
@@ -393,12 +399,12 @@ INT color ;
 	pt_ptr = vptr[i] ;
 	TWarb_addpt( pt_ptr->x, pt_ptr->y ) ;
 	D( "genrows/macropts",
-	    sprintf( label, "%d", i ) ;
+	    sprintf( label, "%d", (int)i ) ;
 	    TWdrawString( pt_ptr->x, pt_ptr->y, TWRED, label ) ;
 	) ;
     }
     if( drawLabelS ){
-	sprintf( label, "C:%d", macro ) ;
+	sprintf( label, "C:%d", (int)macro ) ;
 	labelptr = label ;
     } else {
 	labelptr = NULL ;
@@ -409,7 +415,7 @@ INT color ;
     }
 } /* end draw_macro */
 
-static draw_fs( mptr )
+static VOID draw_fs( mptr )
 MACROPTR  mptr ;        /* current macro */
 {
     INT i ;              /* counter */
@@ -471,7 +477,7 @@ MACROPTR  mptr ;        /* current macro */
 } /* end draw_fs */
 
 /* set the size of the graphics window */
-setGraphicWindow() 
+static VOID setGraphicWindow(VOID) 
 {
     INT l, b, r, t ;
     INT expand ;
@@ -493,8 +499,8 @@ setGraphicWindow()
 */
 
 /* heart of the graphic system processes user input */
-void
-process_graphics()
+VOID
+process_graphics(VOID)
 {
 
     INT x1, y1, x2, y2 ; /* coordinates for fixing cells and neighhds */
@@ -591,7 +597,7 @@ process_graphics()
 	case TELL_POINT:
 	    TWmessage( "Pick a point" ) ;
 	    TWgetPt( &x, &y ) ;
-	    sprintf( YmsgG,"The point is (%d,%d)",x,y ) ;
+	    sprintf( YmsgG,"The point is (%d,%d)",(int)x,(int)y ) ;
 	    TWmessage( YmsgG ) ;
 	    break ;
 	case TRANSLATE:
@@ -791,7 +797,7 @@ process_graphics()
 	    draw_the_data() ;
 	    get_core( &x, &y, &x1, &y1, FALSE ) ;
 	    sprintf( YmsgG, "Core is now llx:(%d,%d) urx:(%d,%d)", 
-		x, y, x1, y1 ) ;
+		(int)x, (int)y, (int)x1, (int)y1 ) ;
 	    TWmessage( YmsgG ) ;
 	    TWcheckExposure() ;
 	    save_for_do( REDO ) ;
@@ -833,7 +839,8 @@ process_graphics()
 	    }
 	    save_for_do( UNDO ) ;
 	    do {
-		if( reply = TWgetString("Enter the number of rows: ")){ 
+		/* use ((...)) to avoid assignment as condition warning */
+		if(( reply = TWgetString("Enter the number of rows: "))){ 
 		    num_rowsG = atoi(reply) ;
 		    if( num_rowsG <= 0 ){
 			TWmessage( "Number of row may not be <= 0" ) ;
@@ -1114,7 +1121,8 @@ process_graphics()
 	    save_for_do( UNDO ) ;
 	    ok = FALSE ;
 	    while(!(ok)){
-		if( reply = TWgetString( "Enter feed ratio in percentage [0-100]: " )){
+		/* use ((...)) to avoid assignment as condition warning */
+		if(( reply = TWgetString( "Enter feed ratio in percentage [0-100]: " ))){
 		    tempf = atof( reply ) ;
 		    if( tempf >= 0.0 ){
 			ok = TRUE ;
@@ -1131,7 +1139,8 @@ process_graphics()
 	    save_for_do( UNDO ) ;
 	    ok = FALSE ;
 	    while(!(ok)){
-		if( reply = TWgetString( "Enter minimum valid row length: " )){ 
+		/* use ((...)) to avoid assignment as condition warning */
+		if(( reply = TWgetString( "Enter minimum valid row length: " ))){ 
 		    temp = atoi( reply ) ;
 		    if( temp >= 0 ){
 			ok = TRUE ;
@@ -1151,7 +1160,8 @@ process_graphics()
 	    save_for_do( UNDO ) ;
 	    ok = FALSE ;
 	    while(!(ok)){
-		if( reply = TWgetString( "Enter row separation [1.0 nominal]:" )){
+		/* use ((...)) to avoid assignment as condition warning */
+		if(( reply = TWgetString( "Enter row separation [1.0 nominal]:" ))){
 		    tempf = atof( reply ) ;
 		    if( tempf > 0.0 ){
 			ok = TRUE ;
@@ -1171,7 +1181,8 @@ process_graphics()
 	    save_for_do( UNDO ) ;
 	    ok = FALSE ;
 	    while(!(ok)){
-		if( reply = TWgetString( "Enter spacing between row and tile edge: " )){ 
+		/* use ((...)) to avoid assignment as condition warning */
+		if(( reply = TWgetString( "Enter spacing between row and tile edge: " ))){ 
 		    temp = atoi( reply ) ;
 		    if( temp >= 0 ){
 			ok = TRUE ;
@@ -1213,7 +1224,7 @@ process_graphics()
 
 } /* end process_graphics */
 
-static last_chance()
+static VOID last_chance(VOID)
 {
     INT i ; /* counter */
 
@@ -1230,12 +1241,12 @@ static last_chance()
     }
 } /* end last_chance */
 
-static no_move_message()
+static VOID no_move_message(VOID)
 {
     TWmessage("Macro moves/core changes not allowed in partitioning");
 }
 
-static save_for_do( save )
+static VOID save_for_do( save )
 INT save ;
 {
     char filename[LRECL] ;
@@ -1251,7 +1262,7 @@ INT save ;
     TWCLOSE( fp ) ;
 } /* end undo */
 
-static update_macro()
+static VOID update_macro(VOID)
 {
     char filename[LRECL] ;
     FILE *fp ;
@@ -1276,7 +1287,7 @@ static update_macro()
 } /* update_macro */
 
 /* dumps the data to a file for future study */
-static graphics_dump() 
+static VOID graphics_dump(VOID) 
 {
     /* now change mode to dump to file */
     TWsetMode(1) ;
@@ -1332,7 +1343,7 @@ char *twmsg ;
 	/* draw the data with highlight on */
 	draw_macro( selectMacroS, TWVIOLET ) ;
 	TWcheckExposure() ;
-	sprintf( YmsgG, "Selected macro:%d", selectMacroS ) ;
+	sprintf( YmsgG, "Selected macro:%d", (int)selectMacroS ) ;
 	TWmessage( YmsgG ) ;
 	return( selectMacroS ) ;
     } else {
@@ -1350,8 +1361,7 @@ char *twmsg ;
 			TWcheckExposure() ;
 
 			/* give directions */
-			sprintf( YmsgG, "Selected cell:%d",
-			    selectMacroS ) ;
+			sprintf( YmsgG, "Selected cell:%d", (int)selectMacroS ) ;
 			TWmessage( YmsgG ) ;
 			(void) sleep( (unsigned) 2 ) ;
 			sprintf( YmsgG,"%s","If correct, enter <cr>. Otherwise ") ;
@@ -1394,7 +1404,7 @@ char *pmsg ;
 
 } /* end pick_tile */
 
-static ROW_BOX *pick_row()
+static ROW_BOX *pick_row(VOID)
 {
     INT x, y ;            /* the user's pick points */
     ROW_BOX  *rowptr  ;     /* current row being output */
@@ -1516,8 +1526,8 @@ INT field ;
     case FORCECASE:
 	break ;
     case NOFORCECASE:
-	sprintf( answer[STARTF].string, "%d", selected_tileS->llx + spacingG ) ;
-	sprintf( answer[MAXF].string, "%d", selected_tileS->urx - spacingG ) ;
+	sprintf( answer[STARTF].string, "%d", (int)(selected_tileS->llx + spacingG) ) ;
+	sprintf( answer[MAXF].string, "%d", (int)(selected_tileS->urx - spacingG) ) ;
 	answer[STARTF].bool = TRUE ;
 	answer[MAXF].bool = TRUE ;
 	break ;
@@ -1526,15 +1536,15 @@ INT field ;
 	sep = get_row_sep( answer ) ;
 	height = selected_tileS->ury - selected_tileS->lly ;
 	maxrows = ( height ) / (row_height + sep ) ;
-	sprintf( answer[MAXROWF].string, "%d", maxrows ) ;
+	sprintf( answer[MAXROWF].string, "%d", (int)maxrows ) ;
 	rows = atoi( answer[NUMROWF].string ) ;
 	if( rows < 0 ){ 
 	    outm( ERRMSG, "edit_tile",
 	    "Invalid number of rows.  Must be non-negative" ) ;
-	    return ;
+	    return -1;
 	}
 	if( rows > maxrows ){
-	    sprintf( answer[NUMROWF].string, "%d", maxrows ) ;
+	    sprintf( answer[NUMROWF].string, "%d", (int)maxrows ) ;
 	}
 	break ;
     case MAXROWF:
@@ -1551,8 +1561,8 @@ INT field ;
 	    outm( WARNMSG, "edit_tile",
 	    "Exceeded maximum number of rows.  Set to maximum." ) ;
 	}
-	sprintf( answer[NUMROWF].string, "%d", maxrows ) ;
-	sprintf( answer[SEPF].string, "%d", sep ) ;
+	sprintf( answer[NUMROWF].string, "%d", (int)maxrows ) ;
+	sprintf( answer[SEPF].string, "%d", (int)sep ) ;
 	break ;
     case NUMROWF:
 	maxrows = get_maxrows( answer ) ;
@@ -1561,12 +1571,12 @@ INT field ;
 	if( rows < 0 ){ 
 	    outm( ERRMSG, "edit_tile",
 	    "Invalid number of rows.  Must be non-negative" ) ;
-	    return ;
+	    return -2;
 	}
 	if( rows > maxrows ){
 	    outm( WARNMSG, "edit_tile",
 	    "Exceeded maximum number of rows.  Set to maximum." ) ;
-	    sprintf( answer[NUMROWF].string, "%d", maxrows ) ;
+	    sprintf( answer[NUMROWF].string, "%d", (int)maxrows ) ;
 	}
 	break ;
     case MINF:
@@ -1576,12 +1586,13 @@ INT field ;
 	row_height = get_row_height( answer ) ;
 	height = selected_tileS->ury - selected_tileS->lly ;
 	rows = ( height ) / (row_height + sep ) ;
-	sprintf( answer[MAXROWF].string, "%d", rows ) ;
+	sprintf( answer[MAXROWF].string, "%d", (int)rows ) ;
 	if( rows > selected_tileS->numrows ){
-	    sprintf( answer[NUMROWF].string, "%d", rows ) ;
+	    sprintf( answer[NUMROWF].string, "%d", (int)rows ) ;
 	}
 	break ;
     } /* end switch */
+	return 0;
 }
 
 static BOOL edit_tiles( tile )
@@ -1613,25 +1624,25 @@ TILE_BOX *tile ;
 #ifdef DEVELOPDIALOG
     dialogS = TWread_dialog( "genrows.dialog" ) ;
     if( !(dialogS) ){
-	return ; /* avoid crashes */
+	return 0; /* avoid crashes */
     }
 #endif
 
 
     /* now initialize the fields to user data */
-    sprintf( tileName,  "Tile  : %d", tile->name ) ;
+    sprintf( tileName,  "Tile  : %d", (int)tile->name ) ;
     dialogS[TILEF].string = tileName ;
     dialogS[TILEF].len = strlen( tileName ) ;
-    sprintf( left,  "Left  : %d", tile->llx ) ;
+    sprintf( left,  "Left  : %d", (int)(tile->llx) ) ;
     dialogS[LEFTF].string = left ;
     dialogS[LEFTF].len = strlen( left ) ;
-    sprintf( bottom,"Bottom: %d", tile->lly ) ;
+    sprintf( bottom,"Bottom: %d", (int)(tile->lly) ) ;
     dialogS[BOTF].string = bottom ;
     dialogS[BOTF].len = strlen( bottom ) ;
-    sprintf( right, "Right : %d", tile->urx ) ;
+    sprintf( right, "Right : %d", (int)(tile->urx) ) ;
     dialogS[RITEF].string = right ;
     dialogS[RITEF].len = strlen( right ) ;
-    sprintf( top,   "Top   : %d", tile->ury ) ;
+    sprintf( top,   "Top   : %d", (int)(tile->ury) ) ;
     dialogS[TOPF].string = top ;
     dialogS[TOPF].len = strlen( top ) ;
     /* set legality of tile */
@@ -1641,7 +1652,7 @@ TILE_BOX *tile ;
 	dialogS[LEGALF].group = LEGALCASE ;
     }
     /* Now set the row height fields */
-    sprintf( rowHeight,   "%d", tile->actual_row_height ) ;
+    sprintf( rowHeight,   "%d", (int)(tile->actual_row_height) ) ;
     dialogS[ROWF].string = rowHeight ;
     /* Now set the number of rows */
     height = tile->ury - tile->lly ;
@@ -1650,24 +1661,24 @@ TILE_BOX *tile ;
     if( tile->numrows > max_rows ){
 	max_rows = tile->numrows ;
     }
-    sprintf( maxrows, "%d", max_rows ) ;
+    sprintf( maxrows, "%d", (int)max_rows ) ;
     dialogS[MAXROWF].string = maxrows ;
-    sprintf( numrows,   "%d", tile->numrows ) ;
+    sprintf( numrows,   "%d", (int)(tile->numrows) ) ;
     dialogS[NUMROWF].string = numrows ;
     /* Now set the min length of row */
-    sprintf( minlength,   "%d", tile->min_length ) ;
+    sprintf( minlength,   "%d", (int)(tile->min_length) ) ;
     dialogS[MINF].string = minlength ;
     /* Now set the start of the row */
-    sprintf( startrow,   "%d", tile->llx + tile->row_start ) ;
+    sprintf( startrow,   "%d", (int)(tile->llx + tile->row_start) ) ;
     dialogS[STARTF].string = startrow ;
     /* Now set the max length of row */
     sprintf( maxlength,   "%d", 
-	tile->llx + tile->row_start + tile->max_length ) ;
+	(int)(tile->llx + tile->row_start + tile->max_length) ) ;
     dialogS[MAXF].string = maxlength ;
     /* Now set the chan separation of row */
-    sprintf( separation,   "%d", tile->channel_separation ) ;
+    sprintf( separation,   "%d", (int)(tile->channel_separation) ) ;
     dialogS[SEPF].string = separation ;
-    sprintf( class,  "%d", tile->class ) ;
+    sprintf( class,  "%d", (int)(tile->class) ) ;
     dialogS[CLASSF].string = class ;
     if( tile->force ){
 	dialogS[FORCEF].group = FORCECASE ;
@@ -1684,7 +1695,8 @@ TILE_BOX *tile ;
 
     /* initialization complete */
 
-    if( answer = TWdialog( dialogS, "genrows", update_tile_data ) ){
+    /* use ((...)) to avoid assignment as condition warning */
+    if(( answer = TWdialog( dialogS, "genrows", update_tile_data )) ){
 	/* must be the number of the case field */
 	if( answer[LEGALCASE].bool ){
 	    /* the tile is legal */
@@ -1711,7 +1723,7 @@ TILE_BOX *tile ;
 	    /* means the user change the field */
 	    temp = get_row_height( answer ) ;
 	    if( temp <= 0 ){
-		return ;
+		return TRUE;
 	    }
 	    tile->actual_row_height = temp ;
 	}
@@ -1721,7 +1733,7 @@ TILE_BOX *tile ;
 	    if( rows < 0 ){ 
 		outm( ERRMSG, "edit_tile",
 		"Invalid number of rows.  Must be non-negative" ) ;
-		return ;
+		return FALSE ;
 	    }
 	    /* now calculate the channel separation for this tile */
 	    height = tile->ury - tile->lly ;
@@ -1742,7 +1754,7 @@ TILE_BOX *tile ;
 	    if( rows < 0 ){ 
 		outm( ERRMSG, "edit_tile",
 		"Invalid number of rows.  Must be non-negative" ) ;
-		return ;
+		return FALSE;
 	    }
 	    /* now calculate the channel separation for this tile */
 	    height = tile->ury - tile->lly ;
@@ -1763,7 +1775,7 @@ TILE_BOX *tile ;
 	    if( temp <= 0 ){
 		outm( ERRMSG, "edit_tile",
 		"Invalid minimum length.  Must be greater than zero" ) ;
-		return ;
+		return FALSE;
 	    }
 	    tile->min_length = temp ;
 	}
@@ -1773,12 +1785,12 @@ TILE_BOX *tile ;
 	    if( temp < tile->llx  ){
 		outm( ERRMSG, "edit_tile",
 		"Invalid end of row.  Must be greater than tile left" );
-		return ;
+		return FALSE;
 	    }
 	    if( temp > tile->urx ){
 		outm( ERRMSG, "edit_tile",
 		"Invalid end of row.  Must be less than tile right" ) ;
-		return ;
+		return FALSE;
 	    }
 	    tile->max_length = temp - tile->llx - tile->row_start ;
 	}
@@ -1788,12 +1800,12 @@ TILE_BOX *tile ;
 	    if( temp < tile->llx ){
 		outm( ERRMSG, "edit_tile",
 		"Invalid start of row.  Must be greater than tile left") ;
-		return ;
+		return FALSE;
 	    }
 	    if( temp > tile->urx ){
 		outm( ERRMSG, "edit_tile",
 		"Invalid start of row.  Row must start before end of tile" ) ;
-		return ;
+		return FALSE;
 	    }
 	    tile->row_start = temp - tile->llx ;
 	    /* now modify the width of the tile accordingly */
@@ -1815,7 +1827,7 @@ TILE_BOX *tile ;
 	    if( temp <= 0 ){
 		outm( ERRMSG, "edit_tile",
 		    "ERROR:Invalid class.  Must be greater than zero" ) ;
-		return ;
+		return FALSE;
 	    }
 	    tile->class = temp ;
 	}
@@ -1826,7 +1838,7 @@ TILE_BOX *tile ;
 } /* end edit_tiles */
 
 
-edit_row( rowptr )
+VOID edit_row( rowptr )
 ROW_BOX *rowptr ;
 {
 
@@ -1857,21 +1869,21 @@ ROW_BOX *rowptr ;
     }
 #endif
     /* now initialize the fields to user data */
-    sprintf( left,  "Left  : %d", rowptr->llx ) ;
+    sprintf( left,  "Left  : %d", (int)(rowptr->llx) ) ;
     row_dialogS[LEFT_F].string = left ;
     row_dialogS[LEFT_F].len = strlen(left) ;
-    sprintf( bottom,"Bottom: %d", rowptr->lly ) ;
+    sprintf( bottom,"Bottom: %d", (int)(rowptr->lly) ) ;
     row_dialogS[BOT_F].string = bottom ;
     row_dialogS[BOT_F].len = strlen(bottom) ;
-    sprintf( right, "Right : %d", rowptr->urx ) ;
+    sprintf( right, "Right : %d", (int)(rowptr->urx) ) ;
     row_dialogS[RITE_F].string = right ;
     row_dialogS[RITE_F].len = strlen(right) ;
-    sprintf( top,   "Top   : %d", rowptr->ury ) ;
+    sprintf( top,   "Top   : %d", (int)(rowptr->ury) ) ;
     row_dialogS[TOP_F].string = top ;
     row_dialogS[TOP_F].len = strlen(top) ;
     /* Now set the class field */
     if( rowptr->class ){
-	sprintf( class, "%d", rowptr->class ) ;
+	sprintf( class, "%d", (int)(rowptr->class) ) ;
     } else {
 	sprintf( class, "1" ) ;
     }
@@ -1884,7 +1896,8 @@ ROW_BOX *rowptr ;
     }
 
     /* Now call the dialog box */
-    if( answer = TWdialog( row_dialogS, "row", NULL ) ){
+    /* use ((...)) to avoid assignment as condition warning */
+    if(( answer = TWdialog( row_dialogS, "row", NULL ) )){
 	if( answer[CLASS_F].bool ){
 	    /* means the user change the field */
 	    temp = atoi( answer[CLASS_F].string ) ;
@@ -1948,26 +1961,30 @@ INT field ;
     } /* end switch */
 
     if( deltax == 0 && deltay == 0 ){
-	return ; /* no work to do */
+	return 0; /* no work to do */
     }
     /* else update the cooridates positions */
     if( deltax != 0 ){
 	pos = atoi( answer[XPOSF].string ) ;
 	pos += deltax ;
-	sprintf( answer[XPOSF].string, "%d", pos ) ;
+	sprintf( answer[XPOSF].string, "%d", (int)pos ) ;
 	answer[XPOSF].bool = TRUE ;
 	sprintf( answer[DELTAXF].string, "0" ) ;
     }
     if( deltay != 0 ){
 	pos = atoi( answer[YPOSF].string ) ;
 	pos += deltay ;
-	sprintf( answer[YPOSF].string, "%d", pos ) ;
+	sprintf( answer[YPOSF].string, "%d", (int)pos ) ;
 	answer[YPOSF].bool = TRUE ;
 	sprintf( answer[DELTAYF].string, "0" ) ;
     }
+    return 0;
 } /* end update_macro_data */
 
-static edit_macro( macro, xoff, yoff )
+static VOID edit_macro( macro, xoff, yoff )
+INT macro;
+INT xoff;
+INT yoff;
 {
     TWDRETURNPTR answer ;  /* return from user */
     MACROPTR mptr ;        /* current macro information */
@@ -1987,9 +2004,9 @@ static edit_macro( macro, xoff, yoff )
 #endif
     mptr = macroArrayG[macro] ;
     /* now initialize the fields to user data */
-    sprintf( xpos,  "%d", xoff ) ;
+    sprintf( xpos,  "%d", (int)xoff ) ;
     macro_dialogS[XPOSF].string = xpos ;
-    sprintf( ypos, "%d", yoff ) ;
+    sprintf( ypos, "%d", (int)yoff ) ;
     macro_dialogS[YPOSF].string = ypos ;
     sprintf( deltax,"0" ) ;
     macro_dialogS[DELTAXF].string = deltax ;
@@ -2005,7 +2022,8 @@ static edit_macro( macro, xoff, yoff )
 
     old_orient = macroArrayG[selectMacroS]->orient ;
 
-    if( answer = TWdialog( macro_dialogS, "macro", update_macro_data )){
+    /* use ((...)) to avoid assignment as condition warning */
+    if(( answer = TWdialog( macro_dialogS, "macro", update_macro_data ))){
 	if( answer[XPOSF].bool ){
 	    /* means the user change the field */
 	    pos = atoi( answer[XPOSF].string ) ;
@@ -2033,7 +2051,7 @@ static edit_macro( macro, xoff, yoff )
 } /* end edit_macro */
 
 
-get_global_pos( macro, l, b, r, t )
+static VOID get_global_pos( macro, l, b, r, t )
 INT macro ; 
 INT *l, *r, *b, *t ;
 {
@@ -2047,7 +2065,7 @@ INT *l, *r, *b, *t ;
     *t = mptr->top + mptr->ycenter ;
 } /* end get_global_pos */
 
-static update_vertices( macro, newxcenter, newycenter )
+static VOID update_vertices( macro, newxcenter, newycenter )
 INT macro, newxcenter, newycenter ;
 {
     INT j ;
@@ -2068,7 +2086,7 @@ INT macro, newxcenter, newycenter ;
     mptr->ycenter = newycenter ;
 } /* end update_vertices */
 
-static rotate_vertices( mptr, orient )
+static VOID rotate_vertices( mptr, orient )
 MACROPTR mptr ;
 INT orient ;
 {
@@ -2172,7 +2190,7 @@ INT orient ;
 
 } /* end rotate_vertices */
 
-static find_nearest_corner( macro, x, y, x_ret, y_ret )
+static VOID find_nearest_corner( macro, x, y, x_ret, y_ret )
 INT macro, x, y, *x_ret, *y_ret ;
 {
     INT j ;
@@ -2207,7 +2225,7 @@ INT macro, x, y, *x_ret, *y_ret ;
 } /* end find_nearest_corner */
 
 
-static highlight_corner( macro, x, y )
+static VOID highlight_corner( macro, x, y )
 INT macro, x, y ;
 {
     INT l, b, r, t ;   /* the core */
@@ -2225,7 +2243,7 @@ INT macro, x, y ;
 
 } /* end highlight_corner */
 
-static outm( errtype, routine, string )
+static VOID outm( errtype, routine, string )
 INT errtype ;
 char *routine ;
 char *string ;

@@ -65,12 +65,23 @@ static char SccsId[] = "@(#) main.c (Yale) version 3.10 9/21/91" ;
 #define VERSION        "v1.0"
 
 #include <stdio.h>
+
+#include <yalecad/base.h>
 #include <yalecad/cleanup.h>
-#include <yalecad/message.h>
-#include <yalecad/file.h>
-#include <yalecad/string.h>
 #include <yalecad/debug.h>
+#include <yalecad/draw.h>
+#include <yalecad/file.h>
+#include <yalecad/message.h>
+#include <yalecad/program.h>
+#include <yalecad/string.h>
+#include <yalecad/system.h>
+
 #include <globals.h>
+
+#include <draw.h>
+#include <genrows.h>
+#include <merge.h>
+#include <readpar.h>
 
 /* NOTE ****** macros cannot overlap !!! ****** */
 
@@ -80,16 +91,17 @@ static char SccsId[] = "@(#) main.c (Yale) version 3.10 9/21/91" ;
 	 I am only interested in EFFECTIVE and ROBUST 
 	 functionality. ---Carl Sechen  */
 
+static VOID syntax(VOID);
+static VOID yaleIntro(VOID);
 
 
 
-main( argc, argv )
+int main( argc, argv )
 int  argc ;
 char *argv[] ;
 {
 
     FILE *fp ;
-    int yaleIntro() ;
     char filename[LRECL] ; /* used for input filename */
     char *ptr ;     /* used to parse command line */
     int  windowId ; /* window id */
@@ -230,8 +242,7 @@ char *argv[] ;
 	(4) Be able to edit the channel_separation.
 		*BUT,THE check_tiles MUST BE CONDUCTED IF THE USER 
 		CHANGES ANYTHING IN (3) OR (4)
-	(5) Be able to edit the min_length
-
+	(5) Be able to edit the min_length */
     /* *************************************************************** */
     /* make the rows once to see where the tiles are */
     /* force the last tile with rows to line up */
@@ -279,7 +290,7 @@ char *argv[] ;
 } /* end main */
 
 
-yaleIntro() 
+VOID yaleIntro(VOID) 
 {
 
     fprintf(stdout,"\n%s\n",YmsgG) ;
@@ -289,7 +300,7 @@ yaleIntro()
 } /* end yaleIntro */
 
 /* give user correct syntax */
-syntax()
+static VOID syntax(VOID)
 {
    M(ERRMSG,NULL,"\n" ) ; 
    M(MSG,NULL,"Incorrect syntax.  Correct syntax:\n");

@@ -55,24 +55,30 @@ REVISIONS:  Sat Feb 23 00:35:01 EST 1991 - added wildcarding.
 static char SccsId[] = "@(#) readpar.c (Yale) version 1.9 5/14/92" ;
 #endif
 
+#include <string.h>
+
+#include <yalecad/base.h>
 #include <yalecad/debug.h>
 #include <yalecad/file.h>
+#include <yalecad/message.h>
+#include <yalecad/program.h>
 #include <yalecad/string.h>
 #include <yalecad/yreadpar.h>
-#include <yalecad/message.h>
+
 #include <globals.h>
+#include <genrows.h>
 
 #define COMMENT '#'
 
 static BOOL abortS = FALSE ;
 
 
-static err_msg(); 
-static get_defaults();
-static int getnumRows();
+static VOID err_msg(char *keyword); 
+static VOID get_defaults(BOOL feed_percent_default, BOOL row_sep_default);
+static int getnumRows(VOID);
 
 
-readpar()
+VOID readpar(VOID)
 {
 
     INT line ;
@@ -99,8 +105,9 @@ readpar()
 
     Yreadpar_init( cktNameG, USER, GENR, FALSE ) ;
 
-    while( tokens = Yreadpar_next( &lineptr, &line, &numtokens, 
-	&onNotOff, &wildcard )){
+    /* use ((...)) to avoid assignment as condition warning */
+    while(( tokens = Yreadpar_next( &lineptr, &line, &numtokens, 
+	&onNotOff, &wildcard ))){
 	if( numtokens == 0 ){
 	    /* skip over empty lines */
 	    continue ;
@@ -196,7 +203,7 @@ readpar()
 	} else if(!(wildcard)){
 	    sprintf( YmsgG, 
 	    "unexpected keyword in the %s.par file at line:%d\n\t%s\n", 
-	    cktNameG, line, lineptr );
+	    cktNameG, (int)line, lineptr );
 	    M( ERRMSG, "readpar", YmsgG ) ;
 	    Ymessage_error_count() ;
 	    abortS = TRUE ;
@@ -213,7 +220,7 @@ readpar()
 	if( numrows != num_rowsG && num_rowsG ){
 	    sprintf( YmsgG, 
 	    "Number of row discrepancy between .row file(%d) and .par file(%d)\n",
-	    numrows, num_rowsG ) ;
+	    (int)numrows, (int)num_rowsG ) ;
 	    M( ERRMSG, "readpar", YmsgG ) ;
 	    M( ERRMSG, NULL, "Using value found in .row file\n" ) ;
 	}
@@ -229,7 +236,7 @@ readpar()
 
 } /* end readpar */
 
-static err_msg( keyword ) 
+static VOID err_msg( keyword ) 
 char *keyword ;
 {
     sprintf( YmsgG, "The value for %s was", keyword );
@@ -239,7 +246,7 @@ char *keyword ;
     abortS = TRUE ;
 }/* end err_msg */
 
-static get_defaults( feed_percent_default, row_sep_default )
+static VOID get_defaults( feed_percent_default, row_sep_default )
 BOOL feed_percent_default, row_sep_default ;
 {
     FILE *fp ;
@@ -254,7 +261,8 @@ BOOL feed_percent_default, row_sep_default ;
     }
 
     /* start at beginning and read till we find feed percentage */
-    while( bufferptr = fgets( buffer, LRECL, fp )){
+    /* use ((...)) to avoid assignment as condition warning */
+    while(( bufferptr = fgets( buffer, LRECL, fp ))){
 	/* remove leading blanks or tabs */
 	bufferptr = Yremove_lblanks( bufferptr ) ;
 	if( strncmp( bufferptr, "Feed Percentage:", 16 ) == STRINGEQ ){
@@ -294,7 +302,7 @@ BOOL feed_percent_default, row_sep_default ;
     TWCLOSE( fp ) ;
 } /* end get_defaults */
 
-static int getnumRows()
+static int getnumRows(VOID)
 {
 
     char **tokens ;         /* for parsing menu file */
@@ -315,7 +323,8 @@ static int getnumRows()
     line = 0 ;  /*--- initialize the line counter ---*/
   
     /*-----------  parse file ------------*/
-    while( bufferptr = fgets( buffer, LRECL, fp )){
+    /* use ((...)) to avoid assignment as condition warning */
+    while(( bufferptr = fgets( buffer, LRECL, fp ))){
 
 	tokens = Ystrparser( bufferptr, "\t\n/ ", &numtokens );
 	if( numtokens == 0 ){
