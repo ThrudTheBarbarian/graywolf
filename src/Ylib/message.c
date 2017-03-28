@@ -79,9 +79,10 @@ static char SccsId[] = "@(#) message.c version 3.6 3/7/91" ;
 #endif
 
 #include <stdio.h>
-#include <yalecad/base.h>
-#include <yalecad/message.h>
-#include <yalecad/file.h>
+
+#include "yalecad/base.h"
+#include "yalecad/message.h"
+#include "yalecad/file.h"
 
 static INT errorCountS = 0;
 static INT warningCountS = 0;
@@ -96,13 +97,13 @@ static char typeS[8] ;
 char *YmsgG = message_bufS ;
 
 
-Ymessage_print( messageType, routine, messageString )
+VOID Ymessage_print( messageType, routine, messageString )
 INT messageType ;
 char *routine ;
 char *messageString ;
 {
 
-    FILE *out ; /* where to output result if verbose */
+    FILE *out = NULL ; /* where to output result if verbose */
 
     /* determine message type */
     switch (messageType){
@@ -166,13 +167,13 @@ char *messageString ;
 } /* end message_print */
 
 /* increment the static variable */
-Ymessage_warn_count()
+VOID Ymessage_warn_count()
 {
     warningCountS++ ;
 } /* end message_warn_count */
 
 /* increment the static variable */
-Ymessage_error_count()
+VOID Ymessage_error_count()
 {
     errorCountS++ ;
 }/* end Ymessage_error_count */
@@ -187,7 +188,7 @@ INT Ymessage_get_errorcount()
     return(errorCountS);
 } /*end Ymessage_get_errorcount */
 
-Ymessage_output( messageString )
+VOID Ymessage_output( messageString )
 char *messageString ;
 {
 
@@ -200,13 +201,13 @@ char *messageString ;
 
 } /* end message_output */
 
-Ymessage_init( fileptr )
+VOID Ymessage_init( fileptr )
 FILE *fileptr ;
 {
      foutS = fileptr ;
 } /* end Ymessage_init */
 
-Ymessage_mode( mode )
+VOID Ymessage_mode( mode )
 INT mode ;
 {
     if( mode == M_VERBOSE ){
@@ -229,7 +230,7 @@ BOOL Ymessage_get_mode()
     return( modeS ) ;
 } /* end Ymessage_get_mode */
 
-Ymessage_flush()
+VOID Ymessage_flush()
 {
     if( outS ){
 	fflush(outS) ;
@@ -240,7 +241,7 @@ Ymessage_flush()
     fflush( stdout ) ;
 } /* end Ymessage_flush */
 
-Ymessage_close()
+VOID Ymessage_close()
 {
     if( foutS ){
 	TWCLOSE(foutS) ;

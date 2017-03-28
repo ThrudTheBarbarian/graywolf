@@ -181,20 +181,22 @@ static char SccsId[] = "@(#) draw.c (Yale) version 3.41 3/10/92" ;
 
 #include <stdio.h>
 #include <string.h>
-#include <X11/Xlib.h>
+#include <stdlib.h>
 #include <X11/Xatom.h>
 #include <X11/Xutil.h>
 
-#include <yalecad/base.h>
-#include <yalecad/file.h>
-#include <yalecad/message.h>
-#include <yalecad/hash.h>
-#include <yalecad/string.h>
-#include <yalecad/draw.h>
-#include <yalecad/debug.h>
-#include <yalecad/buster.h>
-#include <yalecad/dbinary.h>
-#include <yalecad/project.h>
+#include "yalecad/base.h"
+#include "yalecad/colors.h"
+#include "yalecad/file.h"
+#include "yalecad/message.h"
+#include "yalecad/hash.h"
+#include "yalecad/ystring.h"
+#include "yalecad/draw.h"
+#include "yalecad/debug.h"
+#include "yalecad/buster.h"
+#include "yalecad/dbinary.h"
+#include "yalecad/project.h"
+#include "yalecad/program.h"
 
 #define YDRAW_VARS
 #include "info.h"
@@ -232,7 +234,7 @@ static VOID drawWArb() ;
 static VOID drawDLine() ;
 static VOID drawWLine() ;
 static VOID initcolors( P2(char **desiredColorArray,INT  numC ) ) ;
-static closeFrame(P1(void)) ;
+static VOID closeFrame(P1(void)) ;
 static VOID set_viewing_transformation() ;
 extern VOID TW3Dperspective( P5(DOUBLE x, DOUBLE y, DOUBLE z, 
     DOUBLE *pX, DOUBLE *pY ) ) ;
@@ -313,7 +315,7 @@ static  BOOL initS = FALSE ;  /* tells whether initialization performed */
 static  INT  frameCountS ;    /* current number of display frames */
 static  BOOL frameOpenS ;     /* tells whether frame files are open */
 
-BOOL TWcheckServer()
+BOOL TWcheckServer(VOID)
 {
     char *hostmon ;
     char *Ygetenv() ;
@@ -333,7 +335,7 @@ BOOL TWcheckServer()
     return( TRUE ) ;
 } /* end TWcheckServer */
 
-TWsetMode( mode ) 
+VOID TWsetMode( mode ) 
 INT mode ;
 {
     if( dumpOnlyS && mode != TWWRITEONLY ){
@@ -473,7 +475,7 @@ INT (*refresh_func)() ;
 	/* we are done for the dump_graphics mode */
 	initS = TRUE ;
 	TWsetMode( TWWRITEONLY ) ;  /* always enable both modes */
-	return ;
+	return TRUE;
     } else {
 	/* OTHERWISE INITIALIZE BOTH MODES */
 	TWsetMode( TWWRITENDRAW ) ;  /* always enable both modes */
@@ -497,10 +499,12 @@ INT (*refresh_func)() ;
     depth = DefaultDepth(dpyS,screenS);
 
     /* check whether machine is color or not */
-    if( (colorS = XDisplayCells( dpyS, screenS )) > 2 ){ 
+    if( (colorS = XDisplayCells( dpyS, (int)screenS )) > 2 ){
 	/* if color number of display cells > 0 */
 	colorS = TRUE ;
-	if( reply = XGetDefault( dpyS, GRAPHICS, "bw" )){
+	
+	/* Use ((...)) to avoid assignment as a condition warning */
+	if(( reply = XGetDefault( dpyS, GRAPHICS, "bw" ))){
 	    if( strcmp( reply, "on" ) == STRINGEQ ){
 		colorS = FALSE ;
 	    }
@@ -511,7 +515,8 @@ INT (*refresh_func)() ;
 
 
     /* set font and get font info */
-    if(font = XGetDefault( dpyS, GRAPHICS, "font" )){
+    /* Use ((...)) to avoid assignment as a condition warning */
+    if((font = XGetDefault( dpyS, GRAPHICS, "font" ))){
         fontinfoS = TWgetfont( font, &fontS ) ;
 	infoBoxS.fontname = font ;  
     } else {
@@ -525,32 +530,37 @@ INT (*refresh_func)() ;
 	}
     }
     /* see if we should turn on the stipple pattern */
-    if( reply = XGetDefault( dpyS, GRAPHICS, "stipple" )){
+    /* Use ((...)) to avoid assignment as a condition warning */
+    if(( reply = XGetDefault( dpyS, GRAPHICS, "stipple" ))){
 	if( strcmp( reply, "on" ) == STRINGEQ ){
 	    stippleS = TRUE ;
 	}
     }
     /* see if we should turn on/off the rectangular fill */
-    if( reply = XGetDefault( dpyS, GRAPHICS, "rectangle_fill" )){
+    /* Use ((...)) to avoid assignment as a condition warning */
+    if(( reply = XGetDefault( dpyS, GRAPHICS, "rectangle_fill" ))){
 	if( strcmp( reply, "off" ) == STRINGEQ ){
 	    rect_fillS = FALSE ; /* dont fill rectangles - default on */
 	} 
     }
     /* see if we should turn on/off the arbitrary fill */
-    if( reply = XGetDefault( dpyS, GRAPHICS, "arbitrary_fill" )){
+    /* Use ((...)) to avoid assignment as a condition warning */
+    if(( reply = XGetDefault( dpyS, GRAPHICS, "arbitrary_fill" ))){
 	if( strcmp( reply, "off" ) == STRINGEQ ){
 	    fillArbS = FALSE ; /* dont fill arbs - default on */
 	} 
     }
     /* see if we should turn off the reverse video */
-    if( reply = XGetDefault( dpyS, GRAPHICS, "reverse" )){
+    /* Use ((...)) to avoid assignment as a condition warning */
+    if(( reply = XGetDefault( dpyS, GRAPHICS, "reverse" ))){
 	if( strcmp( reply, "on" ) == STRINGEQ ){
 	    reverseS = TRUE ;
 	}
     }
 
     /* see if we need to reset the wait time to redraw */
-    if( reply = XGetDefault( dpyS, GRAPHICS, "wait_time" )){
+    /* Use ((...)) to avoid assignment as a condition warning */
+    if(( reply = XGetDefault( dpyS, GRAPHICS, "wait_time" ))){
 	TWsafe_wait_timeG = atoi( reply ) ;
     } else {
 	TWsafe_wait_timeG = 2 ;
@@ -558,13 +568,14 @@ INT (*refresh_func)() ;
 
 
     /* initialize position */
-    if( winstr = XGetDefault( dpyS, GRAPHICS, "geometry" )){
+    /* Use ((...)) to avoid assignment as a condition warning */
+    if(( winstr = XGetDefault( dpyS, GRAPHICS, "geometry" ))){
 	m = XParseGeometry( winstr,&winxS,&winyS,&winwidthS,&winheightS) ;
 	if( m & XNegative ){
-	    winxS = XDisplayWidth( dpyS, screenS ) + winxS ;
+	    winxS = XDisplayWidth( dpyS, (int)screenS ) + winxS ;
 	}
 	if( m & YNegative ){
-	    winyS = XDisplayHeight( dpyS, screenS ) + winyS ;
+	    winyS = XDisplayHeight( dpyS, (int)screenS ) + winyS ;
 	}
 	/* these two lines insure that uses doesn't have to press */
 	/* button using twm window manager */
@@ -600,7 +611,8 @@ INT (*refresh_func)() ;
     if(!(parasiteS)){
 	backS = XCreateWindow(dpyS,root,winxS,winyS,winwidthS,
 		winheightS,
-		0,depth,InputOutput,DefaultVisual(dpyS,screenS),
+		0,
+		(int)depth,InputOutput,DefaultVisual(dpyS,screenS),
 		CWEventMask|CWBackPixel|CWOverrideRedirect|
 		CWSaveUnder | CWBackingStore,&attr);
 
@@ -619,7 +631,15 @@ INT (*refresh_func)() ;
 	hints.y = winyS ;
 	hints.width = winwidthS ;
 	hints.height = winheightS ;
-	XSetStandardProperties( dpyS,backS,GRAPHICS,GRAPHICS,None,argv,argc,&hints);
+	XSetStandardProperties(
+		dpyS,
+		backS,
+		GRAPHICS,
+		GRAPHICS,
+		None,
+		argv,
+		(int)argc,
+		&hints);
 
 	XMapWindow(dpyS,backS);
 	XMapRaised(dpyS,drawS);
@@ -635,7 +655,7 @@ INT (*refresh_func)() ;
 	-------------------------------------------------------------- */
 	while( TRUE ){
 	    if( XCheckTypedWindowEvent(dpyS,backS,VisibilityNotify,&event)){
-		if( event.xvisibility.state == VisibilityUnobscured ){
+		if( event.xvisibility.state != VisibilityUnobscured ){
 		    break ;
 		}
 	    }
@@ -681,7 +701,7 @@ INT (*refresh_func)() ;
     /* off screen copy of the data */
     pixmapS = XCreatePixmap( dpyS, drawS,
 	(unsigned)winwidthS, (unsigned)winheightS, 
-	XDefaultDepth(dpyS,screenS) ) ;
+	XDefaultDepth(dpyS,(int)screenS) ) ;
 
     if(!(TWinitMenuWindow( menu ))){
 	initS = TRUE ; /* fake out TWcloseGraphics */
@@ -701,7 +721,7 @@ INT (*refresh_func)() ;
 
 } /* end function TWinitGraphics */
 
-TWINFOPTR TWgetDrawInfo() 
+TWINFOPTR TWgetDrawInfo(VOID) 
 {
     TWINFOPTR info ;
 
@@ -731,19 +751,19 @@ TWINFOPTR TWgetDrawInfo()
 } /* end TWgetDrawInfo */
 
 
-TWsetDrawInfo( winheight, winwidth, pixmap ) 
+VOID TWsetDrawInfo( winheight, winwidth, pixmap ) 
 INT winheight, winwidth ;
 Pixmap pixmap ;
 {
-    infoBoxS.winwidth = winwidthS = winwidth ;
-    infoBoxS.winheight = winheightS = winheight ;
+    infoBoxS.winwidth = winwidthS	= (int)winwidth ;
+    infoBoxS.winheight = winheightS = (int)winheight ;
     infoBoxS.pixmap = pixmapS = pixmap ;
     fullViewS = TRUE ;
     TWsetwindow( leftS, bottomS, rightS, topS ) ;
 
 } /* end TWsetDrawInfo */
 
-TWforceRedraw()
+VOID TWforceRedraw(VOID)
 {
     XEvent event ;          /* describes configuration event */
 
@@ -757,7 +777,7 @@ TWforceRedraw()
     XSendEvent( dpyS, drawS, TRUE, ExposureMask, &event ) ;
 } /* end TWforceRedraw */
 
-TWcloseGraphics()
+VOID TWcloseGraphics(VOID)
 {
 
     if(!(initS )){
@@ -780,7 +800,7 @@ TWcloseGraphics()
 
 /***********  BEGIN STRICT GRAPHICS ROUTINES ************* */
 /* perform a zoom in main graphics window */
-TWzoom()
+VOID TWzoom(VOID)
 {
     INT x1, y1 ; /* first point of user zoom */
     INT x2, y2 ; /* second point of user zoom */
@@ -831,7 +851,7 @@ TWzoom()
 }
 
 /* returns to full screen after zoom */
-TWfullView()
+VOID TWfullView()
 {
     if( fullViewS ){
 	return ;
@@ -846,7 +866,7 @@ TWfullView()
 } /* end TWfullScreen */
 
 /* set the window area for bar */
-TWsetwindow( left, bottom, right, top ) 
+VOID TWsetwindow( left, bottom, right, top ) 
 INT left, bottom, right, top ;
 {
     INT xspan, yspan ; /* span of data */
@@ -931,7 +951,7 @@ INT left, right, bottom, top ;
     }
 } /* end set_clip_window() */ 
 
-TWtranslate()
+VOID TWtranslate(VOID)
 {
     INT x1, y1 ;
     INT last_xoff, last_yoff ;
@@ -947,7 +967,7 @@ TWtranslate()
     last_xoff = xoffsetS ; last_yoff = yoffsetS ;
     TWmessage( "[TRANSLATE]:Pick or enter center of view:" ) ;
     TWgetPt2( &x1, &y1 ) ;
-    sprintf( YmsgG, "new center - %d,%d", x1, y1 ) ;
+    sprintf( YmsgG, "new center - %d,%d", (int)x1, (int)y1 ) ;
     TWmessage( YmsgG ) ;
     /* translate to origin first */
     xoffsetS = - x1 ;
@@ -963,14 +983,15 @@ TWtranslate()
     bS -= (yoffsetS - last_yoff) ;
     tS -= (yoffsetS - last_yoff) ;
     D( "TWtranslate",
-	fprintf( stderr, "l:%d r:%d b:%d t:%d\n", lS, rS, bS, tS ) ;
+	fprintf( stderr, "l:%d r:%d b:%d t:%d\n",
+		(int)lS, (int)rS, (int)bS, (int)tS ) ;
     ) ;
 
 } /* end TWtranslate */
 
 /* copy pixmap to screen and flush screen output buffer */
 /* flush screen output buffer */
-TWflushFrame()
+VOID TWflushFrame(VOID)
 {
     if( modeS == TWWRITEONLY ){
 	return ;
@@ -980,7 +1001,7 @@ TWflushFrame()
 } /* end TWflushFrame */
 
 /* process everything in buffer */
-TWsync()
+VOID TWsync(VOID)
 {
     if( modeS == TWWRITEONLY ){
 	return ;
@@ -1002,10 +1023,10 @@ INT  numC ;
     XColor   ecolor ;  /* exact color - do need to use it */
     INT      i, j, k ;
     INT      pattern ;
-    char     *stipple ;
+    char     *stipple = TWstdStipple();
     char     *TWstdStipple() ;
     char     row, bit ;
-    Pixmap   *stipplePix ;  /* array of pixmaps for stipple */
+    Pixmap   *stipplePix = NULL;  /* array of pixmaps for stipple */
 
     /* make copy of the users colors */
     userColorS = YMALLOC( numC+1, char * ) ;
@@ -1028,9 +1049,8 @@ INT  numC ;
 	backgrd = whitepix ;
 	foregrd = blackpix ;
     }
-    if( !(colorS) || stippleS ){
+    if( (!(colorS)) || stippleS ){
 	stippleS = TRUE ;
-	stipple = TWstdStipple() ;
 	stipplePix = YMALLOC( numC+1, Pixmap ) ;
 	{
 	unsigned int x, y, xret, yret  ;
@@ -1124,7 +1144,7 @@ INT  numC ;
 	    XSetLineAttributes( dpyS,graphicContextS[i],1,LineSolid,
 		CapRound, JoinBevel ) ;
 	}
-	if( i >= 3 && stippleS ){ /* i > 2 and black and white */
+	if( (i >= 3) && stippleS ){ /* i > 2 and black and white */
 	    if( !(colorS)){
 		if( reverseS ){
 		    XSetForeground( dpyS, graphicContextS[i], backgrd ) ;
@@ -1138,7 +1158,7 @@ INT  numC ;
 	    XSetFillStyle( dpyS, graphicContextS[i], FillTiled );
 	    /* now create an 8 x 8 pixmap for the stipple pattern */
 	    stipplePix[i] = XCreatePixmap( dpyS,drawS,
-		(unsigned)8, (unsigned)8, XDefaultDepth(dpyS,screenS) ) ;
+		(unsigned)8, (unsigned)8, XDefaultDepth(dpyS,(int)screenS) ) ;
 	    /* Clear the pixmap - this is very subtle. Use */
 	    /* XFillRectangle to insure pixmap doesn't have junk in it */
 	    if( reverseS ){
@@ -1160,14 +1180,14 @@ INT  numC ;
 		    if( bit ){
 			if( reverseS ){
 			    XDrawPoint( dpyS, stipplePix[i], 
-				graphicContextS[WHITE], j, k ) ;
+				graphicContextS[WHITE], (int)j, (int)k ) ;
 			} else {
 			    if( colorS ){
 				XDrawPoint( dpyS, stipplePix[i], 
-				    graphicContextS[i], j, k ) ;
+				    graphicContextS[i], (int)j, (int)k ) ;
 			    } else {
 				XDrawPoint( dpyS, stipplePix[i], 
-				    graphicContextS[BLACK], j, k ) ;
+				    graphicContextS[BLACK], (int)j, (int)k ) ;
 			    }
 			}
 		    }
@@ -1189,17 +1209,17 @@ INT  numC ;
     
 } /* end initcolor */
 
-TWcolorXOR( color, exorFlag )
+VOID TWcolorXOR( color, exorFlag )
 INT color ;
 BOOL exorFlag ;
 {
     /* check to make sure color is valid */
     if( color <= 0 || color > numColorS ){
 	if( initS ){ /* graphics are available */
-	    sprintf( YmsgG, "Color number:%d is out of range", color ) ;
+	    sprintf( YmsgG, "Color number:%d is out of range", (int)color ) ;
 	    TWmessage( YmsgG ) ;
 	} else {
-	    fprintf( stderr,"Color number:%d is out of range", color ) ;
+	    fprintf( stderr,"Color number:%d is out of range", (int)color ) ;
 	}
 	return ;
     }
@@ -1212,7 +1232,7 @@ BOOL exorFlag ;
 
 
 /* start a new slate */
-static startDFrame()
+static VOID startDFrame(VOID)
 {
     XClearWindow( dpyS, drawS ) ;
     if( reverseS ){
@@ -1236,10 +1256,10 @@ char	*label ;
     /* check to make sure color is valid */
     if( color <= 0 || color > numColorS ){
 	if( initS ){ /* graphics are available */
-	    sprintf( YmsgG, "Color number:%d is out of range", color ) ;
+	    sprintf( YmsgG, "Color number:%d is out of range", (int)color ) ;
 	    TWmessage( YmsgG ) ;
 	} else {
-	    fprintf( stderr,"Color number:%d is out of range", color ) ;
+	    fprintf( stderr,"Color number:%d is out of range", (int)color ) ;
 	}
 	return ;
     } else if(!(colorOnS[color])){
@@ -1266,15 +1286,21 @@ char	*label ;
     y2 = winheightS - (INT) ( (DOUBLE) (y2 + yoffsetS) * scaleFactorS ) ;
     /* now draw line */
     XDrawLine( dpyS,drawS,graphicContextS[color], 
-	x1,y1,x2,y2 ) ;
+		(int)x1,(int)y1,(int)x2,(int)y2 ) ;
     XDrawLine( dpyS,pixmapS,graphicContextS[color], 
-	x1,y1,x2,y2 ) ;
+		(int)x1,(int)y1,(int)x2,(int)y2 ) ;
     if( label ){
 	if( *label != EOS ){
 	    XDrawImageString( dpyS, drawS, graphicContextS[color], 
-		(x1+x2)/2, (y1+y2)/2, label, strlen(label) ) ;
+		(int)((x1+x2)/2),
+		(int)((y1+y2)/2),
+		label,
+		(int)strlen(label) ) ;
 	    XDrawImageString( dpyS, pixmapS, graphicContextS[color], 
-		(x1+x2)/2, (y1+y2)/2, label, strlen(label) ) ;
+		(int)((x1+x2)/2),
+		(int)((y1+y2)/2)
+		, label,
+		(int)strlen(label) ) ;
 	}
     }
 } /* end drawDLine */
@@ -1293,10 +1319,10 @@ char	*label ;
     /* check to make sure color is valid */
     if( color <= 0 || color > numColorS ){
 	if( initS ){ /* graphics are available */
-	    sprintf( YmsgG, "Color number:%d is out of range", color ) ;
+	    sprintf( YmsgG, "Color number:%d is out of range", (int)color ) ;
 	    TWmessage( YmsgG ) ;
 	} else {
-	    fprintf( stderr,"Color number:%d is out of range", color ) ;
+	    fprintf( stderr,"Color number:%d is out of range", (int)color ) ;
 	}
 	return ;
     } else if(!(colorOnS[color])){
@@ -1326,36 +1352,40 @@ char	*label ;
     y2 = winheightS - y2 ;
     if( rect_fillS ){
 	XFillRectangle( dpyS,drawS,graphicContextS[color],
-	    x1,y2,width,height ) ;
+	    (int)x1,(int)y2,(int)width,(int)height ) ;
 	XFillRectangle( dpyS,pixmapS,graphicContextS[color],
-	    x1,y2,width,height ) ;
+	    (int)x1,(int)y2,(int)width,(int)height ) ;
 	if( borderColorS ){
 	    XDrawRectangle( dpyS,drawS,graphicContextS[borderColorS],
-		x1,y2,width,height ) ;
+		(int)x1,(int)y2,(int)width,(int)height ) ;
 	    XDrawRectangle( dpyS,pixmapS,graphicContextS[borderColorS],
-		x1,y2,width,height ) ;
+		(int)x1,(int)y2,(int)width,(int)height ) ;
 	}
     } else {
 	XDrawRectangle( dpyS,drawS,graphicContextS[color],
-	    x1,y2,width,height ) ;
+	    (int)x1,(int)y2,(int)width,(int)height ) ;
 	XDrawRectangle( dpyS,pixmapS,graphicContextS[color],
-	    x1,y2,width,height ) ;
+	    (int)x1,(int)y2,(int)width,(int)height ) ;
     }
     if( label ){
 	if( *label != EOS ){
 	    len = strlen(label) ;
 	    /* now find width of string as offset */
-	    width = XTextWidth( fontinfoS, label, len ) ;
+	    width = XTextWidth( fontinfoS, label, (int)len ) ;
 	    /* need image string so you can write on top of fill */
 	    XDrawImageString( dpyS, drawS, graphicContextS[color], 
-		(x1+x2-width)/2, (y1+y2)/2, label, strlen(label) ) ;
+		(int)(x1+x2-width)/2,
+		(int)(y1+y2)/2, label,
+		(int)strlen(label) ) ;
 	    XDrawImageString( dpyS, pixmapS, graphicContextS[color], 
-		(x1+x2-width)/2, (y1+y2)/2, label, strlen(label) ) ;
+		(int)(x1+x2-width)/2,
+		(int)(y1+y2)/2, label,
+		(int)strlen(label) ) ;
 	}
     }
 } /* end drawDCell */
 
-TWarb_init()
+VOID TWarb_init(VOID)
 {
     /* allocate memory if needed */
     if(!(ptS)){
@@ -1381,7 +1411,7 @@ TWarb_init()
 } /* end TWarb_init */
 /* ***************************************************************** */
 
-TWarb_addpt( xpos, ypos )
+VOID TWarb_addpt( xpos, ypos )
 INT xpos, ypos ;
 {
 
@@ -1430,10 +1460,10 @@ char	*label ;
 
     if( color <= 0 || color > numColorS ){
 	if( initS ){ /* graphics are available */
-	    sprintf( YmsgG, "Color number:%d is out of range", color ) ;
+	    sprintf( YmsgG, "Color number:%d is out of range", (int)color ) ;
 	    TWmessage( YmsgG ) ;
 	} else {
-	    fprintf( stderr,"Color number:%d is out of range", color ) ;
+	    fprintf( stderr,"Color number:%d is out of range", (int)color ) ;
 	}
 	return ;
     } else if(!(colorOnS[color])){
@@ -1469,9 +1499,9 @@ char	*label ;
     if( fillArbS ){
 	/* the fill automatically closed the region. if we don't */
 	/* let it close the region, we have problems - bug in XFillPolygon */
-	XFillPolygon( dpyS, drawS, graphicContextS[color], points, numptS,
+	XFillPolygon( dpyS, drawS, graphicContextS[color], points, (int)numptS,
 	    Complex, CoordModeOrigin ) ;
-	XFillPolygon( dpyS, pixmapS, graphicContextS[color], points, numptS,
+	XFillPolygon( dpyS, pixmapS, graphicContextS[color], points, (int)numptS,
 	    Complex, CoordModeOrigin ) ;
     }
 
@@ -1479,7 +1509,7 @@ char	*label ;
 	if( *label != EOS ){
 	    len = strlen(label) ;
 	    /* now find width of string as offset */
-	    width = XTextWidth( fontinfoS, label, len ) ;
+	    width = XTextWidth( fontinfoS, label, (int)len ) ;
 	    /* need image string so you can write on top of fill */
 	    /* calculate where we need to put the label */
 	    x1 = x2 = (INT) ptS[1].x ;
@@ -1491,49 +1521,53 @@ char	*label ;
 		y2 = MAX( y2, (INT) ptS[i].y ) ;
 	    }
 	    XDrawImageString( dpyS, drawS, graphicContextS[color], 
-		(x1+x2-width)/2, (y1+y2)/2, label, strlen(label) ) ;
+			(int)(x1+x2-width)/2,
+			(int)(y1+y2)/2, label,
+			(int)strlen(label) ) ;
 	    XDrawImageString( dpyS, pixmapS, graphicContextS[color], 
-		(x1+x2-width)/2, (y1+y2)/2, label, strlen(label) ) ;
+			(int)(x1+x2-width)/2,
+			(int)(y1+y2)/2, label,
+			(int)strlen(label) ) ;
 	}
     }
     if( fillArbS ){
 	if( borderColorS ){
 	    XDrawLines( dpyS, drawS, graphicContextS[borderColorS], 
-		points, numptS, CoordModeOrigin ) ;
+		points, (int)numptS, CoordModeOrigin ) ;
 	    XDrawLines( dpyS, pixmapS, graphicContextS[borderColorS], 
-		points, numptS, CoordModeOrigin ) ;
+		points, (int)numptS, CoordModeOrigin ) ;
 	}
     } else {
 	XDrawLines( dpyS, drawS, graphicContextS[color], 
-	    points, numptS, CoordModeOrigin ) ;
+	    points, (int)numptS, CoordModeOrigin ) ;
 	XDrawLines( dpyS, pixmapS, graphicContextS[color], 
-	    points, numptS, CoordModeOrigin ) ;
+	    points, (int)numptS, CoordModeOrigin ) ;
     }
 } /* end drawDArb */
 
-TWarb_fill( flag )
+VOID TWarb_fill( flag )
 BOOL flag ;
 {
     fillArbS = flag ;
 } /* end TWarb_fill */
 
-BOOL TWget_arb_fill()
+BOOL TWget_arb_fill(VOID)
 {
     return( fillArbS ) ;
 } /* end TWget_arb_fill */
 
-TWrect_fill( flag )
+VOID TWrect_fill( flag )
 BOOL flag ;
 {
     rect_fillS = flag ;
 } /* end TWrect_fill */
 
-BOOL TWget_rect_fill()
+BOOL TWget_rect_fill(VOID)
 {
     return( rect_fillS ) ;
 } /* end TWget_rect_fill */
 
-TWhighLightRect( x1,y1,x2,y2 )
+VOID TWhighLightRect( x1,y1,x2,y2 )
 /* draw a rectangle whose diagonals are (x1,y1) and (x2,y2) */
 register INT	x1,y1,x2,y2 ;
 {	
@@ -1554,12 +1588,12 @@ register INT	x1,y1,x2,y2 ;
     /* account for inversion of y axis */
     y2 = winheightS - y2 ;
     XFillRectangle( dpyS,drawS,graphicContextS[HIGHLITE],
-	x1,y2,width,height ) ;
+		(int)x1,(int)y2,(int)width,(int)height ) ;
     XFillRectangle( dpyS,pixmapS,graphicContextS[HIGHLITE],
-	x1,y2,width,height ) ;
+		(int)x1,(int)y2,(int)width,(int)height ) ;
 } /* end TWhighLightRect */
 
-TWmoveRect( x1, y1, x2, y2, ptx, pty )
+VOID TWmoveRect( x1, y1, x2, y2, ptx, pty )
 INT *x1, *y1, *x2, *y2, ptx, pty ;
 /* x1, y1, x2, y2 are all user data absolute coordinates */
 /* ptx and pty are the value of the pointer from TWgetPt */
@@ -1604,15 +1638,18 @@ INT *x1, *y1, *x2, *y2, ptx, pty ;
     oldy = pty ;
     /* draw rectangle at absolute coordinates */
     XDrawRectangle( dpyS,drawS,graphicContextS[HIGHLITE],
-	ptx+dx_pix,pty+dy_pix,width_pix,height_pix ) ;
+		(int)(ptx+dx_pix),
+		(int)(pty+dy_pix),
+		(int)width_pix,
+		(int)height_pix ) ;
 
     /* now look for either event - button press or keyboard */
     press = FALSE ;
     last_time = 0 ;
     while(!(press )){
 	/* check for user input from mouse */
-	if( press = XCheckTypedWindowEvent( dpyS,drawS,
-		ButtonPress,&event ) ){
+	/* Use ((...)) to avoid assignment as a condition warning */
+	if(( press = XCheckTypedWindowEvent( dpyS,drawS, ButtonPress,&event )) ){
 	    /* we have an event from the pointer */
 	    /* put event back on queue  and call TWgetPt */
 	    XPutBackEvent( dpyS, &event ) ;
@@ -1634,13 +1671,25 @@ INT *x1, *y1, *x2, *y2, ptx, pty ;
 	    y = event.xmotion.y ;
 	    /* draw rectangle at old position absolute coordinates */
 	    XDrawRectangle( dpyS,drawS,graphicContextS[HIGHLITE],
-		oldx+dx_pix,oldy+dy_pix,width_pix,height_pix ) ;
+			(int)(oldx+dx_pix),
+			(int)(oldy+dy_pix),
+			(int)width_pix,
+			(int)height_pix ) ;
 	    XFillRectangle( dpyS,drawS,graphicContextS[HIGHLITE],
-		oldx+dx_pix,oldy+dy_pix,width_pix,height_pix ) ;
+			(int)(oldx+dx_pix),
+			(int)(oldy+dy_pix),
+			(int)width_pix,
+			(int)height_pix ) ;
 	    XDrawRectangle( dpyS,drawS,graphicContextS[HIGHLITE],
-		x+dx_pix,y+dy_pix,width_pix,height_pix ) ;
+			(int)(x+dx_pix),
+			(int)(y+dy_pix),
+			(int)width_pix,
+			(int)height_pix ) ;
 	    XFillRectangle( dpyS,drawS,graphicContextS[HIGHLITE],
-		x+dx_pix,y+dy_pix,width_pix,height_pix ) ;
+			(int)(x+dx_pix),
+			(int)(y+dy_pix),
+			(int)width_pix,
+			(int)height_pix ) ;
 	    oldx = x ; oldy = y ;
 	    XFlush( dpyS ) ;
 	}
@@ -1665,7 +1714,7 @@ Font *font ;
     return( fontinfo ) ;
 } /* end TWgetfont */
 
-_TW3DdrawAxis( drawNotErase )
+VOID _TW3DdrawAxis( drawNotErase )
 BOOL drawNotErase ;
 {
     INT xspan, yspan, zspan ;
@@ -1727,10 +1776,10 @@ BOOL drawNotErase ;
     TWdrawString( xstring, ystring, c, "z" ) ;
 } /* end _TW3DdrawAxis */
 
-VOID TW3DsetCamera()
+VOID TW3DsetCamera(VOID)
 {
   INT x, y ;
-  INT oldx, oldy ;
+  INT oldx = 0, oldy = 0 ;
   BOOL first_time = TRUE ;
   DOUBLE FOURPI = 720;
   DOUBLE mouseScaleX ;
@@ -1785,14 +1834,14 @@ VOID TW3DsetCamera()
 	    
 /*--------------------
   --------------------*/
-VOID TW3DperspectiveOn()
+VOID TW3DperspectiveOn(VOID)
 {
     perspectiveS = TRUE;
 } /* end TW3DperspectiveOn */
 
 /*--------------------
   --------------------*/
-VOID TW3DperspectiveOff()
+VOID TW3DperspectiveOff(VOID)
 {
     perspectiveS = FALSE;
 } /* end TW3DperspectiveOff */
@@ -1868,7 +1917,7 @@ DOUBLE    *pX, *pY;
 } /* end perspective */
 
 /* set the 3D translations to normal view */
-VOID TW3Dnormal_view()
+VOID TW3Dnormal_view(VOID)
 {
     /* Sperical coordinates ?                                 */
     /* rho   = distance to point                              */
@@ -1889,7 +1938,7 @@ VOID TW3Dnormal_view()
 /*-------------------------
     Draws a 3 dimensional cube.
   -------------------------*/
-INT TW3DdrawCube(ref_num, x1, y1, z1, x2, y2, z2, color, label)
+VOID TW3DdrawCube(ref_num, x1, y1, z1, x2, y2, z2, color, label)
 INT ref_num, x1, y1, z1, x2, y2, z2 ;
 INT color;
 char *label;
@@ -1959,7 +2008,7 @@ char *label;
 } /* end TW3DdrawCube */
 
 /* returns string size in user coordinate system */
-TWstringSize( string, width, height )
+VOID TWstringSize( string, width, height )
 char *string ;
 INT *width, *height ;
 {
@@ -1967,7 +2016,7 @@ INT *width, *height ;
     INT pix_width ;  /* width of string in pixels */
     INT pix_height ; /* height of string in pixels */
     len = strlen( string ) ;
-    pix_width = XTextWidth( fontinfoS, string, len ) ;
+    pix_width = XTextWidth( fontinfoS, string, (int)len ) ;
     pix_height = fontinfoS->ascent + fontinfoS->descent ;
     /* now reverse scale of coordinates */
     *width  = (INT) ( (DOUBLE) pix_width / scaleFactorS ) ;
@@ -1975,16 +2024,16 @@ INT *width, *height ;
 
 }
 
-TWdrawString( x, y, color, label )
+VOID TWdrawString( x, y, color, label )
 INT x, y, color ;
 char *label ;
 {
     if( color <= 0 || color > numColorS ){
 	if( initS ){ /* graphics are available */
-	    sprintf( YmsgG, "Color number:%d is out of range", color ) ;
+	    sprintf( YmsgG, "Color number:%d is out of range", (int)color ) ;
 	    TWmessage( YmsgG ) ;
 	} else {
-	    fprintf( stderr,"Color number:%d is out of range", color ) ;
+	    fprintf( stderr,"Color number:%d is out of range", (int)color ) ;
 	}
 	return ;
     } else if(!(colorOnS[color])){
@@ -2003,9 +2052,13 @@ char *label ;
     if( label ){
 	if( *label != EOS ){
 	    XDrawImageString( dpyS, drawS, graphicContextS[color], 
-		x, y, label, strlen(label) ) ;
+			(int)x,
+			(int)y, label,
+			(int)strlen(label) ) ;
 	    XDrawImageString( dpyS, pixmapS, graphicContextS[color], 
-		x, y, label, strlen(label) ) ;
+			(int)x,
+			(int)y, label,
+			(int)strlen(label) ) ;
 	}
     }
 } /* end TWdrawString */
@@ -2022,11 +2075,10 @@ static  FILE *netFileS = NULL ;  /* net file pointer */
 static  FILE *symbFileS = NULL ; /* symbfile pointer */
 static  INT  numCellS = 0 ; /* cell counter */
 static  INT  numNetS = 0 ;  /* net counter */
-static  INT  numPinS = 0 ;  /* pin counter */
 static  INT  numCharS = 0 ; /* symbol table counter */
 
 
-TWstartFrame()
+VOID TWstartFrame(VOID)
 {
     char filename[LRECL] ;
     char dummy[5] ;
@@ -2065,17 +2117,17 @@ TWstartFrame()
     frameCountS++ ;
 
     /* first cell file */
-    sprintf( filename, "%s/cell.bin.%d", dirNameS, frameCountS ) ;
+    sprintf( filename, "%s/cell.bin.%d", dirNameS, (int)frameCountS ) ;
     cellFileS = TWOPEN( filename, "w", ABORT ) ; 
     numCellS = 0 ; /* reset cell counter */
 
     /* next net file */
-    sprintf( filename, "%s/net.bin.%d", dirNameS, frameCountS ) ;
+    sprintf( filename, "%s/net.bin.%d", dirNameS, (int)frameCountS ) ;
     netFileS = TWOPEN( filename, "w", ABORT ) ; 
     numNetS = 0 ; /* reset net counter */
 
     /* next symb file */
-    sprintf( filename, "%s/symb.bin.%d", dirNameS, frameCountS ) ;
+    sprintf( filename, "%s/symb.bin.%d", dirNameS, (int)frameCountS ) ;
     symbFileS = TWOPEN( filename, "w", ABORT ) ; 
     /* write a dummy character at start file makes test for label */
     /* index easier since symbtable[0] is meaningless now. */
@@ -2088,7 +2140,7 @@ TWstartFrame()
 } /* end startNewFrame */
 
 /* write size of data at end of files and close them if frames are open */
-static closeFrame()
+static VOID closeFrame(VOID)
 {
     char dummy[5] ;
     UNSIGNED_INT nitems ;
@@ -2107,7 +2159,9 @@ static closeFrame()
 	numw = fwrite( &numNetS, sizeof(UNSIGNED_INT),nitems,netFileS ) ;
 	ASSERT( numw == 1, "startNewFrame", "Number written zero" ) ;
 	/* need to put on integer boundary */
-	if( excess = numCharS % 4 ){
+	
+	/* Use ((...)) to avoid assignment as a condition warning */
+	if(( excess = numCharS % 4 )){
 	    /* pad the remainder with dummy */
 	    nitems = (UNSIGNED_INT) (4 - excess ) ;
 	    numw = fwrite( dummy, sizeof(char), nitems, symbFileS ) ;
@@ -2130,7 +2184,7 @@ static closeFrame()
 
 } /* closeFrame */
 
-TWsetFrame( number )
+VOID TWsetFrame( number )
 INT number ;
 {
     char fileName[LRECL] ;
@@ -2143,7 +2197,7 @@ INT number ;
 	/* find max number of frames of data */ 
 	for( frameCountS=1;;frameCountS++ ){
 
-	    sprintf( fileName,"%s/cell.bin.%d",dirNameS,frameCountS ) ;
+	    sprintf( fileName,"%s/cell.bin.%d",dirNameS,(int)frameCountS ) ;
 	    if(! (YfileExists(fileName) )){
 		/* last file successfully read is one less */
 		frameCountS-- ; 
@@ -2290,7 +2344,9 @@ char	*label ;
 	    drawDArb( ref, color, label ) ;
 	    break ;
     }
-    while( bustptr = Ybuster() ){
+    
+    /* Use ((...)) to avoid assignment as a condition warning */
+    while(( bustptr = Ybuster() )){
 	/* l = bustptr[1].x ; */
 	/* r = bustptr[4].x ; */
 	/* b = bustptr[1].y ; */

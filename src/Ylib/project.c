@@ -48,13 +48,13 @@ REVISIONS:
 static char SccsId[] = "@(#) project.c (Yale) version 1.1 11/20/91" ;
 #endif
 
-#include <yalecad/base.h>
-#include <yalecad/project.h>
+#include "yalecad/base.h"
+#include "yalecad/project.h"
 
 static INT xspaceS = 0 ;
 static INT yspaceS = 0 ;
 
-Yproject_space( xspace, yspace )
+VOID Yproject_space( xspace, yspace )
 INT xspace, yspace ;
 {
     xspaceS = xspace ;

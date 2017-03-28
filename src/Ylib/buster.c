@@ -63,10 +63,10 @@ REVISIONS:  May  1, 1990 - made sure we cannot match the 0
 static char SccsId[] = "@(#) buster.c version 3.8 12/15/91" ;
 #endif
 
-#include <yalecad/base.h>
-#include <yalecad/buster.h>
-#include <yalecad/debug.h>
-#include <yalecad/message.h>
+#include "yalecad/base.h"
+#include "yalecad/buster.h"
+#include "yalecad/debug.h"
+#include "yalecad/message.h"
 
 #define EXPECTEDPTS  50
 /* detect problems with clockwise rotation pattern */
@@ -85,13 +85,15 @@ static YBUSTBOXPTR resultS;    /* the array of pts to break into tiles  */
 static INT cur_stateS ;        /* current state direction of edge */
 static char *user_messageS;    /* output message on error */
 /* ################## END STATIC definitions ########################## */
-static BOOL check_rect( P4(INT xx1, INT yy1, INT xx2, INT yy2 ) ) ;
 
-YBUSTBOXPTR Ybuster()
+/* Forward declarations */
+
+
+YBUSTBOXPTR Ybuster(VOID)
 {
 
     INT k , Pk[2] , Pl[2] , Pm[2]  ;
-    INT xmin , ymin , kmin , found ;
+    INT xmin , ymin , kmin = 0 , found ;
 
     if( cornerCountS <= 0 ){
 	return( NIL(YBUSTBOXPTR) ) ;
@@ -222,8 +224,7 @@ YBUSTBOXPTR Ybuster()
 } /* end buster */
 /* ***************************************************************** */
 
-Ybuster_addpt( xpos, ypos )
-INT xpos, ypos ;
+VOID Ybuster_addpt(INT xpos, INT ypos )
 {
     if( xpos == ptS[cornerCountS].x && ypos == ptS[cornerCountS].y ){
 	/* avoid redundant points */
@@ -239,7 +240,7 @@ INT xpos, ypos ;
 } /* end add_arb_pt */
 /* ***************************************************************** */
 
-Ybuster_init()
+VOID Ybuster_init(VOID)
 {
     /* allocate memory if needed */
     if(!(ptS)){
@@ -255,7 +256,7 @@ Ybuster_init()
 } /* end Ybuster_init */
 /* ***************************************************************** */
 
-Ybuster_free()
+VOID Ybuster_free(VOID)
 {
     /* free allocate memory */
     if(ptS){
@@ -327,13 +328,13 @@ INT xx1, yy1, xx2, yy2 ;
 
     if( xx1 == xx2 && yy1 == yy2 ) {
 	M(ERRMSG,"Ybuster_verify","a zero length side was found ");
-	sprintf(YmsgG,"%s @(%d,%d)\n", user_messageS, xx1, yy1 );
+	sprintf(YmsgG,"%s @(%d,%d)\n", user_messageS, (int)xx1, (int)yy1 );
 	M(ERRMSG,NULL,YmsgG);
 	return( TRUE ) ;
     } else if( xx1 != xx2 && yy1 != yy2 ) {
 	M(ERRMSG,"Ybuster_verify","a non rectilinear side was found");
 	sprintf(YmsgG," %s @(%d,%d)\n", 
-	    user_messageS, xx1, yy1 );
+	    user_messageS, (int)xx1, (int)yy1 );
 	M(ERRMSG,NULL,YmsgG);
 	return( TRUE ) ;
     } else if( xx2 == xx1 ){
@@ -364,7 +365,7 @@ INT xx1, yy1, xx2, yy2 ;
     return( FALSE ) ;
 } /* end Ybuster_check_rect */
 
-Ybuster_check_rect_init( user_string )
+VOID Ybuster_check_rect_init( user_string )
 char *user_string ;
 {
     cur_stateS = S_STATE ;

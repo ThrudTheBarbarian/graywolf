@@ -53,11 +53,12 @@ static char SccsId[] = "@(#) plot.c version 1.6 12/9/91" ;
 
 #include <stdarg.h>
 #include <string.h>
-#include <yalecad/base.h>
-#include <yalecad/debug.h>
-#include <yalecad/message.h>
-#include <yalecad/file.h>
-#include <yalecad/string.h>
+#include "yalecad/base.h"
+#include "yalecad/debug.h"
+#include "yalecad/message.h"
+#include "yalecad/file.h"
+#include "yalecad/plot.h"
+#include "yalecad/ystring.h"
 
 #define MAXARGS 20
 typedef struct {
@@ -72,16 +73,16 @@ static INT gfilenoS = 0 ;
 static BOOL graphFilesS = TRUE ;
 
 
-static INT findType();
+static INT findType(char **control, INT number);
 
-Yplot_control( toggle )
+VOID Yplot_control( toggle )
 BOOL toggle ;
 {
     graphFilesS = toggle ;
 } /* end YgraphControl */
 
 /* graph init uses variable number of arguments */
-Yplot_init( int dval, ... )
+VOID Yplot_init( INT dval, ... )
 {
 
     va_list ap ;
@@ -96,7 +97,8 @@ Yplot_init( int dval, ... )
 	return ;
     }
 
-    while( graphName = va_arg( ap, char * ) ){
+    /* Use ((...)) to avoid assignment as a condition warning */
+    while(( graphName = va_arg( ap, char * )) ){
 	/* save graph file name */
 	gptr = &(gfileS[gfilenoS++]) ;
 	sprintf( gptr->fileName,"%s",graphName ) ;
@@ -108,14 +110,13 @@ Yplot_init( int dval, ... )
 }
 
 /* graph init uses variable number of arguments */
-Yplot_heading( int dval, ... )
+VOID Yplot_heading( INT dval, ... )
 {
 
     va_list ap ;
     char *gName, *varName ;
-    YPLOTPTR gptr ;
     INT i ;
-    FILE *fp ;
+    FILE *fp = NULL ;
 
     va_start(ap, dval) ;
 
@@ -144,20 +145,21 @@ Yplot_heading( int dval, ... )
 	}
 	if( i >= gfilenoS ){
 	    sprintf( YmsgG,
-		"couldn't find file %s name in opened file list\n" ) ;
+		"couldn't find file %s name in opened file list\n", gName) ;
 	    M(ERRMSG,"GRAPH", YmsgG ) ;
 	    return ;
 	}
     }
     gfileS[i].headPrintedAlready = TRUE ;
-    while( varName = va_arg( ap, char * ) ){
+    /* Use ((...)) to avoid assignment as a condition warning */
+    while(( varName = va_arg( ap, char * ) )){
 	fprintf( fp, "%s\t", varName ) ;
     }
     fprintf( fp, "\n" ) ;
     va_end(ap) ;
 }
 
-Yplot_close()
+VOID Yplot_close(VOID)
 {
     INT i ;
 
@@ -180,7 +182,7 @@ Yplot_close()
 /* This is what argument list looks like - use it to pass any type */
 /* of variable to graph */
 /* GRAPH( graphFileName, xVarformat, xVar, yVarformat, yVars... ) */ 
-Yplot( int dval, ... ) 
+VOID Yplot( char * dval, ... ) 
 {
     va_list ap ;
     char *gName ;
@@ -192,7 +194,7 @@ Yplot( int dval, ... )
     INT gint ;
     INT i , type, numtokens ;
     DOUBLE gdoub ;
-    FILE *fp ;
+    FILE *fp = NULL;
     static char copyformatS[LRECL] ;
     /* static INT findType();*/
 
@@ -218,7 +220,7 @@ Yplot( int dval, ... )
 	}
 	if( i >= gfilenoS ){
 	    sprintf( YmsgG,
-		"couldn't find file %s name in opened file list\n" ) ;
+		"couldn't find file %s name in opened file list\n", gName) ;
 	    M(ERRMSG,"GRAPH", YmsgG ) ;
 	    return ;
 	}
@@ -250,7 +252,7 @@ Yplot( int dval, ... )
 	}
 	break ;
     case CHAR_TYPE:
-#ifdef linux
+#if defined(linux) || defined (__APPLE__)
 	gchar = (char) va_arg( ap, int ) ;
 #else
 	gchar = va_arg( ap, char ) ;
@@ -299,7 +301,7 @@ Yplot( int dval, ... )
 		fprintf( fp, tokenBuf[i], gint ) ;
 		break ;
 	    case CHAR_TYPE:
-#ifdef linux
+#if defined(linux) || defined (__APPLE__)
 		gchar = (char) va_arg( ap, int ) ;
 #else
 		gchar = va_arg( ap, char ) ;
@@ -321,7 +323,7 @@ Yplot( int dval, ... )
 
 }
 
-Yplot_flush( gName ) 
+VOID Yplot_flush( gName ) 
 char *gName ;
 {
     INT i ;
@@ -344,7 +346,7 @@ char *gName ;
 	}
 	if( i >= gfilenoS ){
 	    sprintf( YmsgG,
-		"couldn't find file %s name in opened file list\n" ) ;
+		"couldn't find file %s name in opened file list\n", gName ) ;
 	    M(ERRMSG,"GRAPH", YmsgG ) ;
 	    return ;
 	}

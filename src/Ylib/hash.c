@@ -60,9 +60,10 @@ static char SccsId[] = "@(#) hash.c version 3.11 12/15/91" ;
 #endif
 
 #include <stdio.h>
-#include <yalecad/base.h>
-#include <yalecad/hash.h>
-#include <yalecad/debug.h>
+#include <string.h>
+#include "yalecad/base.h"
+#include "yalecad/hash.h"
+#include "yalecad/debug.h"
 
 extern char *Ystrclone(char *);
 
@@ -97,7 +98,7 @@ YHASHPTR  hashtable ;
     return(hashtable->size) ;
 }
 
-Yhash_table_delete(hashtable, userdelete )
+VOID Yhash_table_delete(hashtable, userdelete )
 YHASHPTR  hashtable ;
 INT  (*userdelete)() ;
 {
@@ -153,14 +154,15 @@ INT operation ;
     /*  FUNCTION hash_key */
     name = key ;
     for (shift=1 ;*name; name++){
-	hsum = hsum + *name<<shift;
+	hsum = hsum + (*name<<shift);
 	shift = (shift + 1) & 0x0007;
     }
 #endif
     hsum %= tablesize ;
 
     /* insert into table only if distinct number */
-    if( temptr = table[hsum] ){
+    /* Use ((...)) to avoid assignment as a condition warning */
+    if(( temptr = table[hsum] )){
 	/* list started at this hash */
 	for(curPtr=temptr;curPtr;curPtr=curPtr->next ) {
 	    if( strcmp(curPtr->key, key ) == STRINGEQ ){
@@ -198,7 +200,9 @@ INT operation ;
 	    curTable->key = (char *) Ystrclone( key ) ;
 	    curTable->next = NULL ;
 	    /* now fix thread which goes through hash table */
-	    if( tempThread = hashtable->thread ){
+	    
+	    /* Use ((...)) to avoid assignment as a condition warning */
+	    if(( tempThread = hashtable->thread )){
 		hashtable->thread = curTable ;
 		curTable->threadNext = tempThread ;
 	    } else {
@@ -251,14 +255,15 @@ BOOL *new_flag ;
     /*  FUNCTION hash_key */
     name = key ;
     for (shift=1 ;*name; name++){
-	hsum = hsum + *name<<shift;
+	hsum = hsum + (*name<<shift);
 	shift = (shift + 1) & 0x0007;
     }
 #endif
     hsum %= tablesize ;
 
     /* insert into table only if distinct number */
-    if( temptr = table[hsum] ){
+    /* Use ((...)) to avoid assignment as a condition warning */
+    if(( temptr = table[hsum] )){
 	/* list started at this hash */
 	for(curPtr=temptr;curPtr;curPtr=curPtr->next ) {
 	    if( strcmp(curPtr->key, key ) == STRINGEQ ){
@@ -287,7 +292,8 @@ BOOL *new_flag ;
 	curTable->key = (char *) Ystrclone( key ) ;
 	curTable->next = NULL ;
 	/* now fix thread which goes through hash table */
-	if( tempThread = hashtable->thread ){
+	/* Use ((...)) to avoid assignment as a condition warning */
+	if(( tempThread = hashtable->thread )){
 	    hashtable->thread = curTable ;
 	    curTable->threadNext = tempThread ;
 	} else {

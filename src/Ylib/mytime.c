@@ -56,7 +56,7 @@ static char SccsId[] = "@(#) mytime.c version 3.8 12/15/91" ;
 #endif
 
  
-#include <yalecad/base.h>
+#include "yalecad/base.h"
 
 /* NOTE to user on foreign machines: if below does not compile, you */
 /* may use the alternate random seed generator at some penalty for */
@@ -76,7 +76,7 @@ static char SccsId[] = "@(#) mytime.c version 3.8 12/15/91" ;
 #include <sys/time.h>
 #endif
 
-unsigned Yrandom_seed()
+UNSIGNED_INT Yrandom_seed(VOID)
 {
     UNSIGNED_INT m , time1 , time2 ;
     struct timeval tp ;
@@ -91,7 +91,7 @@ unsigned Yrandom_seed()
 #else  /* ALTERNATE */
 
 /* returns a random seed from system clock */
-unsigned Yrandom_seed()
+UNSIGNED_INT Yrandom_seed(VOID)
 {
     UNSIGNED_INT seed ;
     long t ;

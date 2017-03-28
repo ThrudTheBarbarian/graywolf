@@ -71,11 +71,13 @@ REVISIONS: Apr 10, 1990 - rewrote debug routines so that each individual
 static char SccsId[] = "@(#) ydebug.c (Yale) version 3.15 2/7/92" ;
 #endif
 
-#include <yalecad/base.h>
-#include <yalecad/rbtree.h>
-#include <yalecad/file.h>
-#include <yalecad/message.h>
-#include <yalecad/string.h>
+#include <string.h>
+
+#include "yalecad/base.h"
+#include "yalecad/rbtree.h"
+#include "yalecad/file.h"
+#include "yalecad/message.h"
+#include "yalecad/ystring.h"
 
 #define DBGFILE "dbg"
 
@@ -103,8 +105,9 @@ char *routine ;
 	return_code = FALSE ;
 	if( routine ){
 	    routine_key.routine = routine ;
-	    if( data = (ROUTINEPTR) 
-		Yrbtree_search( debug_treeS, (char *) &(routine_key) ) ){
+	    
+	    /* Use ((...)) to avoid assignment as a condition warning */
+	    if(( data = (ROUTINEPTR)Yrbtree_search( debug_treeS, (char *) &(routine_key)))){
 		if( data->debugOn ){
 		    return_code = TRUE ;
 		}
@@ -132,12 +135,12 @@ char *routine ;
 } /* end Ydebug */
 
 /* ASSERTIONS are always on */
-BOOL YdebugAssert() 
+BOOL YdebugAssert(VOID) 
 {   
     return( debugFlagS ) ;
 } /* end YdebugAssert */
 
-YdebugWrite()
+VOID YdebugWrite(VOID)
 {
     ROUTINEPTR data ;              /* the data in the tree */
     FILE *fp ;                   /* write to the debug file */
@@ -160,7 +163,7 @@ YdebugWrite()
     }
 }
 
-YsetDebug( flag )
+VOID YsetDebug( flag )
 BOOL flag ;
 {
 
@@ -175,8 +178,10 @@ BOOL flag ;
 	/* initialize tree of routine name */
 	YRBTREE_INIT( debug_treeS, compare_routine );
 	line = 0 ;
-	if( fp = TWOPEN( DBGFILE, "r", NOABORT ) ){
-	    while( bufferptr=fgets(buffer,LRECL,fp )){
+	
+	/* Use ((...)) to avoid assignment as a condition warning */
+	if((fp = TWOPEN( DBGFILE, "r", NOABORT ))){
+	    while((bufferptr=fgets(buffer,LRECL,fp ))){
 		/* parse file */
 		line ++ ; /* increment line number */
 		tokens = Ystrparser( bufferptr, " \t\n", &numtokens );
@@ -185,7 +190,7 @@ BOOL flag ;
 		    data = make_data_debug( tokens[0], atoi(tokens[1]) ) ;
 		    Yrbtree_insert( debug_treeS, (char *) data ) ;
 		} else {
-		    sprintf( YmsgG, "Syntax error on line:%d\n", line ) ;
+		    sprintf( YmsgG, "Syntax error on line:%d\n", (int)line ) ;
 		    M(ERRMSG, "YsetDebug", YmsgG ) ;
 		} 
 	    }
@@ -215,19 +220,19 @@ BOOL debugOn ;
     return( data ) ;
 } /* end make_data_debug */
 
-YfixDebug( ptr, type )
+VOID YfixDebug( ptr, type )
 char *ptr ;
 INT type ;
 {
     switch( type ){
     case 0: /* integer */
-	printf( "%d\n", (INT) ptr ) ;
+	printf( "%lld\n", (long long) ptr ) ;
 	break ;
     case 1: /* string */
 	printf( "%s\n", ptr ) ;
 	break ;
     case 2: /* hexidecimal */
-	printf( "%0x\n", (INT) ptr ) ;
+	printf( "%p\n", ptr ) ;
 	break ;
     }
 }

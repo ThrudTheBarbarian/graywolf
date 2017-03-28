@@ -69,7 +69,7 @@
 static char SccsId[] = "@(#) deck.c (Yale) version 1.17 1/22/92" ;
 #endif
 
-#include <yalecad/deck.h>
+#include "yalecad/deck.h"
 
 static YCARD deckEndS;
 
@@ -249,13 +249,13 @@ VOID Ydeck_dump( deckPtr, userPrint )
      VOID (*userPrint)();
 {
   
-  fprintf( stderr,"%d cards\n",deckPtr->size);
+  fprintf( stderr,"%d cards\n",(int)(deckPtr->size));
   fprintf( stderr,"Deck top to bottom:" ) ;
   for ( Ydeck_top(deckPtr); Ydeck_notEnd(deckPtr); Ydeck_down(deckPtr) ) {
     if (userPrint) {
       (*userPrint)(Ydeck_getData(deckPtr));
     } else {
-      fprintf( stderr,"%d ", (INT)Ydeck_getData(deckPtr) ) ;
+      fprintf( stderr,"%p ", Ydeck_getData(deckPtr) ) ;
     }
   }
   fprintf( stderr,"\n" ) ;  
@@ -264,7 +264,7 @@ VOID Ydeck_dump( deckPtr, userPrint )
     if (userPrint) {
       (*userPrint)(Ydeck_getData(deckPtr));
     } else {
-      fprintf( stderr,"%d ", (INT) Ydeck_getData(deckPtr) ) ;
+      fprintf( stderr,"%p ", Ydeck_getData(deckPtr) ) ;
     }
   }
   fprintf( stderr,"\n" ) ;  

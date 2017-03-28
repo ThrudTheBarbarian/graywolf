@@ -66,11 +66,11 @@ static char SccsId[] = "@(#) yreadpar.c (Yale) version 1.6 10/1/91" ;
 #endif
 
 #include <string.h>
-#include <yalecad/file.h>
-#include <yalecad/rbtree.h>
-#include <yalecad/message.h>
-#include <yalecad/string.h>
-#include <yalecad/yreadpar.h>
+#include "yalecad/file.h"
+#include "yalecad/rbtree.h"
+#include "yalecad/message.h"
+#include "yalecad/ystring.h"
+#include "yalecad/yreadpar.h"
 
 #define COMMENT		'#'
 #define WILDCARD	'*'
@@ -152,30 +152,6 @@ static INT  lineS = 0 ;
 static char filterNameS[5] ;
 static BOOL verboseS = TRUE ;
 
-static INT prog2id( program ) 
-char *program ;
-{
-    INT c ;
-    struct ptable_rec *low = pgmtableS,          /* ptr to beginning */
-		      *mid ,  
-		      *high = END(pgmtableS) ;   /* ptr to end */
-
-    /* binary search to look thru table to find pattern match */
-    while( low <= high){
-	mid = low + (high-low) / 2 ;
-	if( (c = strcmp(mid->program, program) ) == STRINGEQ){
-	    return( mid->program_id ) ; /* return token number */
-	} else if( c < 0 ){
-	    low = mid + 1 ;
-	} else {
-	    high = mid - 1 ;
-	}
-    }
-    /* at this point we haven't found a match so we have an error */
-    return( UNKN ) ;
-		
-} /* end prog2id function */
-
 static char *id2prog( id )
 INT id ;
 {
@@ -236,7 +212,7 @@ char type ;
     RULEPTR data ;
     RULEBOX data_buffer ;
     DOUBLE  fvalue ;   
-    INT     data_value ;
+    /*INT     data_value ;*/
     char    key[LRECL] ;
 
     /* make the key */
@@ -245,7 +221,7 @@ char type ;
 
     /* see if key already exists */
     if( Yrbtree_search( rule_treeS, (char *) &(data_buffer) ) ){
-	sprintf( YmsgG, "Rule on line:%d already exists. Ignored.\n", lineS ) ;
+	sprintf( YmsgG, "Rule on line:%d already exists. Ignored.\n", (int)lineS ) ;
 	M( ERRMSG, "Yreadpar_init", YmsgG ) ;
 	return( NIL(char *) ) ;
     }
@@ -302,7 +278,7 @@ char type ;
     RULEPTR data ;
     RULEBOX data_buffer ;
     DOUBLE  fvalue ;   
-    INT     data_value ;
+    /*INT     data_value ;*/
     char    key[LRECL] ;
 
 
@@ -316,7 +292,7 @@ char type ;
 
     /* see if key already exists */
     if( Yrbtree_search( rule_treeS, (char *) &(data_buffer) ) ){
-	sprintf( YmsgG, "Rule on line:%d already exists. Ignored.\n", lineS ) ;
+	sprintf( YmsgG, "Rule on line:%d already exists. Ignored.\n", (int)lineS ) ;
 	M( ERRMSG, "Yreadpar_init", YmsgG ) ;
 	return( NIL(char *) ) ;
     }
@@ -363,10 +339,11 @@ BOOL abortFlag ;
     char *data ;                /* rule data to be stored */
     static BOOL rules_unreadL=TRUE; /* false after the rules have been read */
 
-    if( suffix = id2suffix( parfile ) ){
+    /* Use ((...)) to avoid assignment as a condition warning */
+    if((suffix = id2suffix( parfile ))){
 	prog_idS = parfile ;
 	sprintf( filename, "%s.%s", design_name, suffix ) ;
-	if( pname = id2prog( filter )){
+	if((pname = id2prog( filter ))){
 	    filter_idS = filter ;
 	    strcpy( filterNameS, pname ) ;
 	} else {
@@ -392,7 +369,8 @@ BOOL abortFlag ;
 
 
     /* TRY to read the RULES SECTION of the parameter file */
-    while( bufferptr = fgets( bufferS, LRECL, fpS ) ){
+    /* Use ((...)) to avoid assignment as a condition warning */
+    while((bufferptr = fgets( bufferS, LRECL, fpS ))){
 	lineS++ ;
 	/* remove leading blanks */
 	bufferptr = Yremove_lblanks( bufferptr ) ;
@@ -497,7 +475,7 @@ BOOL abortFlag ;
 
 	    } else {
 		sprintf( YmsgG, "Unknown rule at line:%d in filename:%s\n", 
-		    lineS, filename ) ;
+		    (int)lineS, filename ) ;
 		M( ERRMSG, "Yreadpar_init", YmsgG ) ;
 	    }
 
@@ -519,7 +497,6 @@ INT  *numtokens ;
 BOOL *onNotOff ;
 BOOL *wildcard ;
 {
-    PARAMPTR data ;
     char *bufferptr ;
     char **tokens ;
     BOOL rule_section ;
@@ -532,7 +509,8 @@ BOOL *wildcard ;
     /* assume that every option is on */
     *onNotOff = TRUE ; 
     rule_section = FALSE ;
-    while( bufferptr = fgets( bufferS, LRECL, fpS )){
+    /* Use ((...)) to avoid assignment as a condition warning */
+    while((bufferptr = fgets( bufferS, LRECL, fpS ))){
 	/* parse file */
 	lineS++ ;
 	*line = lineS ;
@@ -573,7 +551,7 @@ BOOL *wildcard ;
 		    continue ;
 		} else {
 		    sprintf( YmsgG,
-			"Trouble parsing line:%d :\n\t%s\n", lineS,
+			"Trouble parsing line:%d :\n\t%s\n", (int)lineS,
 			copy_bufferS ) ;
 		    M( ERRMSG, "Yreadpar_next", YmsgG ) ;
 		    continue ;
@@ -628,8 +606,8 @@ YPARPTR Yreadpar_file()
     YRBTREE_INIT( store, compare_parameter );
 
     /* assume that every option is on */
-    while( tokens = Yreadpar_next( &lineptr, &line, &numtokens,
-	&onNotOff, &wildcard )){
+    /* Use ((...)) to avoid assignment as a condition warning */
+    while((tokens = Yreadpar_next( &lineptr, &line, &numtokens, &onNotOff, &wildcard ))){
 	if( numtokens == 0 ){
 	    continue ;
 	}
@@ -647,8 +625,7 @@ YPARPTR Yreadpar_file()
 	    Yrbtree_insert( store, data ) ;
 	} else {
 	    sprintf( YmsgG,
-		"Trouble parsing line:%d :\n\t%s\n", line,
-		lineptr ) ;
+		"Trouble parsing line:%d :\n\t%s\n", (int)line,	lineptr ) ;
 	    M( ERRMSG, "Yreadpar_file", YmsgG ) ;
 	    continue ;
 	}
@@ -695,7 +672,8 @@ char *object1, *object2 ;
     sprintf( key, "%s/%s:%c", object1, object2, SPACING_T ) ;
     data_buffer.rule = key ;
 
-    if( data = (RULEPTR) Yrbtree_search( rule_treeS, (char *) &(data_buffer) ) ){
+	/* Use ((...)) to avoid assignment as a condition warning */
+    if((data = (RULEPTR) Yrbtree_search( rule_treeS, (char *) &(data_buffer) ))){
 	return( data->value.fvalue ) ;
     } else if( verboseS ){
 	sprintf( YmsgG, 
@@ -703,9 +681,8 @@ char *object1, *object2 ;
 	    object1, object2 );
 	M( ERRMSG, "Yreadpar_spacing", YmsgG ) ;
 	M( ERRMSG, NULL, "\tDefaulting to zero.\n\n" ) ;
-	return( 0 ) ;
     }
-
+	return (DOUBLE)0.0;
 } /* end Yreadpar_spacing */
 
 DOUBLE Yreadpar_width( object )
@@ -719,7 +696,9 @@ char *object ;
     /* first build the key */
     sprintf( key, "%s:%c", object, WIDTH_T ) ;
     data_buffer.rule = key ;
-    if( data = (RULEPTR) Yrbtree_search( rule_treeS, (char *) &(data_buffer) ) ){
+    
+    /* Use ((...)) to avoid assignment as a condition warning */
+    if((data = (RULEPTR) Yrbtree_search( rule_treeS, (char *) &(data_buffer) ))){
 	return( data->value.fvalue ) ;
     } else {
 	sprintf( YmsgG, 
@@ -729,7 +708,7 @@ char *object ;
 	M( ERRMSG, NULL, "\tDefaulting to zero.\n\n" ) ;
 	return( 0 ) ;
     }
-
+	return (DOUBLE)0.0;
 } /* end Yreadpar_spacing */
 
 DOUBLE Yreadpar_pitch( object )
@@ -757,7 +736,8 @@ char *object ;
     /* first build the key */
     sprintf( key, "%s:%c", object, RESISTANCE_T ) ;
     data_buffer.rule = key ;
-    if( data = (RULEPTR) Yrbtree_search( rule_treeS, (char *) &(data_buffer) ) ){
+    /* Use ((...)) to avoid assignment as a condition warning */
+    if((data = (RULEPTR) Yrbtree_search( rule_treeS, (char *) &(data_buffer) ))){
 	return( data->value.fvalue ) ;
     } else if( verboseS ){
 	sprintf( YmsgG, 
@@ -765,8 +745,9 @@ char *object ;
 	    object );
 	M( ERRMSG, "Yreadpar_layer_res", YmsgG ) ;
 	M( ERRMSG, NULL, "\tDefaulting to zero.\n\n" ) ;
-	return( 0 ) ;
     }
+	/* add a fallback of 0.0 ... */
+	return (DOUBLE)0.0;
 
 } /* end Yreadpar_layer_res */
 
@@ -781,7 +762,9 @@ char *object ;
     /* first build the key */
     sprintf( key, "%s:%c", object, CAPACITANCE_T ) ;
     data_buffer.rule = key ;
-    if( data = (RULEPTR) Yrbtree_search( rule_treeS, (char *) &(data_buffer) ) ){
+    
+    /* Use ((...)) to avoid assignment as a condition warning */
+    if((data = (RULEPTR) Yrbtree_search( rule_treeS, (char *) &(data_buffer) ))){
 	return( data->value.fvalue ) ;
     } else if( verboseS ){
 	sprintf( YmsgG, 
@@ -789,8 +772,9 @@ char *object ;
 	    object );
 	M( ERRMSG, "Yreadpar_layer_cap", YmsgG ) ;
 	M( ERRMSG, NULL, "\tDefaulting to zero.\n\n" ) ;
-	return( (DOUBLE) 0.0 ) ;
     }
+	/* add a fallback of 0.0 ... */
+	return (DOUBLE)0.0;
 
 } /* end Yreadpar_layer_cap */
 
@@ -798,7 +782,6 @@ BOOL Yreadpar_layer_HnotV( object )
 char *object ;
 {
     char  key[LRECL] ;
-    char  *keyptr ;
     RULEPTR data ;
     RULEBOX data_buffer ;
 
@@ -806,7 +789,9 @@ char *object ;
     /* first build the key */
     sprintf( key, "%s:%c", object, DIRECTION_T ) ;
     data_buffer.rule = key ;
-    if( data = (RULEPTR) Yrbtree_search( rule_treeS, (char *) &(data_buffer) ) ){
+
+    /* Use ((...)) to avoid assignment as a condition warning */
+    if((data = (RULEPTR) Yrbtree_search( rule_treeS, (char *) &(data_buffer) ))){
 	return( data->value.bvalue ) ;
     } else if( verboseS ){
 	sprintf( YmsgG, 
@@ -814,9 +799,9 @@ char *object ;
 	    object );
 	M( ERRMSG, "Yreadpar_layer_HnotV", YmsgG ) ;
 	M( ERRMSG, NULL, "\tDefaulting to horizontal.\n\n" ) ;
-	return( TRUE ) ;
     }
 
+	return( TRUE ) ;
 } /* end Yreadpar_layer_HnotV */
 
 INT Yreadpar_layer2id( object )
@@ -830,7 +815,9 @@ char *object ;
     /* first build the key */
     sprintf( key, "%s:%c", object, LAYER_T ) ;
     data_buffer.rule = key ;
-    if( data = (RULEPTR) Yrbtree_search( rule_treeS, (char *) &(data_buffer) ) ){
+    
+    /* Use ((...)) to avoid assignment as a condition warning */
+    if((data = (RULEPTR) Yrbtree_search( rule_treeS, (char *) &(data_buffer) ))){
 	return( data->value.ivalue ) ;
     } else if( verboseS ){
 	sprintf( YmsgG, 
@@ -838,9 +825,9 @@ char *object ;
 	    object );
 	M( ERRMSG, "Yreadpar_layer2id", YmsgG ) ;
 	M( ERRMSG, NULL, "\tDefaulting to horizontal.\n\n" ) ;
-	return( TRUE ) ;
     }
 
+	return( TRUE ) ;
 } /* end Yreadpar_layer2id */
 
 char *Yreadpar_id2layer( layerid )
@@ -852,7 +839,7 @@ INT layerid ;
     } else {
 	sprintf( YmsgG, 
 	    "Layer id:%d is out of bounds. Numlayers = %d\n",
-	    layerid, numlayS ) ;
+	    (int)layerid, (int)numlayS ) ;
 	M( ERRMSG, "Yreadpar_id2layer", YmsgG ) ;
 	M( ERRMSG, NULL, "\tDefaulting to layer 1.\n\n" ) ;
 	return( layerArrayS[1] ) ;
@@ -881,16 +868,17 @@ char *object1, *object2 ;
     } else {
 	sprintf( key, "%s/%s:%c", object2, object1, VIA_T ) ;
     }
-    if( data = (RULEPTR) Yrbtree_search( rule_treeS, (char *) &(data_buffer) ) ){
+    /* Use ((...)) to avoid assignment as a condition warning */
+    if((data = (RULEPTR) Yrbtree_search( rule_treeS, (char *) &(data_buffer) ) )){
 	return( data->value.svalue ) ;
     } else if( verboseS ){
 	sprintf( YmsgG, 
 	    "Could not find a via between layers %s and %s.\n",
 	    object1, object2 );
 	M( ERRMSG, "Yreadpar_vianame", YmsgG ) ;
-	return( NIL(char *) ) ;
     }
 
+	return( NIL(char *) ) ;
 } /* end Yreadpar_vianame */
 
 char *Yreadpar_viaId2name( viaid )
@@ -902,7 +890,7 @@ INT viaid ;
     } else {
 	sprintf( YmsgG, 
 	    "Via id:%d is out of bounds. Numvias = %d\n",
-	    viaid, numviaS ) ;
+	    (int)viaid, (int)numviaS ) ;
 	M( ERRMSG, "Yreadpar_viaId2name", YmsgG ) ;
 	M( ERRMSG, NULL, "\tDefaulting to via id 1.\n\n" ) ;
 	return( viaArrayS[1] ) ;

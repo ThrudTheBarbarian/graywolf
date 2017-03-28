@@ -70,10 +70,10 @@ REVISIONS:  Dec  4, 1989 added YsetSize and made Yenumerate a macro.
 static char SccsId[] = "@(#) set.c version 3.8 12/15/91" ;
 #endif
 
-#include <yalecad/base.h>
-#include <yalecad/debug.h>
-#include <yalecad/message.h>
-#include <yalecad/set.h>
+#include "yalecad/base.h"
+#include "yalecad/debug.h"
+#include "yalecad/message.h"
+#include "yalecad/set.h"
 
 
 /* initialize set */
@@ -86,12 +86,15 @@ INT lowerLimit, upperLimit ;
 
     set = YMALLOC( 1, YSET ) ;
 
-    ASSERTNRETURN( set, "Yset_init", "Ran out of memory\n" ) ;
+    ASSERTNRETURN2( set, "Yset_init", "Ran out of memory\n" ) ;
 
     /* make sure set limits are correct */
     if( lowerLimit > upperLimit ){
 	M( ERRMSG, "Yset_init", "Set limits are in error\n" ) ;
-	return ;
+		{
+		YFREE(set);
+		return NULL;
+    	}
     }
     sizeSet = upperLimit - lowerLimit + 1 ;
     set->set = YMALLOC( sizeSet, YSETLISTPTR ) ; 
@@ -110,7 +113,7 @@ INT lowerLimit, upperLimit ;
     return( set ) ;
 } /* end Yset_init */
 
-Yset_free( set ) 
+VOID Yset_free( set ) 
 YSETPTR set ;
 {   
     INT i ;
@@ -158,7 +161,9 @@ INT  node ;
 	set->set[node]->member = set->in_set ;
 	set->cardinality++ ;
 	/* connect the doubly linked list */
-	if( temp = set->list ){
+	
+	/* Use ((...)) to avoid assignment as a condition warning */
+	if(( temp = set->list )){
 	    /* hook to old list */
 	    set->list = set->set[node] ;
 	    set->list->next = temp ;
@@ -180,7 +185,7 @@ INT  node ;
 } /* end Yset_add */
 
 /* delete a node from the set */
-Yset_delete( set, node )
+VOID Yset_delete( set, node )
 YSETPTR set ;
 INT node ;
 {
@@ -224,7 +229,7 @@ INT node ;
 } /* end Yset_delete */
 	
 /* To clear set we only need to update in_set number and to null list */
-Yset_empty( set ) 
+VOID Yset_empty( set ) 
 YSETPTR set ;
 {
     set->in_set++ ;
@@ -234,7 +239,7 @@ YSETPTR set ;
 
 
 /* Set complementation */
-Yset_comp( set ) 
+VOID Yset_comp( set ) 
 YSETPTR set ;
 {
 

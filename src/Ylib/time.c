@@ -53,7 +53,7 @@ static char SccsId[] = "@(#) time.c version 3.3 8/28/90" ;
 #endif
 
 #include <time.h>
-#include <yalecad/base.h>
+#include "yalecad/base.h"
 
 #ifdef THINK_C
 #define TIME_T time_t

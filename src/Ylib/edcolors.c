@@ -58,19 +58,19 @@ static char SccsId[] = "@(#) edcolors.c (Yale) version 1.8 12/15/91" ;
 #include <X11/Xatom.h>
 #include <X11/Xutil.h>
 
-#include <yalecad/base.h>
-#include <yalecad/dialog.h>
-#include <yalecad/colors.h>
-#include <yalecad/draw.h>
-#include <yalecad/string.h>
+#include "yalecad/base.h"
+#include "yalecad/dialog.h"
+#include "yalecad/colors.h"
+#include "yalecad/draw.h"
+#include "yalecad/ystring.h"
 #include "info.h"
 
 static TWDIALOGPTR fieldS ;
-static init_field( P8(INT field, INT row, INT column, INT str_len, char *string,
+static VOID init_field( P8(INT field, INT row, INT column, INT str_len, char *string,
 		    INT type, INT color, INT group ) ) ;
 
 /* be able to turn off individual colors */
-TWtoggleColors()
+VOID TWtoggleColors(VOID)
 {
     char **colors ;      /* the standard color array */
     INT  i ;             /* counter */
@@ -81,7 +81,6 @@ TWtoggleColors()
     INT  color ;         /* current color processed */
     INT  field ;         /* current field of dialog */
     BOOL *colorOn ;      /* whether each color is on */
-    TWDIALOGPTR fptr;    /* current field of dialog */
     TWDRETURNPTR answer ; /* return from user */
     TWINFOPTR info ;     /* get information from main draw routine */
 
@@ -135,7 +134,8 @@ TWtoggleColors()
 
     /* initialization complete */
 
-    if( answer = TWdialog( fieldS, "colors", NULL ) ){
+    /* use ((...)) to avoid assignment as condition warning */
+    if((answer = TWdialog( fieldS, "colors", NULL ) )){
 	if( answer[3].bool ){
 	    TWarb_fill( TRUE ) ;
 	} else {
@@ -159,7 +159,7 @@ TWtoggleColors()
 } /* end TWtoggleColors */
 
 
-static init_field( field, row, column, str_len, string, 
+static VOID init_field( field, row, column, str_len, string, 
 type, color, group )
 INT field, row, column, str_len, type, color, group ;
 char *string ;

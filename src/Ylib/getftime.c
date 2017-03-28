@@ -49,9 +49,9 @@ REVISIONS:  Apr 29, 1990 - added message.h
 static char SccsId[] = "@(#) getftime.c version 1.3 8/28/90" ;
 #endif
 
-#include <yalecad/base.h>
-#include <yalecad/debug.h>
-#include <yalecad/message.h>
+#include "yalecad/base.h"
+#include "yalecad/debug.h"
+#include "yalecad/message.h"
 #include <sys/types.h>
 #include <sys/stat.h>
 

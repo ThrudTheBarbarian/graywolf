@@ -57,8 +57,8 @@ REVISIONS:  Mar 21, 1989 - added get current value of random variable.
 static char SccsId[] = "@(#) rand.c version 3.8 4/7/92" ;
 #endif
 
-#include <yalecad/base.h>
-#include <yalecad/debug.h>
+#include "yalecad/base.h"
+#include "yalecad/debug.h"
 
 static INT randVarS = 1 ;                 /* random number */
 
@@ -68,7 +68,7 @@ static INT randVarS = 1 ;                 /* random number */
 #define R_RAND 2836                       /* m mod a */
 
 /* returns a random number in [0..2**31 - 1] */
-INT Yacm_random() 
+INT Yacm_random(VOID) 
 {
     register INT k_rand ;
 
@@ -81,7 +81,7 @@ INT Yacm_random()
 
 } /* end acm_random */
 
-Yset_random_seed( seed )
+VOID Yset_random_seed( seed )
 INT seed ;
 {
     seed = ABS(seed) ;
@@ -91,7 +91,7 @@ INT seed ;
     randVarS = seed ;
 } /* end set_random_seed */
 
-INT Yget_random_var()
+INT Yget_random_var(VOID)
 {
     return( randVarS ) ;
 } /* end get_random_var */

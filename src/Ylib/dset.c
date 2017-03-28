@@ -59,11 +59,12 @@ static char SccsId[] = "@(#) dset.c version 1.13 2/3/92";
 #endif
      
 #define  YDSET_DEFS
-#include <yalecad/base.h>
-#include <yalecad/debug.h>
-#include <yalecad/message.h>
-#include <yalecad/rbtree.h>
-#include <yalecad/dset.h>
+#include "yalecad/base.h"
+#include "yalecad/cleanup.h"
+#include "yalecad/debug.h"
+#include "yalecad/message.h"
+#include "yalecad/rbtree.h"
+#include "yalecad/dset.h"
      
 /* ********************** STRUCTURE DEFINITIONS ******************* */
 typedef struct dset_element {
@@ -103,7 +104,7 @@ ELEMENTPTR ptr;
 } /* end dset_free_element() */
 
 /* delete all the trees associated with set */
-static dset_free_trees( dset )
+static VOID dset_free_trees( dset )
 YDSETPTR dset ;
 {
   if ( dset->superset_tree ) {
@@ -211,7 +212,8 @@ VOIDPTR data ;
   
   dsetS = dset ;
   dummy.data = data;
-  if( ptr = (ELEMENTPTR) Yrbtree_search( dset->dtree, &dummy )){
+  /* Use ((...)) to avoid assignment as a condition warning */
+  if(( ptr = (ELEMENTPTR) Yrbtree_search( dset->dtree, &dummy ))){
     ptr = path_compression(ptr);
   }
   return( ptr ) ;
@@ -456,7 +458,8 @@ VOIDPTR data ;
   
   dsetS = dset ;
   dummy.data = data;
-  if( ptr = (ELEMENTPTR) Yrbtree_search( dset->dtree, &dummy )){
+  /* Use ((...)) to avoid assignment as a condition warning */
+  if(( ptr = (ELEMENTPTR) Yrbtree_search( dset->dtree, &dummy ))){
     return( ptr->data ) ;
   }
   return( NIL(VOIDPTR) ) ;
@@ -513,7 +516,8 @@ VOIDPTR x, y ;
   ELEMENTPTR p1, p2, p3 ;
   
   D("Ydset_union",
-    fprintf(stderr,"start Ydset_union size = %d\n",Yrbtree_size(dset->dtree));
+    fprintf(stderr,"start Ydset_union size = %d\n",
+		(int)Yrbtree_size(dset->dtree));
   );
 
   p1 = find( dset, x ) ;
@@ -529,7 +533,8 @@ VOIDPTR x, y ;
   }
   
   D("Ydset_union",
-    fprintf(stderr,"end Ydset_union size = %d\n",Yrbtree_size(dset->dtree));
+    fprintf(stderr,"end Ydset_union size = %d\n",
+		(int)Yrbtree_size(dset->dtree));
   );
 
   return( p3->data );
@@ -547,7 +552,8 @@ VOIDPTR data ;
 {
   ELEMENTPTR ptr ;
   
-  if (ptr = dset_find_set(dset, data) ) {
+  /* Use ((...)) to avoid assignment as a condition warning */
+  if ((ptr = dset_find_set(dset, data)) ) {
     return( ptr->data ) ;
   }
   return( NIL(VOIDPTR) ) ;
@@ -564,7 +570,8 @@ VOIDPTR data ;
 {
   ELEMENTPTR ptr ;
   
-  if( ptr = find( dset, data )){
+  /* Use ((...)) to avoid assignment as a condition warning */
+  if(( ptr = find( dset, data ))){
     return( ptr->data ) ;
   }
   return( NIL(VOIDPTR) ) ;
@@ -590,7 +597,8 @@ VOIDPTR data ;
   if (dset){
     dsetS = dset ;
     dummy.data = data;
-    if( ptr = (ELEMENTPTR)Yrbtree_search( dset->dtree, &dummy )){
+    /* Use ((...)) to avoid assignment as a condition warning */
+    if(( ptr = (ELEMENTPTR)Yrbtree_search( dset->dtree, &dummy ))){
       return( ptr->parent->size ) ;
     } else {
       M(ERRMSG,"Ydset_subset_size","Problem with finding data sent\n");
@@ -639,7 +647,7 @@ YDSETPTR dset ;
 
   /* make sure the size has not changed, this tell us if makeset is called */
   if ( sizeIn != sizeOut ) {
-    fprintf(stderr,"sizeIn:%d sizeOut:%d\n",sizeIn,sizeOut);
+    fprintf(stderr,"sizeIn:%d sizeOut:%d\n",(int)sizeIn,(int)sizeOut);
     M(ERRMSG,"Ydset_verify","dset size changed during verification\n");
     rc = FALSE;
   }
@@ -650,7 +658,7 @@ YDSETPTR dset ;
 /*------------------------
   Ydset_dump
   ------------------------*/
-Ydset_dump(dset,printFunc)
+VOID Ydset_dump(dset,printFunc)
 YDSETPTR dset;
 VOID (*printFunc)();
 {
@@ -671,24 +679,24 @@ VOID (*printFunc)();
   lastParent = &dummy;
 
   /* dump elements by set */
-  fprintf(stderr,"set contains %d items\n",Yrbtree_size(dset->dtree));
+  fprintf(stderr,"set contains %d items\n",(int)Yrbtree_size(dset->dtree));
   for ( ptr = (VOIDPTR)Ydset_enumerate_superset( dset, TRUE); ptr;
        ptr = (VOIDPTR)Ydset_enumerate_superset( dset, FALSE) ) {
     
     parent = dset_find_set( dset,ptr );
     if ( parent != lastParent ) {
-      fprintf(stderr,"\n%d items in set #%d [parent ",parent->size,count++);
+      fprintf(stderr,"\n%d items in set #%d [parent ",(int)parent->size,(int)(count++));
       if ( printFunc ) {
 	(*printFunc)(parent);
       } else {
-	fprintf(stderr,"%ld ",parent);
+	fprintf(stderr,"%p ",parent);
       }
       fprintf(stderr,"]:\n" ) ;
     }
     if ( printFunc ) {
       (*printFunc)(ptr);
     } else {
-      fprintf(stderr,"%ld ",ptr);
+      fprintf(stderr,"%p ",ptr);
     }
     lastParent = parent;
   }
@@ -736,16 +744,10 @@ BOOL startFlag;
 /*------------------------
   Ydset_dump_tree
   ------------------------*/
-Ydset_dump_tree(dset,print_key)
+VOID Ydset_dump_tree(dset,print_key)
 YDSETPTR dset;
 VOID (*print_key)();
-{
-  VOIDPTR ptr ;
-  INT count = 1;
-  ELEMENTPTR lastParent;
-  ELEMENTPTR parent;
-  ELEMENT dummy;
-  
+{  
   D("Ydset_dump_tree",
     fprintf(stderr,"start Ydset_dump_tree\n");
   );

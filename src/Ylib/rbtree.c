@@ -87,10 +87,10 @@ static char SccsId[] = "@(#) rbtree.c (Yale) version 3.38 4/18/92" ;
 
 #define YTREE_H_DEFS
 
-#include <yalecad/base.h>
-#include <yalecad/debug.h>
-#include <yalecad/deck.h>
-#include <yalecad/message.h>
+#include "yalecad/base.h"
+#include "yalecad/debug.h"
+#include "yalecad/deck.h"
+#include "yalecad/message.h"
 
 /* define macros for easier reading of the code */
 #define  comp_f( a, b )  ( (*comp_func)(a,b) )
@@ -117,11 +117,10 @@ typedef struct tree {
     YDECKPTR   intervalDeck;          /* interval pointer deck */
 } YTREEBOX, *YTREEPTR ;
 
+#include "yalecad/rbtree.h"
 
-#include <yalecad/rbtree.h>
 
 /* ***************** STATIC VARIABLE DEFINITIONS ******************* */
-static INT          treeSizeS ;        /* the size of a tree */
 static BINTREE      sentinelS ;        /* build a sentinel */
 static BINTREEPTR   nilS ;             /* pointer to sentinel */
 static BINTREE      recalc_sentinelS ; /* build a recalculate flag */
@@ -131,12 +130,12 @@ static BINTREEPTR   recalcS ;          /* pointer to recalc flag */
 static BINTREEPTR tree_search( P2(YTREEPTR tree, char *key) ) ;
 static BINTREEPTR tree_suc( P1(BINTREEPTR ptr) ) ;
 static BINTREEPTR tree_pred( P1(BINTREEPTR ptr) ) ;
-static left_rotate( P2(YTREEPTR tree, BINTREEPTR x) ) ;
-static right_rotate( P2(YTREEPTR tree, BINTREEPTR x) ) ;
-static tree_free( P1(BINTREEPTR ptr) ) ;
-static free_tree_and_data( P2(BINTREEPTR ptr, VOID (*userDelete)() ) ) ;
-static tree_delete( P3(YTREEPTR tree, BINTREEPTR z, VOID (*userDelete)() ) ) ;
-static tree_dump( P4(YTREEPTR tree,BINTREEPTR ptr,
+static VOID left_rotate( P2(YTREEPTR tree, BINTREEPTR x) ) ;
+static VOID right_rotate( P2(YTREEPTR tree, BINTREEPTR x) ) ;
+static VOID tree_free( P1(BINTREEPTR ptr) ) ;
+static VOID free_tree_and_data( P2(BINTREEPTR ptr, VOID (*userDelete)() ) ) ;
+static VOID tree_delete( P3(YTREEPTR tree, BINTREEPTR z, VOID (*userDelete)() ) ) ;
+static VOID tree_dump( P4(YTREEPTR tree,BINTREEPTR ptr,
     		    VOID (*print_key)(),INT printTab) ) ;
 
 YTREEPTR Yrbtree_init( compare_func )
@@ -433,7 +432,7 @@ YTREEPTR tree ;
     
 } /* end Yrbtree_search_pred */
 
-static left_rotate( tree, x )
+static VOID left_rotate( tree, x )
 YTREEPTR tree ;
 BINTREEPTR x ;
 {
@@ -456,7 +455,7 @@ BINTREEPTR x ;
     x->parent = y ;       
 } /* left_rotate */
 
-static right_rotate( tree, x )
+static VOID right_rotate( tree, x )
 YTREEPTR tree ;
 BINTREEPTR x ;
 {
@@ -483,7 +482,7 @@ BINTREEPTR x ;
 * Delete a node in the tree by using actual pointer.  Also frees
 * user data if necessary.
 ----------------------------------------------------------------- */
-static tree_delete( tree, z, userDelete )
+static VOID tree_delete( tree, z, userDelete )
 YTREEPTR tree ;
 BINTREEPTR z ;
 VOID (*userDelete)();
@@ -594,8 +593,6 @@ VOIDPTR data ;
 {
     BINTREEPTR x ;          /* a temporary pointer */
     BINTREEPTR y ;          /* a temporary pointer */
-    BINTREEPTR z ;          /* a temporary pointer */
-    BINTREEPTR nil ;          /* a temporary pointer */
     BINTREEPTR ptr ;          /* a temporary pointer */
     INT (*comp_func)() ;      /* current compare function */
 
@@ -837,7 +834,7 @@ VOID (*userDelete)();
     }
 } /* end Yrbtree_deleteCurrentEnumerate() */
 
-static tree_dump( tree, ptr, print_key, printTab )
+static VOID tree_dump( tree, ptr, print_key, printTab )
 YTREEPTR tree ;
 BINTREEPTR ptr ;
 VOID (*print_key)() ;
@@ -1022,7 +1019,7 @@ VOID (*userDelete)();
 
 } /* end Yrbtree_interval_free() */
 
-static tree_free( ptr )
+static VOID tree_free( ptr )
 BINTREEPTR ptr ;
 {
 
@@ -1037,7 +1034,7 @@ BINTREEPTR ptr ;
     }
 } /* end tree_free */
 
-static free_tree_and_data( ptr, userDelete )
+static VOID free_tree_and_data( ptr, userDelete )
 BINTREEPTR ptr ;
 VOID (*userDelete)();
 {
@@ -1094,8 +1091,6 @@ VOID (*userDelete)();
 INT Yrbtree_size( tree )
 YTREEPTR tree ;
 {
-    INT size;
-
     if( tree ){
       if ( tree->size >= 0 ) {
 	return( tree->size ) ;
@@ -1219,13 +1214,13 @@ typedef struct {
     char *name ;
 } DATA, *DATAPTR ;
 
-static compare_string( key1, key2 )
+static INT compare_string( key1, key2 )
 DATAPTR key1, key2 ;
 {
     return( strcmp( key1->name, key2->name ) ) ;
 } /* end compare */
 
-static compare_len( key1, key2 )
+static INT compare_len( key1, key2 )
 DATAPTR key1, key2 ;
 {
     return( key1->str_len - key2->str_len ) ;

@@ -70,7 +70,7 @@
  ****************************************************************************
  ****************************************************************************/
 
-#include <yalecad/heap.h>
+#include "yalecad/heap.h"
 
 #ifndef lint
 static char Yheap_Id[] = "@(#) heap.c version 1.8 12/15/91";
@@ -275,7 +275,8 @@ extern VOIDPTR Yheap_delete_min(heap)
   HEAP_EL el;
   VOIDPTR rtn;
   
-  if (el = heap->top) {
+  /* Use ((...)) to avoid assignment as a condition warning */
+  if ((el = heap->top)) {
     heap->top = meld(get_left(el), get_rite(el), heap->heap_cmp);
     rtn = get_data(el);
     free_heap_el(el);
@@ -529,8 +530,8 @@ static VOID free_heap_el(el)
 
 extern VOID Yheap_check_mem()
 {
-  fprintf(stderr,"\theaps_allocated = %d\n", heaps_allocated);
-  fprintf(stderr,"\theap_els_allocated = %d\n", heap_els_allocated);
+  fprintf(stderr,"\theaps_allocated = %d\n", (int)heaps_allocated);
+  fprintf(stderr,"\theap_els_allocated = %d\n", (int)heap_els_allocated);
 }   /*  heap_check_mem  */
 
 /*--------------------------------

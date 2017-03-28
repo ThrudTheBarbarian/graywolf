@@ -54,10 +54,11 @@ static char SccsId[] = "@(#) path.c version 3.8 10/23/90" ;
 #endif
 
 #include <stdio.h>
-#include <unistd.h>
 #include <string.h>
-#include <yalecad/base.h>
-#include <yalecad/string.h>
+#include <unistd.h>
+#include "yalecad/base.h"
+#include "yalecad/file.h"
+#include "yalecad/ystring.h"
 
 #undef  LRECL
 #define LRECL	BUFSIZ
@@ -175,7 +176,8 @@ register char *user;
         } else {
 	    who = user;
 	}
-        if (pass = getpwnam(who)){
+        /* Use ((...)) to avoid assignment as a condition warning */
+        if ((pass = getpwnam(who))){
 	    return(pass->pw_dir);
         } else {
 	    return(user);

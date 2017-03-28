@@ -68,9 +68,13 @@ static char SccsId[] = "@(#) file.c version 3.11 10/20/91" ;
 #endif
 
 #include <stdio.h>
-#include <yalecad/base.h>
-#include <yalecad/file.h>
-#include <yalecad/message.h>
+#include <unistd.h>	// for readlink()
+
+#include "yalecad/base.h"
+#include "yalecad/file.h"
+#include "yalecad/message.h"
+#include "yalecad/program.h"
+
 
 #define SERROR  0
 
@@ -143,7 +147,8 @@ char *pathname ;
     DIR *dp ;
 
     if( pathname ){
-	if( dp = opendir(pathname) ){
+	/* Use ((...)) to avoid assignment as a condition warning */
+	if(( dp = opendir(pathname) )){
 	    closedir(dp) ;
 	    return(TRUE) ;
 	}
@@ -158,7 +163,7 @@ FILE *Yfile_create_lock( filename, readNotWrite )
 char *filename ;
 BOOL readNotWrite ;
 {
-    INT fd ;             /* file descriptor */
+    int fd ;             /* file descriptor */
     INT status ;         /* return status */
     FILE *fp ;           /* file stream descriptor */
 
@@ -204,7 +209,7 @@ BOOL readNotWrite ;
 BOOL Yfile_test_lock( filename ) 
 char *filename ;
 {
-    INT fd ;             /* file descriptor */
+    int fd ;             /* file descriptor */
     INT status ;         /* return status */
 
     if(!(YfileExists(filename))){ 

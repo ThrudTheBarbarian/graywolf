@@ -63,8 +63,8 @@ static char SccsId[] = "@(#) string.c version 3.8 2/29/92" ;
 #endif
 
 #include <string.h>
-#include <yalecad/base.h>
-#include <yalecad/string.h>
+#include "yalecad/base.h"
+#include "yalecad/ystring.h"
 
 extern char *str_tok( P2( char *str, char *delimiters ) ) ; 
  

@@ -48,11 +48,11 @@ REVISIONS:  Sun Nov  3 12:49:49 EST 1991 - made assign more
 static char SccsId[] = "@(#) assign.c (Yale) version 1.4 4/16/92" ;
 #endif
 
-#include <yalecad/base.h>
-#include <yalecad/message.h>
-#include <yalecad/program.h>
-#include <yalecad/assign.h>
-#include <yalecad/debug.h>
+#include "yalecad/base.h"
+#include "yalecad/message.h"
+#include "yalecad/program.h"
+#include "yalecad/assign.h"
+#include "yalecad/debug.h"
 
 static INT **costS = (INT **) NULL ;
 static INT *capS = (INT *) NULL ;
@@ -167,7 +167,7 @@ INT m, n;
 {
     INT i,
 	j,
-	j0,
+	j0 = 0,
 	ui,
 	cij;
     INT neff = 0;  /* total capacity */
@@ -340,7 +340,7 @@ INT u, ind;
  */
 {
     INT oldind;
-    INT w = (INT)NULL;
+    INT w = 0;
 
     (capS[ind])--;
 
@@ -364,7 +364,7 @@ INT u, ind;
 
 static void transformation( ys, yt, dplus, dminus, d, m, n )
 INT ys[], yt[], dplus[], dminus[] ;
-INT d ;
+INT d,m,n ;
 /*
  *  update ys and yt
  */
@@ -502,16 +502,16 @@ INT **cost_matrix ;
     if( max >= ASSIGN_PREASSIGN ){
         fprintf(stderr,"ERROR in assignment\n");
     }
-    fprintf(stderr,"sum = %d, max = %d\n", sum, max );
+    fprintf(stderr,"sum = %d, max = %d\n", (int)sum, (int)max );
     for( j = 1; j <= n; j++ ){
-	fprintf(stderr,"%d  %d\n", j, capS[j]);
+	fprintf(stderr,"%d  %d\n", (int)j, (int)capS[j]);
     }
     for( i = 1; i<= m; i++ ) {
 	for( j = 1; j <=n; j++ ) {
 	    if( colS[i] == j ){
-		fprintf( stderr, "[%d]", cost_matrix[i][j]);
+		fprintf( stderr, "[%d]", (int)cost_matrix[i][j]);
 	    } else {
-		fprintf( stderr, " %d ", cost_matrix[i][j]);
+		fprintf( stderr, " %d ", (int)cost_matrix[i][j]);
 	    }
 	}
 	fprintf( stderr, "\n");

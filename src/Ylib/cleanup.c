@@ -77,10 +77,9 @@ REVISIONS:  Sep 25, 1988 - converted to common utility.
 static char SccsId[] = "@(#) cleanup.c version 3.13 11/2/91" ;
 #endif
 
-#include <yalecad/cleanup.h>
+#include "yalecad/cleanup.h"
 
 /* conditional compile switch is set in cleanup.h */
-#ifdef CLEANUP_C
 
 #include <stdio.h>
 #include <yalecad/base.h>
@@ -93,9 +92,10 @@ static char SccsId[] = "@(#) cleanup.c version 3.13 11/2/91" ;
 
 
 static INT dumpFlag ;
-static char programPath[LRECL] ;
 static BOOL  (*userFunction)() ;
 
+#ifdef CLEANUP_C
+static char programPath[LRECL] ;
 
 /* ***************************************************************** 
    initCleanup - sets static variables for cleanup handler.
@@ -171,11 +171,12 @@ struct sigcontext *scp ;
     YcleanupHandler(sigNum) ;
 
 }
+#endif /* CLEANUP_H */
 
 /* ***************************************************************** 
    YcleanupHandler - after system work process user information.
 */
-YcleanupHandler(status)
+VOID YcleanupHandler(status)
 INT status ;
 {
 
@@ -188,7 +189,7 @@ INT status ;
 
     } else {
 #ifndef SYS5
-	psignal( status, "ERROR[cleanup handler]" ) ;
+	psignal( (unsigned int)status, "ERROR[cleanup handler]" ) ;
 #endif
     }
 
@@ -210,10 +211,8 @@ INT status ;
 	fflush(stdout) ;
 	signal(SIGILL,SIG_DFL);
 	abort() ;
-	exit(1) ;
     } else {
 	exit(1) ;
     }
 
 }
-#endif /* CLEANUP_H */

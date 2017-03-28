@@ -53,14 +53,15 @@ static char SccsId[] = "@(#) log.c version 1.2 8/28/90" ;
 #endif
 
 #include <string.h>
-#include <yalecad/base.h>
-#include <yalecad/message.h>
-#include <yalecad/file.h>
+#include "yalecad/base.h"
+#include "yalecad/message.h"
+#include "yalecad/file.h"
+#include "yalecad/ytime.h"
 
 static char cktNameS[LRECL] = " " ; 
 
 /* put a message in the log file */
-Ylog_msg( message )
+VOID Ylog_msg( message )
 char *message ;
 {
     INT timestamp ;           /* seconds since Jan 1, 1970 */
@@ -71,11 +72,11 @@ char *message ;
     sprintf( filename, "%s.log", cktNameS ) ;    
     fp = TWOPEN( filename, "a", ABORT ) ;
     time = YcurTime( &timestamp ) ;
-    fprintf( fp, "time %8d %s:%s\n", timestamp, time, message ) ;
+    fprintf( fp, "time %8d %s:%s\n", (int)timestamp, time, message ) ;
     TWCLOSE( fp ) ;
 } /* end log */
 
-Ylog_start( design, message )
+VOID Ylog_start( design, message )
 char *design ;
 char *message ;
 {
@@ -89,6 +90,6 @@ char *message ;
     fp = TWOPEN( filename, "a", ABORT ) ;
     time = YcurTime( &timestamp ) ;
     fprintf( fp,"####################################################\n");
-    fprintf( fp, "time %8d %s:%s\n", timestamp, time, message ) ;
+    fprintf( fp, "time %8d %s:%s\n", (int)timestamp, time, message ) ;
     TWCLOSE( fp ) ;
 } /* end log */

@@ -60,7 +60,7 @@ REVISIONS:  Sun Apr 21 21:21:58 EDT 1991 - renamed to Ystat_
 static char SccsId[] = "@(#) stat.c (Yale) version 3.3 4/21/91" ;
 #endif
 
-#include <yalecad/base.h>
+#include "yalecad/base.h"
 
 
 /* Given an array of number_elements of size_element, calculate min */
@@ -108,8 +108,7 @@ INT  size_element ;
 	    }
 	}
 	break ;
-    default: fprintf( stderr, "Unsupported element size:%d\n",
-	size_element ) ;
+    default: fprintf( stderr, "Unsupported element size:%d\n", (int)size_element ) ;
     }
 
     return(min);
@@ -160,8 +159,7 @@ INT  size_element ;
 	    }
 	}
 	break ;
-    default: fprintf( stderr, "Unsupported element size:%d\n",
-	size_element ) ;
+    default: fprintf( stderr, "Unsupported element size:%d\n", (int)size_element ) ;
 	
     }
     return(max);
@@ -204,8 +202,7 @@ INT  size_element ;
 	    sum += (DOUBLE) darray[i] ;
 	}
 	break ;
-    default: fprintf( stderr, "ERROR:Unsupported element size:%d\n",
-	size_element ) ;
+    default: fprintf( stderr, "ERROR:Unsupported element size:%d\n", (int)size_element ) ;
     }
 
     if( number_elements ){
@@ -264,8 +261,7 @@ DOUBLE mean ;
 	    sum2 += sum * sum ;
 	}
 	break ;
-    default: fprintf( stderr, "ERROR:Unsupported element size:%d\n",
-	size_element ) ;
+    default: fprintf( stderr, "ERROR:Unsupported element size:%d\n", (int)size_element ) ;
 
     }
     if( number_elements > 1 ){

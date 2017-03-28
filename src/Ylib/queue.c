@@ -60,10 +60,10 @@ static char SccsId[] = "@(#) queue.c (Yale) version 3.4 12/15/91" ;
 #endif
 
 #include <stdio.h>
-#include <yalecad/queue.h>
+#include "yalecad/queue.h"
 
 /* initialize queue */
-YinitQueue( queue, node ) 
+VOID YinitQueue( queue, node ) 
 YQUEUE *queue ;
 char *node ;
 {   
@@ -81,7 +81,8 @@ YQUEUE *queue ;
     YQUEUEPTR temp ; 
     char *data ; 
 
-    if( temp = queue->top_of_queue ){
+    /* Use ((...)) to avoid assignment as a condition warning */
+    if(( temp = queue->top_of_queue )){
 	data = temp->data ;
 	queue->top_of_queue = temp->next ; 
 	YFREE( temp ) ;  
@@ -92,7 +93,7 @@ YQUEUE *queue ;
 } /* end YtopQueue */
 
 /* add a vertex to the end of the queue */
-Yadd2Queue( queue, node ) 
+VOID Yadd2Queue( queue, node ) 
 YQUEUE *queue ;
 char *node ;
 {  
@@ -114,18 +115,19 @@ YQUEUE *queue ;
 }
 
 /* debug function to dump the contents of the queue */
-YdumpQueue( queue ) 
+VOID YdumpQueue( queue ) 
 YQUEUE *queue ;
 {
     YQUEUEPTR temp ; 
 
     fprintf( stderr,"Queue:" ) ;
-    if( temp = queue->top_of_queue ){
+    /* Use ((...)) to avoid assignment as a condition warning */
+    if( (temp = queue->top_of_queue )){
 	for( ;temp; temp=temp->next ){
 #if SIZEOF_VOID_P == 64
-	    fprintf( stderr,"%ld ", (INT)temp->data ) ;
+	    fprintf( stderr,"%lld ", (INT)temp->data ) ;
 #else
-	    fprintf( stderr,"%d ", (INT)temp->data ) ;
+	    fprintf( stderr,"%d ", (int)temp->data ) ;
 #endif
 	}
 	fprintf( stderr,"\n" ) ;

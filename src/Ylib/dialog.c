@@ -82,15 +82,16 @@ static char SccsId[] = "@(#) dialog.c version 3.15 3/6/92" ;
 
 /* #define  TURNOFFPRINTD */
 
-#include <yalecad/base.h>
-#include <yalecad/file.h>
-#include <yalecad/colors.h>
-#include <yalecad/message.h>
-#include <yalecad/hash.h>
-#include <yalecad/string.h>
-#include <yalecad/debug.h>
-#include <yalecad/draw.h>
-#include <yalecad/dialog.h>
+#include "yalecad/base.h"
+#include "yalecad/file.h"
+#include "yalecad/colors.h"
+#include "yalecad/message.h"
+#include "yalecad/hash.h"
+#include "yalecad/ystring.h"
+#include "yalecad/debug.h"
+#include "yalecad/draw.h"
+#include "yalecad/dialog.h"
+#include "yalecad/ytime.h"
 #include "info.h"
 
 #define WHITE       1                /* white parent gc is one in array */
@@ -121,7 +122,6 @@ static char SccsId[] = "@(#) dialog.c version 3.15 3/6/92" ;
 
 static TWINFOPTR    infoS ;          /* information about main details */
 static Display      *dpyS;           /* the display */
-static Window       menuS;           /* the current menu window */
 static Window       wS;              /* the main TW display window */
 static Window       dialogS;         /* the dialog display window */
 static GC           *contextArrayS ; /* array of context window */
@@ -129,7 +129,6 @@ static GC           reverseGCS ;     /* reverse gc for dialog  */
 static INT          screenS ;        /* the current screen */
 static UNSIGNED_INT backgrdS ;
 static UNSIGNED_INT foregrdS ;
-static INT          winwidthS ;      /* window width */
 static Window       *winS ;          /* contains info about menus */
 static XFontStruct  *fontinfoS ;     /* font information */
 static Font         fontS ;          /* current font */
@@ -142,18 +141,18 @@ static TWDRETURNPTR dataS ;          /* return data array */
 static TWDIALOGPTR  fieldS ;         /* the current dialog array */
 
 /* function definitions */
-static INT world2pix_x() ;
-static INT world2pix_y() ;
-static INT world2fonty() ;
-static INT pixlen() ;
-static set_stipple_font( P2(BOOL stippleOn, INT font_change ) ) ;
-static debug_dialog( P1( TWDIALOGPTR fieldp ) ) ;
-static check_cases( P3( TWDIALOGPTR fieldp, INT select, 
+static INT world2pix_x(P1(INT x)) ;
+static INT world2pix_y(P1(INT y)) ;
+static INT world2fonty(P1(INT y)) ;
+static INT pixlen(P1(INT length)) ;
+static VOID set_stipple_font( P2(BOOL stippleOn, INT font_change ) ) ;
+static VOID debug_dialog( P1( TWDIALOGPTR fieldp ) ) ;
+static VOID check_cases( P3( TWDIALOGPTR fieldp, INT select, 
     			INT (*user_function)() )) ;
-static draw_fields( P1(TWDIALOGPTR fieldp) ) ;
-static TWfreeWindows() ;
-static find_font_boundary() ;
-static edit_field( P4( INT field, Window win, XEvent event,
+static VOID draw_fields( P1(TWDIALOGPTR fieldp) ) ;
+static VOID TWfreeWindows() ;
+static VOID find_font_boundary() ;
+static VOID edit_field( P4( INT field, Window win, XEvent event,
 		    INT (*user_function)() ) ) ;
 
 /* build a dialog box and get info */
@@ -169,11 +168,9 @@ INT (*user_function)() ;
     unsigned int widthd ; /* adjusted width of dialog screen */
     INT screenheight ;    /* height of root window */
     unsigned int heightd ;/* adjusted height of dialog screen */
-    INT win_num ;         /* window counter */
     INT time ;            /* current time */
-    TWDIALOGPTR fptr ;    /* current dialog field */
+    TWDIALOGPTR fptr = NULL ;    /* current dialog field */
     TWDRETURNPTR dptr ;   /* current return field */
-    BOOL press ;          /* tells whether button has been pushed */
     BOOL bw ;             /* tells whether display is color or not */
     BOOL foundWindow ;    /* used in window search to find match */
     static INT lasttimeL; /* last time of exposure event */
@@ -202,7 +199,7 @@ INT (*user_function)() ;
     foregrdS = white ;
 
     /* check whether machine is color or not */
-    if( (bw = XDisplayCells( dpyS, screenS )) > 2 ){ 
+    if( (bw = XDisplayCells( dpyS, (int)screenS )) > 2 ){
 	/* if color number of display cells > 0 */
 	bw = FALSE ;
     } else {
@@ -212,12 +209,14 @@ INT (*user_function)() ;
     /* calculate where to put master window */
     /* we want to center the window and take 70% of */ 
     /* the available screen */
-    screenwidth = XDisplayWidth(dpyS,screenS);
-    screenheight = XDisplayHeight(dpyS,screenS);
+    screenwidth  = XDisplayWidth(dpyS, (int)screenS);
+    screenheight = XDisplayHeight(dpyS,(int)screenS);
 
     sprintf( resource, "geometry_%s", dialogname ) ;
     D( "dialog", fprintf( stderr, "resource:%s\n", resource ) ) ;
-    if( winstr = XGetDefault( dpyS, GRAPHICS, resource )){
+    
+    /* Use ((...)) to avoid assignment as a condition warning */
+    if(( winstr = XGetDefault( dpyS, GRAPHICS, resource ))){
 	m = XParseGeometry( winstr,&xdS,&ydS,&widthd,&heightd) ;
 	if( m & XNegative ){
 	    xdS += screenwidth ;
@@ -231,17 +230,19 @@ INT (*user_function)() ;
 	if( ydS == 0 ) ydS++ ;
 	hints.flags = USPosition | USSize ;
     } else {
-	widthd  = (INT) (RATIO * (DOUBLE) screenwidth ) ;
-	heightd = (INT) (RATIO * (DOUBLE) screenheight ) ;
-	xdS = (screenwidth - widthd ) / 2 ;
-	ydS = (screenheight - heightd ) / 2 ;
+	widthd  = (unsigned int) (RATIO * (DOUBLE) screenwidth ) ;
+	heightd = (unsigned int) (RATIO * (DOUBLE) screenheight ) ;
+	xdS = (int)((screenwidth - widthd ) / 2) ;
+	ydS = (int)((screenheight - heightd ) / 2) ;
 	hints.flags = PPosition | PSize ;
     }
     sprintf( resource, "font_%s", dialogname ) ;
     D( "dialog", fprintf( stderr, "font resource:%s\n", resource ) ) ;
     /* set font and get font info */
     font_loaded = FALSE ;
-    if(font = XGetDefault( dpyS, GRAPHICS, resource )){
+    
+    /* Use ((...)) to avoid assignment as a condition warning */
+    if((font = XGetDefault( dpyS, GRAPHICS, resource ))){
 	if( strcmp( font, infoS->fontname ) != STRINGEQ ){
 	    fontinfoS = TWgetfont( font, &fontS ) ;
 	    font_loaded = TRUE ;
@@ -301,9 +302,10 @@ INT (*user_function)() ;
 	}
 	if( fptr->type == INPUTTYPE || fptr->type == BUTTONTYPE ){
 	    winS[i] = XCreateSimpleWindow( dpyS, dialogS, 
-		world2pix_x( fptr->column ),
-		world2pix_y( fptr->row - 1 ),
-		pixlen( fptr->len ), fheightS,
+		(int)(world2pix_x( fptr->column )),
+		(int)(world2pix_y( fptr->row - 1 )),
+		(int)(pixlen( fptr->len )),
+		(int)fheightS,
 		1L, backgrdS, foregrdS ) ;
 	    XDefineCursor( dpyS, winS[i], cursor ) ;
 
@@ -371,7 +373,8 @@ INT (*user_function)() ;
 	if( XCheckMaskEvent( dpyS, event_mask, &event ) ){
 	    D( "TWdialog/event",
 		fprintf( stderr, "Event:%d window:%d\n",
-		    event.type, event.xany.window ) ;
+		    event.type,
+			(int)(event.xany.window) ) ;
 	    ) ;
 	    switch( event.type ){
 	    case ButtonPress:
@@ -416,11 +419,14 @@ INT (*user_function)() ;
 		    dptr = &(dataS[i]) ;
 		    XFillRectangle( dpyS,win, contextArrayS[fptr->color],
 			0,0,
-			pixlen( fptr->len ), fheightS ) ;
+			(int)(pixlen( fptr->len )),
+			(int)fheightS ) ;
 		    if( dptr->string ){
-			XDrawString( dpyS, win, reverseGCS, 
-			    0L, world2fonty( 0L ),
-			    dptr->string, strlen(dptr->string)) ;
+				XDrawString( dpyS, win, reverseGCS,
+					0L,
+					(int)(world2fonty( 0L )),
+					dptr->string,
+					(int)strlen(dptr->string)) ;
 		    }
 		    XSetInputFocus( dpyS, win, 
 			RevertToPointerRoot, CurrentTime ) ;
@@ -446,26 +452,31 @@ INT (*user_function)() ;
 			if( fieldp[i].type != BUTTONTYPE ){
 			    /* normal case */
 			    XDrawString( dpyS, winS[i], 
-				contextArrayS[fptr->color], 
-				0L, world2fonty( 0L ),
+				contextArrayS[fptr->color],
+				0L,
+				(int)(world2fonty( 0L )),
 				dptr->string, 
-				strlen(dptr->string)) ;
+				(int)strlen(dptr->string)) ;
 			} else if( dptr->bool ){
 			    /* a case switch that is on */
 			    XFillRectangle( dpyS,win, 
 				contextArrayS[fptr->color],
 				0,0,
-				pixlen( fptr->len ), fheightS ) ;
+				(int)pixlen( fptr->len ),
+				(int) fheightS ) ;
 			    XDrawString( dpyS, win, reverseGCS, 
-				0L, world2fonty( 0L ),
-				dptr->string, strlen(dptr->string)) ;
+					0L,
+					(int)world2fonty( 0L ),
+					dptr->string,
+					(int)strlen(dptr->string)) ;
 			} else {
 			    /* a case switch that is off */
 			    XDrawString( dpyS, winS[i], 
-				contextArrayS[fptr->color], 
-				0L, world2fonty( 0L ),
-				dptr->string, 
-				strlen(dptr->string)) ;
+					contextArrayS[fptr->color],
+					0L,
+					(int)world2fonty( 0L ),
+					dptr->string,
+					(int)strlen(dptr->string)) ;
 			}
 		    }
 		    XSetInputFocus( dpyS, PointerRoot, 
@@ -500,14 +511,14 @@ INT (*user_function)() ;
 			    D( "TWdialog/exposure", 
 				fprintf( stderr,
 				    "Dialog Exposure:0 @time = %d\n",
-				    time);
+				    (int)time);
 			    ) ;
 			    break ;
 			}
 			D( "TWdialog/exposure", 
 			    fprintf( stderr,
 				"Dialog Exposure:1 @time = %d\n",
-				time);
+				(int)time);
 			) ;
 			draw_fields( fieldp ) ;
 			/* update time for slow machines */
@@ -522,7 +533,7 @@ INT (*user_function)() ;
 
 } /* end TWdialog */
 
-static set_stipple_font( stippleOn, font_change )
+static VOID set_stipple_font( stippleOn, font_change )
 BOOL stippleOn ;
 INT font_change ;
 {
@@ -544,7 +555,8 @@ INT font_change ;
 	    for( i=0; i <= infoS->numColors; i++ ){
 		XSetFont( dpyS, contextArrayS[i], fontS ) ;
 	    }
-	} else if( font_change = REVERT_FONT ){
+	} 
+	else if( font_change == REVERT_FONT ){
 	    for( i=0; i <= infoS->numColors; i++ ){
 		XSetFont( dpyS, contextArrayS[i], infoS->fontinfo->fid ) ;
 	    }
@@ -553,7 +565,7 @@ INT font_change ;
 } /* end set_stipple_font */
 
 /* check the case fields and set all member of group to false */
-static check_cases( fieldp, select, user_function )
+static VOID check_cases( fieldp, select, user_function )
 TWDIALOGPTR fieldp ;
 INT select ;
 INT (*user_function)() ;
@@ -585,7 +597,7 @@ INT (*user_function)() ;
 
 } /* end check_cases */
 
-static draw_fields( fieldp )
+static VOID draw_fields( fieldp )
 TWDIALOGPTR fieldp ;
 {
     INT i ;               /* counter */
@@ -603,38 +615,46 @@ TWDIALOGPTR fieldp ;
 	}
 	if( fptr->type == LABELTYPE || fptr->type == CASETYPE ){
 	    XDrawString( dpyS, dialogS, contextArrayS[fptr->color], 
-		world2pix_x( fptr->column ), 
-		world2fonty( fptr->row - 1 ),
-		dptr->string, strlen(dptr->string)) ;
+		(int)world2pix_x( fptr->column ),
+		(int)world2fonty( fptr->row - 1 ),
+		dptr->string,
+		(int)strlen(dptr->string)) ;
 	} else if( fptr->type == INPUTTYPE ){
 	    /* input case */
 	    XClearWindow( dpyS, winS[i] ) ;
 	    XDrawString( dpyS, winS[i], contextArrayS[fptr->color], 
-		0L, world2fonty( 0L ),
-		dptr->string, strlen(dptr->string)) ;
+		0L,
+		(int)world2fonty( 0L ),
+		dptr->string,
+		(int)strlen(dptr->string)) ;
 	} else if( fptr->type == BUTTONTYPE ){
 	    XClearWindow( dpyS, winS[i] ) ;
 	    if( dptr->bool ){
 		/* true initially */
 		XFillRectangle( dpyS,winS[i], contextArrayS[fptr->color],
 		    0,0,
-		    pixlen( fptr->len ), fheightS ) ;
+		    (int)pixlen( fptr->len ),
+			(int)fheightS ) ;
 		XDrawString( dpyS, winS[i], reverseGCS, 
-		    0L, world2fonty( 0L ),
-		    dptr->string, strlen(dptr->string)) ;
+		    0L,
+			(int)world2fonty( 0L ),
+		    dptr->string,
+			(int)strlen(dptr->string)) ;
 	    } else { /* off */
 		XDrawString( dpyS, winS[i], contextArrayS[fptr->color], 
-		    0L, world2fonty( 0L ),
-		    dptr->string, strlen(dptr->string)) ;
+		    0L,
+			(int)world2fonty( 0L ),
+		    dptr->string,
+			(int)strlen(dptr->string)) ;
 	    }
 	}
     }
 } /* end draw_fields */
 
 
-static TWfreeWindows()
+static VOID TWfreeWindows()
 {
-    INT i, j ;              /* counters */
+    INT i;              /* counters */
 
     for( i = 0; winS[i] ; i++ ){
 	/* we must free window this way */
@@ -645,7 +665,7 @@ static TWfreeWindows()
 
 } /* end TWfreeWindows */
 
-static find_font_boundary() 
+static VOID find_font_boundary() 
 {
     fwidthS = fontinfoS->max_bounds.rbearing - 
 	fontinfoS->min_bounds.lbearing ;
@@ -657,16 +677,19 @@ static find_font_boundary()
 /* tranforms the world coordinate character column format */
 /* to pixel coordinates */
 static INT world2pix_x( x )
+INT x;
 {
     return( x * fwidthS ) ;
 } /* end world2pix_x */
 
 static INT world2pix_y( y )
+INT y;
 {
     return( y * fheightS ) ;
 } /* end world2pix_y */
 
 static INT world2fonty( y )
+INT y;
 {
     return( (++y) * fheightS - fontinfoS->max_bounds.descent ) ;
 } /* end world2pix_y */
@@ -678,7 +701,7 @@ INT length ;
     return( fwidthS * length ) ;
 } /* end pixlen */
 
-static edit_field( field, win, event, user_function )
+static VOID edit_field( field, win, event, user_function )
 INT field ;
 Window win ;
 XEvent event ;       /* describes the button event */
@@ -688,9 +711,7 @@ INT (*user_function)() ;
     TWDRETURNPTR dptr;   /* return field of dialog */
     BOOL press ;            /* tells whether keyboard has been pushed */
     BOOL finish ;           /* tells whether we have received a return */
-    long event_mask ;       /* setup menus */
     char buffer[LRECL] ;    /* used for keyboard translation */
-    char curMsg[LRECL] ;    /* current value of message window */
     char data[LRECL];       /* current value of users input */
     KeySym keysym ;         /* return of keysym from user */
     XComposeStatus status ; /* where a compose key was pressed */
@@ -705,10 +726,11 @@ INT (*user_function)() ;
 	dataCount = strlen( dptr->string ) ;
 	strcpy( data, dptr->string ) ;
 	/* now move pointer to end of current data */
-	strwidth = XTextWidth( fontinfoS, dptr->string, dataCount) ;
+	strwidth = XTextWidth( fontinfoS, dptr->string, (int)dataCount) ;
 	/* now warp pointer to message window */
 	XWarpPointer( dpyS, None, win, 0, 0, 0, 0, 
-	    strwidth + fwidthS/3, fheightS/2 ) ;
+	    (int)(strwidth + fwidthS/3),
+		(int)(fheightS/2) ) ;
     } else {
 	/* initialize string buffers */
 	data[0] = EOS ;
@@ -755,18 +777,21 @@ INT (*user_function)() ;
 		/* now echo to screen */
 		XFillRectangle( dpyS,win, contextArrayS[fptr->color],
 		    0,0,
-		    pixlen( fptr->len ), fheightS ) ;
+		    (int)pixlen( fptr->len ),
+			(int)fheightS ) ;
 		XDrawString( dpyS, win, reverseGCS, 
-		    0L, world2fonty( 0L ),
-		    data, dataCount) ;
+		    0L,
+			(int)world2fonty( 0L ),
+		    data,
+			(int)dataCount) ;
 		D( "Yedit_field",fprintf( stderr, "data:%s\n", data ) ) ;
-		D( "Yedit_field",fprintf( stderr,"datacount:%d\n",
-		    dataCount ) ) ;
+		D( "Yedit_field",fprintf( stderr,"datacount:%d\n", (int)dataCount ) ) ;
 		/* now move pointer to end of current data */
-		strwidth = XTextWidth( fontinfoS, data,dataCount) ;
+		strwidth = XTextWidth( fontinfoS, data,(int)dataCount) ;
 		/* now warp pointer to message window */
 		XWarpPointer( dpyS, None, win, 0, 0, 0, 0, 
-		    strwidth + fwidthS/3, fheightS/2 ) ;
+		    (int)(strwidth + fwidthS/3),
+			(int)(fheightS/2) ) ;
 		
 	    }
 	}
@@ -802,10 +827,9 @@ char *filename ;
     INT  group_num ;     /* number of case fields given */
     INT  i ;             /* counter */
     INT  line ;          /* line number of TWmenu file */
-    INT  length ;        /* length of string */
-    INT  numfields ;     /* number of dialog fields */
+    INT  numfields = 0 ;     /* number of dialog fields */
     INT  curfield ;      /* current dialog field */
-    INT  case_label ;    /* current case field */
+    INT  case_label = 0 ;    /* current case field */
     INT  numcolors ;     /* the number of colors in color array */
     BOOL found ;         /* whether color was found */
     TWDIALOGPTR fields;  /* dialog array information */
@@ -822,7 +846,7 @@ char *filename ;
     group_num = 0 ;
     fields = NULL ;
     fp = TWOPEN( filename, "r", ABORT ) ;
-    while( bufferptr=fgets(buffer,LRECL,fp )){
+    while( (bufferptr=fgets(buffer,LRECL,fp ))){
 	/* parse file */
 	line++ ; /* increment line number */
 	/* skip comments */
@@ -839,7 +863,7 @@ char *filename ;
 	    
 	    /* there better be only two tokens on this line */
 	    if( numtokens != 2 ){
-		sprintf( YmsgG, "Syntax error on line:%d\n", line ) ;
+		sprintf( YmsgG, "Syntax error on line:%d\n", (int)line ) ;
 		M(ERRMSG, "TWread_dialog", YmsgG ) ;
 		break ;
 	    } 
@@ -854,8 +878,7 @@ char *filename ;
 	    } 
 	    fptr = &(fields[curfield]) ;
 	    if( numtokens != 8 && numtokens != 9 ){
-		sprintf( YmsgG, "Problem parsing line:%d in dialog file\n",
-		    line ) ;
+		sprintf( YmsgG, "Problem parsing line:%d in dialog file\n", (int)line ) ;
 		M( ERRMSG,"TWread_dialog", YmsgG ) ;
 		continue ;
 		
@@ -913,7 +936,7 @@ char *filename ;
 		if( numtokens == 9 ){
 		    strcpy( group, tokens[CASEGROUP] ) ;
 		    tokens = Ystrparser( group, ",\t\n", &numtokens );
-		    ASSERTNRETURN( numtokens>0,"TWread_dialog",
+		    ASSERTNRETURN2( numtokens>0,"TWread_dialog",
 			"no cases found\n" ) ;
 		    for( i = numtokens-1; i >= 0;i-- ){
 			case_label = atoi( tokens[i] ) ;
@@ -929,8 +952,7 @@ char *filename ;
 		    return( NULL ) ;
 		}
 	    } else {
-		sprintf( YmsgG, "Problem parsing line:%d in dialog file\n",
-		    line ) ;
+		sprintf( YmsgG, "Problem parsing line:%d in dialog file\n", (int)line ) ;
 		M( ERRMSG,"TWread_dialog", YmsgG ) ;
 	    }
 	} 
@@ -954,7 +976,7 @@ char *filename ;
 
 } /* end TWread_dialog */
 
-static debug_dialog( fieldp )
+static VOID debug_dialog( fieldp )
 TWDIALOGPTR fieldp ;
 {
     INT i ;                   /* counter */
@@ -969,13 +991,19 @@ TWDIALOGPTR fieldp ;
 	count++ ;
     }
 
-    fprintf( fp, "static TWDIALOGBOX dialogS[%d] = {\n", count+1 ) ;
+    fprintf( fp, "static TWDIALOGBOX dialogS[%d] = {\n", (int)(count+1) ) ;
 
     for( i=0 ; fieldp[i].row; i++ ){ 
 	fptr = &(fieldp[i]) ;
-	fprintf( fp, "    %d,%d,%d,",fptr->row,fptr->column,fptr->len ) ;
-	fprintf( fp, "\"%s\",%d,%d,%d,\n", fptr->string,fptr->type,
-	    fptr->color, fptr->group ) ;
+	fprintf( fp, "    %d,%d,%d,",
+		(int)(fptr->row),
+		(int)(fptr->column),
+		(int)(fptr->len) ) ;
+	fprintf( fp, "\"%s\",%d,%d,%d,\n",
+		fptr->string,
+		(int)(fptr->type),
+	    (int)(fptr->color),
+		(int)(fptr->group) ) ;
     }
     fprintf( fp, "    0,0,0,0,0,0,0\n" ) ;
     fprintf( fp, "} ;\n\n" ) ;

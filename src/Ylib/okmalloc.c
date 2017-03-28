@@ -133,8 +133,8 @@ static char SccsId[] = "@(#) okmalloc.c (Yale) version 3.24 3/6/92" ;
 #include	<unistd.h>
 #include	<signal.h>
 #include	<errno.h>
-#include 	<yalecad/base.h>
-#include 	<yalecad/message.h>
+#include 	"yalecad/base.h"
+#include 	"yalecad/message.h"
 
 #ifdef HPUX
 #undef		NBPG

@@ -73,13 +73,14 @@ static char SccsId[] = "@(#) wgraphics.c version 3.8 8/12/91" ;
 #include <string.h>
 
 #define  TWDRAWCODE
-#include <yalecad/base.h>
-#include <yalecad/file.h>
-#include <yalecad/message.h>
-#include <yalecad/debug.h>
-#include <yalecad/dbinary.h>
-#include <yalecad/wgraphics.h>
-#include <yalecad/string.h>
+#include "yalecad/base.h"
+#include "yalecad/file.h"
+#include "yalecad/message.h"
+#include "yalecad/debug.h"
+#include "yalecad/dbinary.h"
+#include "yalecad/program.h"
+#include "yalecad/wgraphics.h"
+#include "yalecad/ystring.h"
 
 #define NODIRECTORY     1
 #define NOINIT          2
@@ -129,7 +130,7 @@ char **desiredColors ;
 } /* end function TWinitWGraphics */
 
 
-TWcloseWGraphics()
+VOID TWcloseWGraphics(VOID)
 {
 
     if(!(initS )){
@@ -145,7 +146,7 @@ TWcloseWGraphics()
 
 } /* end TWcloseGraphics */
 
-TWstartWFrame()
+VOID TWstartWFrame(VOID)
 {
     char filename[LRECL] ;
     char dummy[5] ;
@@ -168,17 +169,17 @@ TWstartWFrame()
     frameCountS++ ;
 
     /* first cell file */
-    sprintf( filename, "%s/cell.bin.%d", dirNameS, frameCountS ) ;
+    sprintf( filename, "%s/cell.bin.%d", dirNameS, (int)frameCountS ) ;
     cellFileS = TWOPEN( filename, "w", ABORT ) ; 
     numCellS = 0 ; /* reset cell counter */
 
     /* next net file */
-    sprintf( filename, "%s/net.bin.%d", dirNameS, frameCountS ) ;
+    sprintf( filename, "%s/net.bin.%d", dirNameS, (int)frameCountS ) ;
     netFileS = TWOPEN( filename, "w", ABORT ) ; 
     numNetS = 0 ; /* reset net counter */
 
     /* next symb file */
-    sprintf( filename, "%s/symb.bin.%d", dirNameS, frameCountS ) ;
+    sprintf( filename, "%s/symb.bin.%d", dirNameS, (int)frameCountS ) ;
     symbFileS = TWOPEN( filename, "w", ABORT ) ; 
     /* write a dummy character at start file makes test for label */
     /* index easier since symbtable[0] is meaningless now. */
@@ -191,7 +192,7 @@ TWstartWFrame()
 } /* end startWFrame */
 
 /* write size of data at end of files and close them if frames are open */
-TWflushWFrame()
+VOID TWflushWFrame(VOID)
 {
     char dummy[5] ;
     UNSIGNED_INT nitems ;
@@ -207,7 +208,8 @@ TWflushWFrame()
 	numw = fwrite( &numNetS, sizeof(UNSIGNED_INT),nitems,netFileS ) ;
 	ASSERT( numw == 1, "startNewFrame", "Number written zero" ) ;
 	/* need to put on integer boundary */
-	if( excess = numCharS % 4 ){
+	/* Use ((...)) to avoid assignment as a condition warning */
+	if(( excess = numCharS % 4 )){
 	    /* pad the remainder with dummy */
 	    nitems = (UNSIGNED_INT) (4 - excess ) ;
 	    numw = fwrite( dummy, sizeof(char), nitems, symbFileS ) ;
@@ -230,7 +232,7 @@ TWflushWFrame()
 
 } /* TWflushWFrame */
 
-TWsetWFrame( number )
+VOID TWsetWFrame( number )
 INT number ;
 {
     char fileName[LRECL] ;
@@ -240,7 +242,7 @@ INT number ;
 	/* find max number of frames of data */ 
 	for( frameCountS=1;;frameCountS++ ){
 
-	    sprintf( fileName,"%s/cell.bin.%d",dirNameS,frameCountS ) ;
+	    sprintf( fileName,"%s/cell.bin.%d",dirNameS,(int)frameCountS ) ;
 	    if(! (YfileExists(fileName) )){
 		/* last file successfully read is one less */
 		frameCountS-- ; 
@@ -255,7 +257,7 @@ INT number ;
 /* *********  GENERIC WRITE ROUTINES **************  */
 /* draw a rectangle whose diagonals are (x1,y1) and (x2,y2) */
 /* 	if the specified color is default or invalid, use default color */
-TWdrawWPin( ref_num, x1,y1,x2,y2,color,label)
+VOID TWdrawWPin( ref_num, x1,y1,x2,y2,color,label)
 INT     ref_num ; /* reference number */
 INT	x1,y1,x2,y2, color;
 char	*label;
@@ -264,7 +266,7 @@ char	*label;
 } /* end drawWPin */
 
 /* draw a one pixel tall line segment from x1,y1 to x2,y2 */
-TWdrawWLine( ref_num,x1,y1,x2,y2,color,label)
+VOID TWdrawWLine( ref_num,x1,y1,x2,y2,color,label)
 INT     ref_num ; /* reference number */
 INT	x1,y1,x2,y2,color ;
 char	*label;
@@ -306,7 +308,7 @@ char	*label;
 
 /* draw a rectangle whose diagonals are (x1,y1) and (x2,y2) */
 /* 	if the specified color is default or invalid, use default color */
-TWdrawWRect( ref_num, x1,y1,x2,y2,color,label)
+VOID TWdrawWRect( ref_num, x1,y1,x2,y2,color,label)
 INT     ref_num ; /* reference number */
 INT	x1,y1,x2,y2, color;
 char	*label;

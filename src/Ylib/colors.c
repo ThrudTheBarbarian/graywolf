@@ -55,7 +55,7 @@ REVISIONS:  Jan 31, 1989 - added screen routines.
 static char SccsId[] = "@(#) colors.c version 3.8 2/26/92" ;
 #endif
 
-#include <yalecad/base.h>
+#include "yalecad/base.h"
 
 #define NUMCOLORS 18
 static char *TWstdcolorArrayS[NUMCOLORS+1] = {

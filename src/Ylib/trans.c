@@ -57,9 +57,9 @@ static char SccsId[] = "@(#) trans.c version 1.5 3/6/92" ;
 #endif
 
 #define  YTRANS_DEFS
-#include <yalecad/base.h>
-#include <yalecad/relpos.h>
-#include <yalecad/message.h>
+#include "yalecad/base.h"
+#include "yalecad/relpos.h"
+#include "yalecad/message.h"
 
 /* ***************************************************************** 
 translate rotation of cells

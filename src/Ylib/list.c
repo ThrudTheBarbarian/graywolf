@@ -73,7 +73,7 @@ REVISIONS:  Oct  9, 1990 - rename routines for easier use.
 static char SccsId[] = "@(#) list.c Yale Version 1.9 12/9/91" ;
 #endif
 
-#include <yalecad/list.h>
+#include "yalecad/list.h"
 
 /************************************************************************
  *  									*
@@ -638,7 +638,6 @@ static YLIST allocate_list()
 {
   YLIST tmp;
   long idx;
-  static long last_id;
 
   if (!(free_listS)) {
     tmp = YMALLOC(NUM_LISTS, YLIST_STRUCT) ;
@@ -676,7 +675,6 @@ static YLIST_EL allocate_list_el()
 {
   YLIST_EL tmp;
   long idx;
-  static long last_id;
 
   if (!(free_list_elS)) {
     tmp = YMALLOC(NUM_LIST_ELS, YLIST_EL_STRUCT);
@@ -765,8 +763,8 @@ static INT def_comp(d1, d2)
 
 VOID Ylist_check_mem()
 {
-  printf("\tlists_allocated = %d\n", lists_allocatedS);
-  printf("\tlist_els_allocated = %d\n", list_els_allocatedS);
+  printf("\tlists_allocated = %d\n", (int)lists_allocatedS);
+  printf("\tlist_els_allocated = %d\n", (int)list_els_allocatedS);
 }   /*  Ylist_check_mem  */
 
 

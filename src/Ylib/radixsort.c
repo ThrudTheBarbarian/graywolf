@@ -32,7 +32,8 @@ static char SccsId[] = "@(#) radixsort.c (Yale) version 1.4 4/18/92" ;
 #endif
 
 #include <string.h>
-#include <yalecad/base.h>
+#include <strings.h>
+#include "yalecad/base.h"
 #define RADIX_PREFIX	4
 
 /* radixsort.c, radixsort.h: linear-per-byte in-memory string sort
@@ -125,7 +126,8 @@ register int n;
  register int t2;
 
  incrp = __rsshell_increments;
- while (incr = *incrp++)
+ /* Use ((...)) to avoid assignment as a condition warning */
+ while ((incr = *incrp++))
    for (t1 = incr;t1 < n;++t1)
      for (t2 = t1 - incr;t2 >= 0;)
       {

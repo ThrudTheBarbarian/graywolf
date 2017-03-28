@@ -64,13 +64,17 @@ REVISIONS:  May 04, 1988 - updated initProgram to include
 static char SccsId[] = "@(#) program.c version 3.8 3/4/92" ;
 #endif
 
-#include <yalecad/base.h>
-#include <yalecad/message.h>
-#include <yalecad/program.h>
+#include "yalecad/base.h"
+#include "yalecad/debug.h"
+#include "yalecad/message.h"
+#include "yalecad/program.h"
+#include "yalecad/ytime.h"
  
 static char programName[LRECL];
 static char progVersion[LRECL];
 static char progDate[LRECL];
+
+#define DATE_FORMAT "@(#) Yale compilation date:%s\n"
 
 /* ----------------------------------------------------------------- 
    Program control routines                    
@@ -85,14 +89,14 @@ char *YinitProgram(name,version,introTextFunction)
      char *version ;
      VOID (*introTextFunction)() ;
 {
-  char    *date ,
-  *getCompileDate() ;
+  char    *date;
   
   Ytimer_start() ;   /* start the elapsed timer */
   sprintf(programName,"%s",name);
   sprintf(progVersion,"%s",version);
   
-  if ( date = getCompileDate() ){
+  /* Use ((...)) to avoid assignment as a condition warning */
+  if (( date = getCompileDate() )){
     sprintf(progDate,"%s",date);
   } else {
     sprintf(progDate,"unknown") ;
@@ -110,7 +114,7 @@ char *YinitProgram(name,version,introTextFunction)
 } /* end initProgram */
 
 /* exit program gracefully */
-YexitPgm(status)
+VOID YexitPgm(status)
 INT status ;
 {
 
@@ -132,24 +136,25 @@ INT status ;
 	Ymessage_mode( M_VERBOSE ) ;
     }
 
-    if( name = YgetProgName() ){
+    /* Use ((...)) to avoid assignment as a condition warning */
+    if(( name = YgetProgName() )){
 	if( errorCount ){
 	    sprintf(message,"\n%s terminated abnormally with %d error[s] and %d warning[s]\n\n",
-		name,errorCount,warningCount) ;
+		name,(int)errorCount, (int)warningCount) ;
 	} else {
 	    sprintf(message,"\n%s terminated normally with no errors and %d warning[s]\n\n",
-		name,warningCount) ;
+		name, (int)warningCount) ;
 	}
     } else {
 	M(WARNMSG,"exitPgm","Unable to get program name.  Probably initProgram not used.\n") ;
 	sprintf(message,"Program terminated abnormally with %d error[s] and %d warning[s]\n\n",
-		errorCount,++warningCount) ;
+		(int)errorCount, (int)(++warningCount)) ;
     }
     M(MSG,NULL,message) ;
     /* now write debug file if desired */
     YdebugWrite() ;
     Ymessage_close();	/* Added by Tim, 5/4/11 */
-    exit(status) ;
+    exit((int)status) ;
 
 } /* end exitPgm */
  

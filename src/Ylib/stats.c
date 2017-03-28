@@ -53,7 +53,8 @@ REVISIONS:  Oct  4, 1990 - added elaspse time for the mips machine.
 static char SccsId[] = "@(#) stats.c version 3.8 2/26/92" ;
 #endif
 
-#include	<yalecad/base.h>
+#include "yalecad/base.h"
+#include "yalecad/ytime.h"
 
 #ifdef VMS
 #define AVOID
@@ -69,6 +70,7 @@ static char SccsId[] = "@(#) stats.c version 3.8 2/26/92" ;
 
 #ifndef AVOID
 
+#include <unistd.h>
 #include <sys/types.h>
 #include <sys/time.h>
 #include <sys/resource.h>
@@ -76,7 +78,7 @@ static char SccsId[] = "@(#) stats.c version 3.8 2/26/92" ;
 #endif  /* AVOID */
 
 /* print out the statistics of the program to the given file */
-void Yprint_stats( fout )
+VOID Yprint_stats( fout )
 FILE *fout ;
 {
 
@@ -85,7 +87,10 @@ FILE *fout ;
     char	*timestring ;
     INT	text		;
     INT	data		;
+#if !defined(__APPLE__)
+    caddr_t		p	;
     INT	vm_used		;
+#endif
     INT	vm_limit	;
     INT	vm_soft_limit	;
     INT elapsed_time    ;
@@ -98,8 +103,6 @@ FILE *fout ;
 
     struct rusage	rusage	;
     struct rlimit 	rlp	;
-    caddr_t		p	;
-    caddr_t		sbrk()	;
 
     /***********************************************************
     * Get the hostname
@@ -110,8 +113,10 @@ FILE *fout ;
     /***********************************************************
     * Get the brk() value
     ***********************************************************/
+#if !defined(__APPLE__)
     p = sbrk(0) ;
     vm_used = ((INT) p) / 1024.0 + 0.5 ;
+#endif
 
     /***********************************************************
     * Get virtual memory limits
@@ -152,30 +157,32 @@ FILE *fout ;
 
     text = rusage.ru_ixrss / scale + 0.5 ;
     data = (rusage.ru_idrss + rusage.ru_isrss) / scale + 0.5 ;
-    fprintf(fout, "Average resident text size       = %5dK\n", text) ;
-    fprintf(fout, "Average resident data+stack size = %5dK\n", data) ;
+    fprintf(fout, "Average resident text size       = %5dK\n", (int)text) ;
+    fprintf(fout, "Average resident data+stack size = %5dK\n", (int)data) ;
     fprintf(fout, "Maximum resident size            = %5dK\n", 
-	rusage.ru_maxrss/2) ;
-    fprintf(fout, "Virtual memory size              = %5dK\n", vm_used) ;
+		(int)rusage.ru_maxrss/2) ;
+    #if !defined(__APPLE__)
+      fprintf(fout, "Virtual memory size              = %5dK\n", (int)vm_used) ;
+    #endif
     fprintf(fout, "Virtual memory limit             = %5dK (%dK)\n", 
-	vm_soft_limit, vm_limit) ;
+		(int)vm_soft_limit, (int)vm_limit) ;
 
     if( YgetMaxMemUse() ){
 	fprintf(fout, "Maximum heap size                = %5d\n", 
-	    YgetMaxMemUse() ) ;
+	    (int)YgetMaxMemUse() ) ;
 	fprintf(fout, "Current heap size                = %5d\n", 
-	    YgetCurMemUse() ) ;
+	    (int)YgetCurMemUse() ) ;
     } 
 
-    fprintf(fout, "\nMajor page faults = %d\n", rusage.ru_majflt) ;
-    fprintf(fout, "Minor page faults = %d\n", rusage.ru_minflt) ;
-    fprintf(fout, "Swaps = %d\n\n", rusage.ru_nswap) ;
+    fprintf(fout, "\nMajor page faults = %d\n", (int)rusage.ru_majflt) ;
+    fprintf(fout, "Minor page faults = %d\n", (int)rusage.ru_minflt) ;
+    fprintf(fout, "Swaps = %d\n\n", (int)rusage.ru_nswap) ;
 
-    fprintf(fout, "Input blocks = %d\n", rusage.ru_inblock) ;
-    fprintf(fout, "Output blocks = %d\n\n", rusage.ru_oublock) ;
+    fprintf(fout, "Input blocks = %d\n", (int)rusage.ru_inblock) ;
+    fprintf(fout, "Output blocks = %d\n\n", (int)rusage.ru_oublock) ;
 
-    fprintf(fout, "Context switch (voluntary) = %d\n", rusage.ru_nvcsw) ;
-    fprintf(fout, "Context switch (involuntary) = %d\n", rusage.ru_nivcsw) ;
+    fprintf(fout, "Context switch (voluntary) = %d\n", (int)rusage.ru_nvcsw) ;
+    fprintf(fout, "Context switch (involuntary) = %d\n", (int)rusage.ru_nivcsw) ;
 
 #else 
     fprintf(fout,"Usage statistics not available\n") ;
@@ -184,7 +191,7 @@ FILE *fout ;
 } /* end Yprint_stats */
 /* ==================================================================== */
 
-DOUBLE Ycpu_time()
+DOUBLE Ycpu_time(VOID)
 {
 #ifndef AVOID
     struct rusage rusage;
