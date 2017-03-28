@@ -62,26 +62,23 @@ REVISIONS:  Oct 21, 1989 - changed memoptrS to a pointer rather than
 static char SccsId[] = "@(#) unet.c (Yale) version 3.6 11/23/91" ;
 #endif
 
-#include <custom.h>
+#include <yalecad/base.h>
 #include <yalecad/debug.h>
+
+#include <custom.h>
+#include <paths.h>
+
 #define BREAK_PT 5
 static INT prev_netS , curr_netS , test_newnetS ;
 static INT validLS , validRS , validBS , validTS ;
 static PINBOXPTR  *memoptrS ;
 static INT kS ;
 
+static VOID check_validbound(NETBOXPTR netptr, PINBOXPTR termptr , PINBOXPTR nextptr);
+static VOID wire_boundary2(INT c, NETBOXPTR netptr);
+static VOID wire_boundary1(NETBOXPTR netptr);
 
-
-
-
-static check_validbound();
-static wire_boundary2();
-static wire_boundary1();
-
-
-
-
-init_unet()
+VOID init_unet(VOID)
 {
     INT maxpin, get_max_pin() ;
 
@@ -122,7 +119,8 @@ PINBOXPTR antrmptr ;
 	    netptr->nflag = 0 ;
 
 	    /* ***** CASE of small number of pins - normal case ***** */
-	    if( pinptr = netptr->pins ) {
+	    /* use ((...)) to avoid assignment as condition warning */
+	    if(( pinptr = netptr->pins )) {
 		if( pinptr->flag == 1 ) {
 		    netptr->newxmin = netptr->newxmax = pinptr->newx ;
 		    netptr->newymin = netptr->newymax = pinptr->newy ;
@@ -279,7 +277,7 @@ PINBOXPTR antrmptr , bntrmptr ;
     return( cost ) ;
 } /* end unet2 */
 
-static check_validbound( netptr , termptr , nextptr )
+static VOID check_validbound( netptr , termptr , nextptr )
 NETBOXPTR netptr ;
 PINBOXPTR termptr , nextptr ;
 {
@@ -365,9 +363,9 @@ PINBOXPTR termptr , nextptr ;
     }
 } /* end check_validbound */
 
-static wire_boundary2( c , netptr )
-NETBOXPTR netptr ;
+static VOID wire_boundary2( c , netptr )
 INT c ;
+NETBOXPTR netptr ;
 {
 
     PINBOXPTR pinptr ;
@@ -379,7 +377,8 @@ INT c ;
 	}
 	return ;
     }
-    if( pinptr = netptr->pins ){
+    /* use ((...)) to avoid assignment as condition warning */
+    if(( pinptr = netptr->pins )){
 	if( pinptr->flag == 1 ) {
 	    pinptr->flag = 0 ;
 	    switch( c ) {
@@ -761,14 +760,15 @@ INT c ;
     }
 } /* end wire_boundary2 */
 
-static wire_boundary1( netptr )
+static VOID wire_boundary1( netptr )
 NETBOXPTR netptr ;
 {
 
     PINBOXPTR pinptr ;
     INT x , y ;
 
-    if( pinptr = netptr->pins ) {
+    /* use ((...)) to avoid assignment as condition warning */
+    if(( pinptr = netptr->pins )) {
 	if( pinptr->flag == 1 ) {
 	    netptr->newxmin = netptr->newxmax = pinptr->newx ;
 	    netptr->newymin = netptr->newymax = pinptr->newy ;

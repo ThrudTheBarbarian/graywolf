@@ -56,11 +56,17 @@ static char SccsId[] = "@(#) gmain.c version 3.8 5/1/91" ;
 
 #define DENS_DEFS
 
+#include <string.h>
+#include <unistd.h>
+
 #include <custom.h>
 #include <dens.h>
 #include <yalecad/debug.h>
+#include <yalecad/draw.h>
 #include <yalecad/file.h>
+#include <yalecad/program.h>
 #include <yalecad/string.h>
+#include <yalecad/system.h>
 
 #include "config-build.h"
 
@@ -69,7 +75,7 @@ static char SccsId[] = "@(#) gmain.c version 3.8 5/1/91" ;
 
 
 
-static free_routing_tiles();
+static VOID free_routing_tiles();
 
 
 /* --------------------------------------------------------------------
@@ -82,7 +88,7 @@ static free_routing_tiles();
 	from the global router and build the routing tiles.  We will
 	update the routing tiles in this file.
 -------------------------------------------------------------------- */
-gmain( updateNotChan )
+VOID gmain( updateNotChan )
 BOOL updateNotChan ;  /* if true update routing tiles otherwise normal */
 {
     char filename[LRECL] ;
@@ -112,7 +118,9 @@ BOOL updateNotChan ;  /* if true update routing tiles otherwise normal */
     /* find the path of compactor relative to main program */
     pathname = Yrelpath( argv0G, GENGRAPHPATH ) ;
     if( !(YfileExists(pathname))){
-	if( twdir = TWFLOWDIR ){
+	
+	/* use ((...)) to avoid assignment as condition warning */
+	if((twdir = TWFLOWDIR )){
 	    sprintf( filename, "%s/bin/%s", twdir, GENGRAPHPROG ) ;
 	    pathname = Ystrclone( filename ) ;
 	}
@@ -122,9 +130,10 @@ BOOL updateNotChan ;  /* if true update routing tiles otherwise normal */
 	sprintf( YmsgG, "%s -nr %s", pathname, cktNameG ) ;
     } else {
 	if( doGraphicsG ){
-	    G( windowId = TWsaveState() ) ;
+	    /* use ((...)) to avoid assignment as condition warning */
+	    G((windowId = TWsaveState())) ;
 	    stateSaved = TRUE ;
-	    sprintf( YmsgG, "%s -w %s %d", pathname,cktNameG,windowId ) ;
+	    sprintf( YmsgG, "%s -w %s %d", pathname,cktNameG,(int)windowId ) ;
 	} else {
 	    sprintf( YmsgG, "%s -n %s", pathname, cktNameG ) ;
 	}
@@ -167,7 +176,8 @@ BOOL updateNotChan ;  /* if true update routing tiles otherwise normal */
     /* parse file */
     line = 0 ;
     abort = FALSE ;
-    while( bufferptr=fgets(buffer,LRECL,fp )){
+    /* use ((...)) to avoid assignment as condition warning */
+    while((bufferptr=fgets(buffer,LRECL,fp ))){
 	/* parse file */
 	line ++ ; /* increment line number */
 	tokens = Ystrparser( bufferptr, " :\t\n", &numtokens );
@@ -185,7 +195,8 @@ BOOL updateNotChan ;  /* if true update routing tiles otherwise normal */
 	    y2   = atoi( tokens[13] ) ;
 	    side = atoi( tokens[15] ) ;
 
-	    if( tmp = routingTilesG[cell] ){
+	    /* use ((...)) to avoid assignment as condition warning */
+	    if((tmp = routingTilesG[cell])){
 		tile = routingTilesG[cell] = (RTILEBOXPTR)
 		    Ysafe_malloc( sizeof(RTILEBOX) );
 		tile->next = tmp ;
@@ -220,7 +231,7 @@ BOOL updateNotChan ;  /* if true update routing tiles otherwise normal */
 	    }
 
 	} else {
-	    sprintf( YmsgG, "Syntax error on line:%d\n", line ) ;
+	    sprintf( YmsgG, "Syntax error on line:%d\n", (int)line ) ;
 	    M(ERRMSG, "gmain", YmsgG ) ;
 	    abort = TRUE ;
 	}
@@ -235,12 +246,12 @@ BOOL updateNotChan ;  /* if true update routing tiles otherwise normal */
 } /* end gmain */
 
 
-init_routing_tiles()
+VOID init_routing_tiles(VOID)
 {
     routingTilesG = NULL ;
 } /* end init_routing_tiles */
 
-static free_routing_tiles()
+static VOID free_routing_tiles()
 {
     INT cell ;              /* cell counter */
     RTILEBOXPTR freeptr ;   /* free tile */

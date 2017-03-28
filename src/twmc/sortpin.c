@@ -51,16 +51,31 @@ REVISIONS:  May  2, 1990 - added verify_pad_pins as an error checking
 static char SccsId[] = "@(#) sortpin.c version 3.7 10/18/91" ;
 #endif
 
-#include <custom.h>
+#include <string.h>
+
+#include <yalecad/base.h>
 #include <yalecad/debug.h>
 #include <yalecad/message.h>
+#include <yalecad/quicksort.h>
+
+#include <custom.h>
 
 
+static INT comparePin( pinA , pinB )
+PINBOXPTR *pinA , *pinB ;
 
-static INT comparePin() ;
+{
+    /* first sort by net number */
+    if( (*pinA)->net != (*pinB)->net ){
+	return( (*pinA)->net - (*pinB)->net ) ;
+    } else {
+	/* if nets are equal sort by pinname */
+	return( strcmp( (*pinA)->pinname,(*pinB)->pinname ) ) ;
+    }
+} /* end comparePin */
 
 
-sortpins()
+VOID sortpins(VOID)
 {
 
     INT j , n , cell ;
@@ -100,15 +115,3 @@ sortpins()
 } /* end sortpins */
 
 
-static INT comparePin( pinA , pinB )
-PINBOXPTR *pinA , *pinB ;
-
-{
-    /* first sort by net number */
-    if( (*pinA)->net != (*pinB)->net ){
-	return( (*pinA)->net - (*pinB)->net ) ;
-    } else {
-	/* if nets are equal sort by pinname */
-	return( strcmp( (*pinA)->pinname,(*pinB)->pinname ) ) ;
-    }
-} /* end comparePin */

@@ -74,14 +74,23 @@ static char SccsId[] = "@(#) config1.c version 3.10 10/18/91" ;
 
 #include <custom.h>
 #include <yalecad/debug.h>
+#include <yalecad/draw.h>
 #include <yalecad/file.h>
+#include <yalecad/program.h>
+#include <yalecad/system.h>
+
+#include "bins.h"
+#include "cells.h"
+#include "main.h"
+#include "pads.h"
+#include "wire.h"
 
 #define NUMBINSPERCELL  4   /* we want average cell to be in 4 bins
 				for accuracy */
 #define WIREAREAUNKNOWN 0   /* at this time we don't know wire area */
 #define UPDATE  (BOOL)  FALSE /* don't initialize updateFixedCells */
 
-config1()
+VOID config1(VOID)
 {
 
 CELLBOXPTR cellptr ;
@@ -208,8 +217,7 @@ if( 5.0 * coreArea > (DOUBLE) INT_MAX && !(cost_onlyG) ){
     scale_dataG++ ; /* round up always */
     M( MSG,"config1", "Design is too large for integer operations\n");
     sprintf( YmsgG,
-	"Calling TimberWolfMC recursively to scale data by %d\n",
-	scale_dataG ) ;
+	"Calling TimberWolfMC recursively to scale data by %d\n", (int)scale_dataG ) ;
     M( MSG, NULL, YmsgG ) ;
     TWCLOSE( fpoG ) ;
     parasite = get_arg_string( arguments ) ;
@@ -278,7 +286,7 @@ placepads() ;
 
 bdxlengthG = blockrG - blocklG ;
 bdylengthG = blocktG - blockbG ;
-OUT3("bdxlength:%d    bdylength:%d\n",bdxlengthG,bdylengthG);
+OUT3("bdxlength:%d    bdylength:%d\n",(int)bdxlengthG, (int)bdylengthG);
 FLUSHOUT();
 
 /* update for wire estimation algorithm */

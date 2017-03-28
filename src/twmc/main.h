@@ -139,4 +139,19 @@ EXTERN BOOL verboseG ;
 
 #undef EXTERN
 
+extern VOID writeResults(P3(INT wire, INT penal, INT rand ));
+extern INT closegraphics(P1(VOID));
+extern VOID syntax(P1(VOID));
+
+extern BOOL get_arg_string( P1(char *arguments) );
+extern BOOL get_batch_mode(P1(VOID));
+extern VOID set_wiring_reduction(P1(DOUBLE reduction));
+
+/* From gmain.c */
+extern VOID gmain(P1(BOOL updateNotChan));
+extern VOID init_routing_tiles(P1(VOID));
+
+/* from rmain.c */
+extern VOID rmain(P1(BOOL constraint_flag));
+
 #endif /* MAIN_H */

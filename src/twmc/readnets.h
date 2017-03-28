@@ -76,3 +76,17 @@ REVISIONS:  Sun Dec 16 00:40:28 EST 1990 - moved net routines to
 #define yysindex        NET_yysindex
 #define yylen           NET_yylen
 #define yylhs           NET_yylhs
+
+/* Declare prototypes if required */
+extern int yyback(P2(int *, int));
+extern int yyinput(P1(void));
+extern int yylook(P1(void));
+extern void yyoutput(P1(int));
+extern int yyracc(P1(int));
+extern int yyreject(P1(void));
+extern void yyunput(P1(int));
+extern int yylex(P1(void));
+extern int yyless(P1(int));
+extern int yywrap(P1(void));
+extern int yyparse(P1(void));
+extern int yyerror(P1(char * s));

@@ -72,7 +72,7 @@ static DOUBLE betaS ;     /* exponential decay constant for low temp */
 static DOUBLE speedS ;    /* multiply attempts per cell by this factor */
 
 /* calculate static exponential time constants */
-init_acceptance_rate()
+VOID init_acceptance_rate(VOID)
 {
     /* determine alpha */
     alphaS =  - log( CRITRATIO ) / HIGHTEMP ;
@@ -121,7 +121,7 @@ DOUBLE iteration ;
     return( desired_ratio ) ;
 } /* end calc_acceptance ratio */
 
-INT compute_attprcel() 
+INT compute_attprcel(VOID) 
 {
     DOUBLE attempts ;
 
@@ -144,7 +144,7 @@ INT compute_attprcel()
 
 } /* end compute_attprcell */ 
 
-set_tw_speed( speed ) 
+VOID set_tw_speed( speed ) 
 DOUBLE speed ;
 {
     speedS = speed ;

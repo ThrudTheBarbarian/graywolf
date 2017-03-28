@@ -56,12 +56,21 @@ REVISIONS:  Jan  20, 1989 - added findcost call to update new wirelength
 static char SccsId[] = "@(#) reconfig.c version 3.6 5/5/91" ;
 #endif
 
-#include <custom.h>
+#include <yalecad/base.h>
 #include <yalecad/debug.h>
+#include <yalecad/relpos.h>
+
+#include "bins.h"
+#include "cells.h"
+#include "custom.h"
+#include "findcost.h"
+#include "graphics.h"
+#include "pads.h"
+#include "wire.h"
 
 #define UPDATE  (BOOL)  FALSE /* don't initialize updateFixedCells */
 
-reconfigure( numbinX, numbinY, newCoreArea )
+VOID reconfigure( numbinX, numbinY, newCoreArea )
 INT numbinX ;
 INT numbinY ;
 DOUBLE newCoreArea ;
@@ -133,7 +142,7 @@ DOUBLE newCoreArea ;
     bdxlengthG = blockrG - blocklG ;
     bdylengthG = blocktG - blockbG ;
 
-    OUT3("bdxlength:%d    bdylength:%d\n",bdxlengthG,bdylengthG);
+    OUT3("bdxlength:%d    bdylength:%d\n",(int)bdxlengthG,(int)bdylengthG);
 
     /* update for wire estimation algorithm */
     resize_wire_params() ;
@@ -147,7 +156,7 @@ DOUBLE newCoreArea ;
 
 
 
-reorigin()
+VOID reorigin(VOID)
 {
 
     CELLBOXPTR cellptr ;
@@ -196,7 +205,7 @@ reorigin()
     for( cell = 1 ; cell <= numcellsG ; cell++ ){
 	cellptr = cellarrayG[cell] ;
 	cellptr->xcenter += deltax ;
-	cellptr->ycenter += deltax ;
+	cellptr->ycenter += deltay ;
     } /* end cell update */
 
     placepads() ;

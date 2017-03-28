@@ -50,10 +50,13 @@ REVISIONS:
 static char SccsId[] = "@(#) analyze.c version 3.7 4/18/91" ;
 #endif
 
+#include <string.h>
+
 #include <custom.h>
 #include <yalecad/debug.h>
 #include <yalecad/string.h>
 #include <yalecad/file.h>
+#include <yalecad/quicksort.h>
 
 #define CURWT      1
 #define PRIORWT    1
@@ -222,7 +225,8 @@ DOUBLE wireRatio ;
 	return( wireRatio ) ;
     }
     /* parse log file */
-    while( bufferptr=fgets(buffer,LRECL,fp )){
+    /* use ((...)) to avoid assignment as condition warning */
+    while(( bufferptr=fgets(buffer,LRECL,fp ))){
 	/* parse file */
 	tokens = Ystrparser( bufferptr, ":\t\n", &numtokens );
 

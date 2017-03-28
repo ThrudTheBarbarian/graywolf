@@ -50,10 +50,12 @@ REVISIONS:  May 14, 1989 - set weights to zero for stdcell case.
 static char SccsId[] = "@(#) setpwates.c version 3.4 2/4/91" ;
 #endif
 
-#include <custom.h>
+#include <yalecad/base.h>
 #include <yalecad/debug.h>
 
-setpwates()
+#include <custom.h>
+
+VOID setpwates(VOID)
 {
 
 TILEBOXPTR tileptr ;
@@ -65,7 +67,8 @@ INT numinstances ;
 
 for( cell = 1 ; cell <= numcellsG ; cell++ ) {
     cptr = cellarrayG[cell] ;
-    if( instptr = cptr->instptr ){
+    /* use ((...)) to avoid assignment as condition warning */
+    if(( instptr = cptr->instptr )){
 	numinstances = instptr->numinstances ;
     } else {
 	numinstances = 1 ;

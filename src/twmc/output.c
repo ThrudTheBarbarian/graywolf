@@ -88,37 +88,32 @@ REVISIONS:  Aug 10, 1988 - add compile switch for Dahe.
 static char SccsId[] = "@(#) output.c version 3.16 3/6/92" ;
 #endif
 
-#include <custom.h>
-#include <pads.h>
-#include <initialize.h>
+#include <yalecad/base.h>
 #include <yalecad/buster.h>
 #include <yalecad/debug.h>
 #include <yalecad/relpos.h>
 #include <yalecad/file.h>
 #include <yalecad/string.h>
 
+#include <custom.h>
+#include <finalout.h>
+#include <pads.h>
+#include <initialize.h>
+
 static FILE *outS ;                    /* the output file */
 static BOOL determine_sideS = TRUE ;   /* normally determine side */
 
+static VOID output_corners(CELLBOXPTR cellptr);
+static VOID output_class_orient(CELLBOXPTR cellptr);
+static VOID output_pins(CELLBOXPTR cellptr);
+static VOID output_side_n_space(CELLBOXPTR cellptr);
+static VOID output_pad_groups(CELLBOXPTR cellptr);
+static VOID output_fixed( CELLBOXPTR cellptr );
+static VOID create_pl1(VOID);
+static VOID print_four_corners( FILE *fp, CELLBOXPTR cellptr );
+static VOID create_pin(VOID);
 
-
-
-
-static output_corners();
-static output_class_orient();
-static output_pins();
-static output_side_n_space();
-static output_pad_groups();
-static output_fixed();
-static create_pl1();
-static print_four_corners();
-static create_pin();
-
-
-
-
-
-output( fp )
+VOID output( fp )
 FILE *fp ;
 {
 
@@ -141,7 +136,7 @@ FILE *fp ;
 	switch( cellptr->celltype ){
 	    case CUSTOMCELLTYPE :
 		fprintf( outS,"\nhardcell %d name %s\n", 
-		    cellptr->cellnum, cellptr->cname ) ;
+		    (int)(cellptr->cellnum), cellptr->cname ) ;
 		output_fixed( cellptr ) ;
 		output_corners( cellptr ) ;
 		output_class_orient( cellptr ) ;
@@ -149,15 +144,15 @@ FILE *fp ;
 		break ;
 	    case PADCELLTYPE :
 		fprintf( outS,"\npad %d name %s\n",
-		    cellptr->cellnum, cellptr->cname ) ;
+		    (int)(cellptr->cellnum), cellptr->cname ) ;
 		output_corners( cellptr ) ;
-		fprintf( outS, "orient %d\n", cellptr->orient ) ;
+		fprintf( outS, "orient %d\n",(int)(cellptr->orient) ) ;
 		output_side_n_space( cellptr ) ;
 		output_pins( cellptr ) ;
 		break ;
 	    case SOFTCELLTYPE :
 		fprintf( outS,"\nsoftcell %d name %s\n",
-		    cellptr->cellnum, cellptr->cname ) ;
+		    (int)(cellptr->cellnum), cellptr->cname ) ;
 		output_fixed( cellptr ) ;
 		output_corners( cellptr ) ;
 		fprintf( outS,"asplb %lf aspub %lf\n", 
@@ -187,7 +182,7 @@ FILE *fp ;
 		    break ;
 		}
 		fprintf( outS,"\nstdcell %d name %s\n",
-		    cellptr->cellnum, cellptr->cname ) ;
+		    (int)(cellptr->cellnum), cellptr->cname ) ;
 		output_corners( cellptr ) ;
 		fprintf( outS,"asplb %lf aspub %lf\n", 
 		    cellptr->aspLB, cellptr->aspUB ) ;
@@ -201,7 +196,7 @@ FILE *fp ;
 
 } /* end output */
 
-output_pads( fp )
+VOID output_pads( fp )
 FILE *fp ;
 {
 
@@ -223,7 +218,7 @@ FILE *fp ;
 	switch( cellptr->celltype ){
 	    case PADCELLTYPE :
 		fprintf( outS,"\npad %d name %s\n",
-		    cellptr->cellnum, cellptr->cname ) ;
+		    (int)(cellptr->cellnum), cellptr->cname ) ;
 		output_corners( cellptr ) ;
 		output_side_n_space( cellptr ) ;
 		output_pins( cellptr ) ;
@@ -248,32 +243,32 @@ FILE *fp ;
 
 } /* end output_pads */
 
-static output_corners( cellptr )
+static VOID output_corners( cellptr )
 CELLBOXPTR cellptr ;
 {
-    fprintf( outS, "corners %d\n", cellptr->numsides ) ;
+    fprintf( outS, "corners %d\n", (int)(cellptr->numsides) ) ;
     output_vertices( outS, cellptr ) ;
 } /* end output_corners */
 
-static output_class_orient( cellptr )
+static VOID output_class_orient( cellptr )
 CELLBOXPTR cellptr ;
 {
     INT i ;
 
-    fprintf( outS, "class %d ", cellptr->class ) ;
+    fprintf( outS, "class %d ", (int)(cellptr->class) ) ;
     fprintf( outS, "orientations " ) ;
     for( i = 0; i <= 7 ; i++ ){
 	if( cellptr->orientList[i] ){
-	    fprintf( outS, "%d ", i ) ;
+	    fprintf( outS, "%d ", (int)i ) ;
 	}
     }
     fprintf( outS, "\n" ) ;
-    fprintf( outS, "orient %d\n", cellptr->orient ) ;
+    fprintf( outS, "orient %d\n", (int)(cellptr->orient) ) ;
 
 } /* end output_class_orient */
 
 
-static output_pins( cellptr )
+static VOID output_pins( cellptr )
 CELLBOXPTR cellptr ;
 {
     INT i ;                  /* counter */
@@ -304,7 +299,7 @@ CELLBOXPTR cellptr ;
 
 	    fprintf(outS,"pin name %s signal %s layer %d %d %d\n",
 		pinptr->pinname, netarrayG[ pinptr->net ]->nname, 
-		ABS(pinptr->layer), x , y ) ;
+		(int)(ABS(pinptr->layer)), (int)x , (int)y ) ;
 	}
 	/* ******** HARD PIN EQUIVALENT CASE ****** */
 	if( pinptr->eqptr && !(pinptr->softinfo)){ 
@@ -317,7 +312,7 @@ CELLBOXPTR cellptr ;
 		    eqptr->typos[instance],          /* cell relative */
 		    cellptr->xcenter, cellptr->ycenter ) ; /* center */
 		fprintf(outS,"equiv name %s layer %d %d %d\n",
-		    pinptr->pinname,  ABS(pinptr->layer), x , y ) ;
+		    pinptr->pinname,  (int)(ABS(pinptr->layer)), (int)x , (int)y ) ;
 	    }
 	}
 	/* ******** SOFT PIN EQUIVALENT CASE ****** */
@@ -337,12 +332,12 @@ CELLBOXPTR cellptr ;
 		    cellptr->xcenter, cellptr->ycenter ) ; /* center */
 
 		fprintf(outS,"equiv name %s layer %d %d %d\n",
-		    child->pinname,  ABS(pinptr->layer), x , y ) ;
+		    child->pinname,  (int)(ABS(pinptr->layer)), (int)x , (int)y ) ;
 	    }
 	}
     }
 } /* end output_pins */
-static output_side_n_space( cellptr )
+static VOID output_side_n_space( cellptr )
 CELLBOXPTR cellptr ;
 {
     INT i ;           /* counter */
@@ -392,7 +387,7 @@ CELLBOXPTR cellptr ;
     }
 } /* end output_side_n_space */
 
-static output_pad_groups( cellptr )
+static VOID output_pad_groups( cellptr )
 CELLBOXPTR cellptr ;
 {
     INT i, child, padnum ;
@@ -416,7 +411,7 @@ CELLBOXPTR cellptr ;
     
 } /* end output_pad_groups */
 
-static output_fixed( cellptr )
+static VOID output_fixed( cellptr )
 CELLBOXPTR cellptr ;
 {
     FIXEDBOXPTR fixptr ;
@@ -427,47 +422,47 @@ CELLBOXPTR cellptr ;
     if( fixptr->fixedType == POINTFLAG ){
 	fprintf( outS, "fixed at " ) ;
 	if( fixptr->leftNotRight == TRUE ){
-	    fprintf( outS, "%d from L ", fixptr->xcenter ) ;
+	    fprintf( outS, "%d from L ", (int)(fixptr->xcenter) ) ;
 	} else {
-	    fprintf( outS, "%d from R ", fixptr->xcenter ) ;
+	    fprintf( outS, "%d from R ", (int)(fixptr->xcenter) ) ;
 	}
 	if( fixptr->bottomNotTop == TRUE ){
-	    fprintf( outS, "%d from B ", fixptr->ycenter ) ;
+	    fprintf( outS, "%d from B ", (int)(fixptr->ycenter) ) ;
 	} else {
-	    fprintf( outS, "%d from T ", fixptr->ycenter ) ;
+	    fprintf( outS, "%d from T ", (int)(fixptr->ycenter) ) ;
 	}
     } else {
 	fprintf( outS, "fixed neighborhood " ) ;
 	if( fixptr->leftNotRight == TRUE ){
-	    fprintf( outS, "%d from L ", fixptr->xloc1 ) ;
+	    fprintf( outS, "%d from L ", (int)(fixptr->xloc1) ) ;
 	} else {
-	    fprintf( outS, "%d from R ", fixptr->xloc1 ) ;
+	    fprintf( outS, "%d from R ", (int)(fixptr->xloc1) ) ;
 	}
 	if( fixptr->bottomNotTop == TRUE ){
-	    fprintf( outS, "%d from B ", fixptr->yloc1 ) ;
+	    fprintf( outS, "%d from B ", (int)(fixptr->yloc1) ) ;
 	} else {
-	    fprintf( outS, "%d from T ", fixptr->yloc1 ) ;
+	    fprintf( outS, "%d from T ", (int)(fixptr->yloc1) ) ;
 	}
 	if( fixptr->leftNotRight2 == TRUE ){
-	    fprintf( outS, "%d from L ", fixptr->xloc2 ) ;
+	    fprintf( outS, "%d from L ", (int)(fixptr->xloc2) ) ;
 	} else {
-	    fprintf( outS, "%d from R ", fixptr->xloc2 ) ;
+	    fprintf( outS, "%d from R ", (int)(fixptr->xloc2) ) ;
 	}
 	if( fixptr->bottomNotTop2 == TRUE ){
-	    fprintf( outS, "%d from B ", fixptr->yloc2 ) ;
+	    fprintf( outS, "%d from B ", (int)(fixptr->yloc2) ) ;
 	} else {
-	    fprintf( outS, "%d from T ", fixptr->yloc2 ) ;
+	    fprintf( outS, "%d from T ", (int)(fixptr->yloc2) ) ;
 	}
     }
 } /* end output_fixed */
 
-set_determine_side( flag )
+VOID set_determine_side( flag )
 BOOL flag ;
 {
     determine_sideS = flag ;
 } /* end set_determine_side */
 
-output_vertices( fp, cellptr )
+VOID output_vertices( fp, cellptr )
 FILE *fp ;
 CELLBOXPTR cellptr ;
 {
@@ -528,7 +523,7 @@ CELLBOXPTR cellptr ;
 	}
     }
     /* output the first points */
-    fprintf( fp, "%d %d ", l, b ) ;
+    fprintf( fp, "%d %d ", (int)l, (int)b ) ;
 
     /* now determine CW direction */
     nextpos = lowestp + 1 ;
@@ -549,7 +544,7 @@ CELLBOXPTR cellptr ;
 	    } else {
 		this_pt = p ;
 	    }
-	    fprintf( fp, "%d %d ", temp_x[this_pt], temp_y[this_pt] ) ; 
+	    fprintf( fp, "%d %d ", (int)(temp_x[this_pt]), (int)(temp_y[this_pt]) ) ; 
 	}
 
     } else if( temp_x[nextneg] == l && temp_y[nextneg] > b ){
@@ -561,7 +556,7 @@ CELLBOXPTR cellptr ;
 	    } else {
 		this_pt = p ;
 	    }
-	    fprintf( fp, "%d %d ", temp_x[this_pt], temp_y[this_pt] ) ; 
+	    fprintf( fp, "%d %d ", (int)(temp_x[this_pt]), (int)(temp_y[this_pt]) ) ; 
 	}
     } else {
 	M( ERRMSG, "output_vertices",
@@ -573,7 +568,7 @@ CELLBOXPTR cellptr ;
 
 } /* end output_vertices */
 
-create_sc_output()
+VOID create_sc_output(VOID)
 {
     create_pl1() ;
     create_pin() ;
@@ -581,7 +576,7 @@ create_sc_output()
 
 /** by kroy July 1991 **/
 /* modified by WPS Aug 6, 1991 */
-static create_pl1()
+static VOID create_pl1(VOID)
 {
     FILE *fpp1 ;
     CELLBOXPTR cellptr ;
@@ -614,7 +609,7 @@ static create_pl1()
 #endif
 	    print_four_corners (fpp1, cellptr ) ;
 
-	    fprintf(fpp1," %d 0\n",  cellptr->orient ) ;
+	    fprintf(fpp1," %d 0\n",  (int)(cellptr->orient) ) ;
 	    break ;
 	case PADCELLTYPE :
 #ifdef NSC
@@ -648,7 +643,7 @@ static create_pl1()
 		row = - 3 ;
 		break ;
 	    } /* end switch */
-	    fprintf(fpp1," %d %d\n",  cellptr->orient , row ) ;
+	    fprintf(fpp1," %d %d\n",  (int)(cellptr->orient) , (int)row ) ;
 	    break ;
 	case PADGROUPTYPE :
 	case SUPERCELLTYPE :
@@ -664,7 +659,7 @@ static create_pl1()
 
 } /* create_pl1 */
 
-static print_four_corners( fp, cellptr )
+static VOID print_four_corners( fp, cellptr )
 FILE *fp ;
 CELLBOXPTR cellptr ;
 {
@@ -683,14 +678,14 @@ CELLBOXPTR cellptr ;
     YtranslateC( &(bounptr->l), &(bounptr->b), 
 	&(bounptr->r),&(bounptr->t), cellptr->orient ) ;
 
-    fprintf( fp, "%d %d ", bounptr->l + xc, bounptr->b + yc ) ;
-    fprintf( fp, "%d %d ", bounptr->r + xc, bounptr->t + yc ) ;
+    fprintf( fp, "%d %d ", (int)(bounptr->l + xc), (int)(bounptr->b + yc) ) ;
+    fprintf( fp, "%d %d ", (int)(bounptr->r + xc), (int)(bounptr->t + yc) ) ;
     fflush ( fp );
 } /* end print_four_corners */
 
 
 /* by WPS Aug 6, 1991 */
-static create_pin()
+static VOID create_pin(VOID)
 {
     FILE *fpp1 ;
     CELLBOXPTR cellptr ;
@@ -719,8 +714,8 @@ static create_pin()
 	    case CUSTOMCELLTYPE :
 	    case SOFTCELLTYPE :
 		fprintf( fpp1, "%s %d %s %s %d %d 0 0 %d\n",
-		    netptr->nname, net, cellptr->cname, pinptr->pinname,
-		    pinptr->xpos, pinptr->ypos, pinptr->layer ) ;
+		    netptr->nname, (int)net, cellptr->cname, pinptr->pinname,
+		    (int)(pinptr->xpos), (int)(pinptr->ypos), (int)(pinptr->layer) ) ;
 		break ;
 	    case PADCELLTYPE :
 		pad = cellptr->padptr ;
@@ -740,14 +735,14 @@ static create_pin()
 		    break ;
 		} /* end switch */
 		fprintf( fpp1, "%s %d %s %s %d %d %d 0 %d\n",
-		    netptr->nname, net, cellptr->cname, pinptr->pinname,
-		    pinptr->xpos, pinptr->ypos, row, pinptr->layer ) ;
+		    netptr->nname, (int)net, cellptr->cname, pinptr->pinname,
+		    (int)(pinptr->xpos), (int)(pinptr->ypos), (int)row, (int)(pinptr->layer) ) ;
 		fprintf( fpp1, "%s %d PSEUDO_CELL PSEUDO_PIN %d %d %d 0 %d\n",
-		    netptr->nname, net,
-		    pinptr->xpos, pinptr->ypos, row, pinptr->layer ) ;
+		    netptr->nname, (int)net,
+		    (int)(pinptr->xpos), (int)(pinptr->ypos), (int)row, (int)(pinptr->layer) ) ;
 		fprintf( fpp1, "%s %d PSEUDO_CELL PSEUDO_PIN %d %d 0 0 %d\n",
-		    netptr->nname, net,
-		    pinptr->xpos, pinptr->ypos, pinptr->layer ) ;
+		    netptr->nname, (int)net,
+		    (int)(pinptr->xpos), (int)(pinptr->ypos), (int)(pinptr->layer) ) ;
 		break ;
 	    case PADGROUPTYPE :
 	    case SUPERCELLTYPE :

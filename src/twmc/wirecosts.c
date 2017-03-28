@@ -56,7 +56,7 @@ static char SccsId[] = "@(#) wirecosts.c version 3.3 9/5/90" ;
 #include <yalecad/debug.h>
 
 
-wirecosts()
+VOID wirecosts(VOID)
 {
 
 NETBOXPTR dimptr ;
@@ -143,9 +143,9 @@ for( net = 1 ; net <= numnetsG ; net++ ) {
     }
 }
 OUT1("Wirelength:\n") ;
-OUT2("\tAll nets             :%d\n", withPads ) ;
-OUT2("\tLimited nets         :%d\n", limitNets ) ;
-OUT2("\tAll nets without pads:%d\n", withOutPads ) ;
+OUT2("\tAll nets             :%d\n", (int)withPads ) ;
+OUT2("\tLimited nets         :%d\n", (int)limitNets ) ;
+OUT2("\tAll nets without pads:%d\n", (int)withOutPads ) ;
 return ;
 
 }

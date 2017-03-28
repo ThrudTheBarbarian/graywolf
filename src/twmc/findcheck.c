@@ -50,12 +50,15 @@ REVISIONS:  Jul 21, 1988 - fixed softcell code.
 static char SccsId[] = "@(#) findcheck.c version 3.3 9/5/90" ;
 #endif
 
-#include <custom.h>
+#include <yalecad/base.h>
 #include <yalecad/relpos.h>
 #include <yalecad/debug.h>
 
+#include <check.h>
+#include <custom.h>
 
-finalcheck()
+
+VOID finalcheck(VOID)
 {
 
 NETBOXPTR netptr ;
@@ -132,7 +135,7 @@ return;
 
 
 
-initcheck()
+VOID initcheck(VOID)
 {
 
 NETBOXPTR netptr ;

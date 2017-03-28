@@ -3,6 +3,9 @@
 #else
 # include "stdio.h"
 #endif
+
+extern VOID setErrorFlag();
+
 # define U(x) ((x)&0377)
 # define NLSTATE yyprevious=YYNEWLINE
 # define BEGIN yybgin = yysvec + 1 +
@@ -21,7 +24,7 @@ int yyleng; extern char yytext[];
 int yymorfg;
 extern char *yysptr, yysbuf[];
 int yytchar;
-#ifdef linux
+#if defined(linux) || defined (__APPLE__)
 FILE *yyin = NULL, *yyout = NULL;
 #else
 FILE *yyin ={stdin}, *yyout ={stdout};
@@ -63,10 +66,10 @@ REVISIONS:  Feb  9, 1990 - expanded ASCII character set.
 #define END(v) (v-1 + sizeof(v) / sizeof( v[0] ) ) /* for table lookup */
 
 static INT screen() ;
-static INT check_line_count() ;
+static VOID check_line_count() ;
 
 # define YYNEWLINE 10
-yylex(){
+int yylex(){
 int nstr; extern int yyprevious;
 while((nstr = yylook()) >= 0)
 yyfussy: switch(nstr){
@@ -175,15 +178,15 @@ static INT screen()
 		
 } /* end screen function */
 
-static INT check_line_count( s ) 
+static VOID check_line_count( s ) 
 char *s ;
 {
     if( s ){
 	if( strlen(s) >= YYLMAX ){
-	    sprintf(YmsgG, "comment beginning at line %d ",line_countS+1 );
+	    sprintf(YmsgG, "comment beginning at line %d ",(int)(line_countS+1) );
 	    M( ERRMSG, "lex", YmsgG ) ;
 	    sprintf(YmsgG,"exceeds maximum allowed length:%d chars.\n", 
-		YYLMAX );
+		(int)YYLMAX );
 	    M( MSG, NULL, YmsgG ) ;
 	    setErrorFlag() ;
 	}
@@ -516,7 +519,7 @@ char *yysptr = yysbuf;
 int *yyfnd;
 extern struct yysvf *yyestate;
 int yyprevious = YYNEWLINE;
-yylook(){
+int yylook(){
 	register struct yysvf *yystate, **lsp;
 	register struct yywork *yyt;
 	struct yysvf *yyz;
@@ -526,7 +529,7 @@ yylook(){
 	int debug;
 # endif
 	char *yylastch;
-#ifdef linux
+#if defined(linux) || defined (__APPLE__)
 	if (yyin == NULL) yyin = stdin;
 	if (yyout == NULL) yyout = stdout;
 #endif
@@ -666,8 +669,9 @@ yylook(){
 # endif
 		}
 	}
-yyback(p, m)
+int yyback(p, m)
 	int *p;
+	int m;
 {
 if (p==0) return(0);
 while (*p)
@@ -678,20 +682,20 @@ while (*p)
 return(0);
 }
 	/* the following are only used in the lex library */
-yyinput(){
-#ifdef linux
+int yyinput(){
+#if defined(linux) || defined (__APPLE__)
 	if (yyin == NULL) yyin = stdin;
 #endif
 	return(input());
 	}
-yyoutput(c)
+void yyoutput(c)
   int c; {
-#ifdef linux
+#if defined(linux) || defined (__APPLE__)
 	if (yyout == NULL) yyout = stdout;
 #endif
 	output(c);
 	}
-yyunput(c)
+void yyunput(c)
    int c; {
 	unput(c);
 	}

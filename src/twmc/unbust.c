@@ -60,6 +60,9 @@ static char SccsId[] = "@(#) unbust.c version 3.7 1/20/91" ;
 #include <yalecad/buster.h>
 #include <yalecad/debug.h>
 #include <yalecad/message.h>
+#include <yalecad/quicksort.h>
+
+#include <unbust.h>
 
 #define E 0
 #define T 1
@@ -68,16 +71,6 @@ static char SccsId[] = "@(#) unbust.c version 3.7 1/20/91" ;
 #define B 4
 #define HOWMANY  0
 #define EXPECTEDNUMPINS  4
-
-typedef struct {
-    INT tile ;    /* tile that point is attached */
-    INT x ;       /* x position of point */
-    INT y ;       /* y position of point */
-    INT Vnum ;    /* position in VPts array */
-    INT Hnum ;    /* position in HPts array */
-    INT order ;   /* order that points should be output - negative means invalid */
-    BOOL marked ; /* point has been used */
-} POINTBOX, *POINTPTR ;
 
 static INT numptS ;           /* number of total points for figure */
 static INT ptAllocS ;         /* number of space allocated for points */
@@ -88,17 +81,17 @@ static BOOL addptS = FALSE ;  /* whether to add points to figures or not*/
 
 
 
-static INT find_next_state() ;
+static INT find_next_state(INT cur_state, POINTPTR cur_pt, POINTPTR* next_pt) ;
 static INT remove_redundant_points() ; 
 static INT find_next_state();
-static INT sortbyXY();
-static INT sortbyYX();
-static INT sortbyorder();
-static INT remove_redundant_points(); 
-static add_vpts();
-static chek_vpt();
-static add_hpts();
-static chek_hpt();
+static INT sortbyXY(void *pointA , void *pointB);
+static INT sortbyYX(void *pointA , void *pointB);
+static INT sortbyorder(void *pointA , void *pointB);
+static INT remove_redundant_points(POINTPTR *pt_array); 
+static VOID add_vpts(INT numpts);
+static VOID chek_vpt(POINTPTR tile1, POINTPTR tile2, POINTPTR tile3, POINTPTR tile4);
+static VOID add_hpts(INT numpts);
+static VOID chek_hpt(POINTPTR tile1, POINTPTR tile2, POINTPTR tile3, POINTPTR tile4);
 
 
 
@@ -113,7 +106,7 @@ static INT nextStateS[5][5] =
     /* DOWN  state - B  */  E, R, B, L, /* T */ E
 } ;
 
-YBUSTBOXPTR unbust()
+YBUSTBOXPTR unbust(VOID)
 {
 
     /*
@@ -149,9 +142,6 @@ YBUSTBOXPTR unbust()
 
      POINTPTR cur_pt ;  /* current point record */
      POINTPTR next_pt ; /* next point record */
-     INT sortbyXY() ;   /* sort horizontal points */
-     INT sortbyYX() ;   /* sort vertical points */
-     INT sortbyorder() ;/* final sort */
      INT i ;            /* counter */
      INT count ;            /* counter */
      INT cur_state ;    /* current state */
@@ -248,7 +238,8 @@ YBUSTBOXPTR unbust()
 		cur_state, cur_pt->x, cur_pt->y ) ) ;
      for( i = 0; i <= limit; i++ ){  /* infinite loop protector */
 	/* determine next state */
-	if( next_state = find_next_state( cur_state,cur_pt,&next_pt )){
+	/* use ((...)) to avoid assignment as condition warning */
+	if(( next_state = find_next_state( cur_state,cur_pt,&next_pt ))){
 	    D( "unbust", 
 		fprintf( stderr,"next_state:%d next_pt:(%d,%d)\n", 
 		next_state, next_pt->x, next_pt->y ) ) ;
@@ -282,7 +273,7 @@ YBUSTBOXPTR unbust()
      if( i == limit ){
 	M( ERRMSG, "unbust",
 	"we have detected an infinite loop in automaton\n" ) ;
-	return ;
+	return NULL;
      }
 
      dump_pts( VptS ) ;
@@ -409,9 +400,11 @@ POINTPTR *next_pt ;
 
     } /* end going thru posibilities */
 
+/* should never be reached but humour the compiler */
+return 0;
 } /* end get_next_state */
 
-addPt( tile, x, y )
+VOID addPt( tile, x, y )
 INT tile, x, y ;
 {
     INT i ;                   /* counter */
@@ -445,7 +438,7 @@ INT tile, x, y ;
     return ;
 } /* end addPt */
 
-addPts( cell, l, r, b, t ) 
+VOID addPts( cell, l, r, b, t ) 
 INT cell, l, r, b, t ; 
 {
     addPt( cell, l, b ) ;
@@ -456,7 +449,7 @@ INT cell, l, r, b, t ;
 	    l, b, l, t, r, t, r, b ) ) ;
 } /* end addPts */
 
-initPts( addpoint_flag )
+VOID initPts( addpoint_flag )
 BOOL addpoint_flag ;
 {
     INT i ;     /* counter */
@@ -487,33 +480,41 @@ BOOL addpoint_flag ;
 
 /* sort by x first then y */
 static INT sortbyXY( pointA , pointB )
-POINTPTR *pointA , *pointB ;
+void *pointA , *pointB ;
 {
-    if( (*pointA)->x != (*pointB)->x ){
-	return( (*pointA)->x - (*pointB)->x ) ;
+	POINTPTR * pa = (POINTPTR *)pointA;
+	POINTPTR * pb = (POINTPTR *)pointB;
+	
+    if( (*pa)->x != (*pb)->x ){
+	return( (*pa)->x - (*pb)->x ) ;
     } else {
 	/* if x's are equal sort by y's */
-	return( (*pointA)->y - (*pointB)->y ) ;
+	return( (*pa)->y - (*pb)->y ) ;
     }
 } /* end sortbyXY */
 
 /* sort by y first then x */
 static INT sortbyYX( pointA , pointB )
-POINTPTR *pointA , *pointB ;
+void *pointA , *pointB ;
 {
-    if( (*pointA)->y != (*pointB)->y ){
-	return( (*pointA)->y - (*pointB)->y ) ;
+	POINTPTR * pa = (POINTPTR *)pointA;
+	POINTPTR * pb = (POINTPTR *)pointB;
+
+    if( (*pa)->y != (*pb)->y ){
+	return( (*pa)->y - (*pb)->y ) ;
     } else {
 	/* if y's are equal sort by x's */
-	return( (*pointA)->x - (*pointB)->x ) ;
+	return( (*pa)->x - (*pb)->x ) ;
     }
 } /* end sortbyYX */
 
 /* sort by order */
 static INT sortbyorder( pointA , pointB )
-POINTPTR *pointA , *pointB ;
+void *pointA , *pointB ;
 {
-    return( (*pointA)->order - (*pointB)->order ) ;
+	POINTPTR * pa = (POINTPTR *)pointA;
+	POINTPTR * pb = (POINTPTR *)pointB;
+    return( (*pa)->order - (*pb)->order ) ;
 } /* end sortbyorder */
 
 static INT remove_redundant_points( pt_array ) 
@@ -588,7 +589,7 @@ POINTPTR *pt_array ;
 
 } /* end remove_redundant_points */
 
-static add_vpts( numpts )
+static VOID add_vpts( numpts )
 INT numpts ;
 {
     POINTPTR tile1ptr ;         /* temp pointer to a point */
@@ -675,7 +676,7 @@ INT numpts ;
 
 } /* end add_vpts */
 
-static chek_vpt( tile1, tile2, tile3, tile4 )
+static VOID chek_vpt( tile1, tile2, tile3, tile4 )
 POINTPTR tile1, tile2, tile3, tile4 ;
 {
     /* four cases */
@@ -750,7 +751,7 @@ POINTPTR tile1, tile2, tile3, tile4 ;
 } /* end chek_vpt */
 
 
-static add_hpts( numpts )
+static VOID add_hpts( numpts )
 INT numpts ;
 {
     POINTPTR tile1ptr ;         /* temp pointer to a point */
@@ -837,7 +838,7 @@ INT numpts ;
     }
 } /* end add_hpts */
 
-static chek_hpt( tile1, tile2, tile3, tile4 )
+static VOID chek_hpt( tile1, tile2, tile3, tile4 )
 POINTPTR tile1, tile2, tile3, tile4 ;
 {
     /* four cases */
@@ -910,8 +911,7 @@ POINTPTR tile1, tile2, tile3, tile4 ;
 	}
     }
 } /* end chek_hpt */
-
- dump_pts( pt )
+VOID dump_pts( pt )
  POINTPTR *pt ;
  {
     INT i ;

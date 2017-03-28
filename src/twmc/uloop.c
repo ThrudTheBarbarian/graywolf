@@ -110,15 +110,24 @@ REVISIONS:  July 21, 1988 - reversed order of softpin and aspect ratio
 static char SccsId[] = "@(#) uloop.c version 3.14 4/6/92" ;
 #endif
 
-#include <custom.h>
-#include <temp.h>
+#include <yalecad/base.h>
 #include <yalecad/debug.h>
 #include <yalecad/file.h>
+#include <yalecad/plot.h>
+#include <yalecad/random.h>
+
+#include <cells.h>
+#include <custom.h>
+#include <genorient.h>
+#include <graphics.h>
+#include <initialize.h>
+#include <pins.h>
+#include <temp.h>
+#include <usite.h>
 
 #define TMIN      1E-6
 #define HOWMANY   0
 
-extern INT pick_position() ;
 /* ----------------------------------------------------------------- 
    important global definitions - defined in custom.h 
    MOVEBOXPTR *old_aposG, *new_aposG, *old_bposG, *new_bposG ;
@@ -170,7 +179,7 @@ static DOUBLE avg_dfuncS ;  /* average random delta wirelength */
 
 
 
-static output_move_table();
+static VOID output_move_table();
 
 
 
@@ -191,7 +200,7 @@ static INT TempSelectHardS[11]  = {
 /* ***************************************************************** 
    uloop - inner loop of simulated annealing algorithm.
 */
-uloop( limit )
+VOID uloop( limit )
 INT limit ;
 {
 
@@ -352,7 +361,9 @@ while( attempts < limit ) {
 		    pick_neighborhood(&xb,&yb,axcenter,aycenter,fixptr) ;
 		}
 		
-	    } else if( fixptr = acellptr->fixed ){
+	    } 
+	    /* use ((...)) to avoid assignment as condition warning */
+	    else if(( fixptr = acellptr->fixed )){
 		/* two cases - fixed at point ii)fixed in neighborhood */
 		if( fixptr->fixedType == POINTFLAG ){
 		    /* if a cell is fixed at a point, */
@@ -459,7 +470,8 @@ while( attempts < limit ) {
 
     case SINGLE_CELL_MOVE:
 	/* first try moving cell */
-	if( acc_move = usite1( /* old_apos, new_apos */ ) ) {
+	/* use ((...)) to avoid assignment as condition warning */
+	if(( acc_move = usite1( /* old_apos, new_apos */ ) )) {
 	    flipsG++ ;
 	    flip[SINGLE_CELL_MOVE]++ ;
 	    acc_cntS++ ;
@@ -474,7 +486,8 @@ while( attempts < limit ) {
 	/* try a rotation of cell and move  */
 	new_apos0G->orient = newOrient( acellptr , 4 ) ;
 	if( new_apos0G->orient >= 0 ) {
-	    if( acc_move = usite1( /* old_apos, new_apos */ ) ) {
+	    /* use ((...)) to avoid assignment as condition warning */
+	    if(( acc_move = usite1( /* old_apos, new_apos */ )) ) {
 		flipsG++ ;
 		flip[SINGLE_CELL_MOVE_AND_ROTATE]++ ;
 		acc_cntS++ ;
@@ -515,7 +528,8 @@ while( attempts < limit ) {
 	new_bpos0G->xcenter = acellptr->xcenter ;
 	new_bpos0G->ycenter = acellptr->ycenter ;
 	/* first try exchanging a and b positions */
-	if( acc_move = usite2( /*old_apos,new_apos,old_bpos,new_bpos*/ )) {
+	/* use ((...)) to avoid assignment as condition warning */
+	if(( acc_move = usite2( /*old_apos,new_apos,old_bpos,new_bpos*/ ))) {
 	    acc_cntS++ ;
 	    flipsG++ ;
 	    flip[PAIRWISE_CELL_SWAP]++ ;
@@ -549,8 +563,8 @@ while( attempts < limit ) {
 	    new_apos0G->ycenter = bcellptr->ycenter ;
 	    new_bpos0G->xcenter = acellptr->xcenter ;
 	    new_bpos0G->ycenter = acellptr->ycenter ;
-	    if( acc_move = usite2( /* old_apos, new_apos, old_bpos, 
-		    new_bpos */ )){
+	    /* use ((...)) to avoid assignment as condition warning */
+	    if(( acc_move = usite2( /* old_apos, new_apos, old_bpos, new_bpos */ ))){
 		acc_cntS++ ;
 		flipsG++  ;
 		flip[PAIRWISE_CELL_SWAP_AND_ROTATION]++ ;
@@ -575,7 +589,8 @@ while( attempts < limit ) {
 	new_apos0G->orient = newOrient( acellptr , 8 ) ;
 	if( new_apos0G->orient >= 0 ) {
 	    /* set coordinates back to original place */
-	    if( acc_move = usite1( /* old_apos, new_apos */ ) ) {
+	    /* use ((...)) to avoid assignment as condition warning */
+	    if(( acc_move = usite1( /* old_apos, new_apos */ )) ) {
 		flipsG++ ;
 		acc_cntS++ ;
 		flip[ROTATION]++ ;
@@ -602,7 +617,8 @@ while( attempts < limit ) {
 	/* need to make sure we count right number of tiles */
 	/* see overlap.c - calc_wBins for details */
 	new_apos0G->numtiles = acellptr->numtiles ;
-	if( acc_move = uaspect( a , newAspect ) ) {
+	/* use ((...)) to avoid assignment as condition warning */
+	if(( acc_move = uaspect( a , newAspect ) )) {
 	    flipsG++ ; 
 	    acc_cntS++ ;
 	    flip[ASPECT_RATIO_CHANGE]++ ;
@@ -645,7 +661,8 @@ while( attempts < limit ) {
 	new_apos0G->xcenter = acellptr->xcenter ;
 	new_apos0G->ycenter = acellptr->ycenter ;
 	D( "twmc/instance", checkcost() ) ;
-	if( acc_move = uinst( /* old_apos, new_apos */) ) {
+	/* use ((...)) to avoid assignment as condition warning */
+	if(( acc_move = uinst( /* old_apos, new_apos */) )) {
 	    flipsG++ ;
 	    flip[CELL_INSTANCE_CHANGE]++ ;
 	    acc_cntS++ ;
@@ -917,7 +934,7 @@ if( quickrouteG ){
 */
 
 OUT1("\nI     T     funccost  binpen x lapFact = penalty  cost coreFactor\n");
-OUT2("%3d ",iterationG ); 
+OUT2("%3d ",(int)iterationG ); 
 OUT2("%4.2le ",TG ); 
 OUT2("%4.2le ",(DOUBLE) funccostG ); 
 OUT2("%4.2le ",(DOUBLE) binpenalG ); 
@@ -931,17 +948,17 @@ OUT2("%4.2le ",(DOUBLE) timingpenalG );
 OUT2("%4.2le ",(DOUBLE) timingcostG ); 
 OUT2("%4.2le\n ",percentDone ); 
 OUT1(" flip1   flipo   flip0   flipp   flipa   flip2   flipo2  flipi   flips ratio\n");
-OUT3("%3d/%3d ",flip[SINGLE_CELL_MOVE],att[SINGLE_CELL_MOVE] ); 
-OUT3("%3d/%3d ",flip[SINGLE_CELL_MOVE_AND_ROTATE],
-                att[SINGLE_CELL_MOVE_AND_ROTATE] ); 
-OUT3("%3d/%3d ",flip[ROTATION],att[ROTATION] ); 
-OUT3("%3d/%3d ",flip[SOFT_PIN_MOVE],att[SOFT_PIN_MOVE] ); 
-OUT3("%3d/%3d ",flip[ASPECT_RATIO_CHANGE],att[ASPECT_RATIO_CHANGE] ); 
-OUT3("%3d/%3d ",flip[PAIRWISE_CELL_SWAP],att[PAIRWISE_CELL_SWAP] ); 
-OUT3("%3d/%3d ",flip[PAIRWISE_CELL_SWAP_AND_ROTATION],
-		att[PAIRWISE_CELL_SWAP_AND_ROTATION] ); 
-OUT3("%3d/%3d ",flip[CELL_INSTANCE_CHANGE],att[CELL_INSTANCE_CHANGE] ); 
-OUT3(" %3d/%3d ",flipsG,attempts ); 
+OUT3("%3d/%3d ",(int)flip[SINGLE_CELL_MOVE],(int)att[SINGLE_CELL_MOVE] ); 
+OUT3("%3d/%3d ",(int)flip[SINGLE_CELL_MOVE_AND_ROTATE],
+                (int)att[SINGLE_CELL_MOVE_AND_ROTATE] ); 
+OUT3("%3d/%3d ",(int)flip[ROTATION],(int)att[ROTATION] ); 
+OUT3("%3d/%3d ",(int)flip[SOFT_PIN_MOVE],(int)att[SOFT_PIN_MOVE] ); 
+OUT3("%3d/%3d ",(int)flip[ASPECT_RATIO_CHANGE],(int)att[ASPECT_RATIO_CHANGE] ); 
+OUT3("%3d/%3d ",(int)flip[PAIRWISE_CELL_SWAP],(int)att[PAIRWISE_CELL_SWAP] ); 
+OUT3("%3d/%3d ",(int)flip[PAIRWISE_CELL_SWAP_AND_ROTATION],
+		(int)att[PAIRWISE_CELL_SWAP_AND_ROTATION] ); 
+OUT3("%3d/%3d ",(int)flip[CELL_INSTANCE_CHANGE],(int)att[CELL_INSTANCE_CHANGE] ); 
+OUT3(" %3d/%3d ",(int)flipsG,(int)attempts ); 
 OUT2(" %4.2f\n\n",ratioG ); 
 FLUSHOUT() ;
 
@@ -963,7 +980,7 @@ return ;
 
 
 /* initializes random wiring and overlap statistics */
-initStatCollection()
+VOID initStatCollection(VOID)
 {
     avgsG = 0.0 ;
     avg_funcG = 0.0 ;
@@ -977,7 +994,7 @@ initStatCollection()
 } /* end initStatCollection */
 /* ***************************************************************** */
 
-getStatistics( totalWire, totalPenalty, avg_time, avg_func )
+VOID getStatistics( totalWire, totalPenalty, avg_time, avg_func )
 DOUBLE *totalWire, *totalPenalty, *avg_time, *avg_func ;
 {
     *totalWire = totalwireS ;
@@ -994,7 +1011,7 @@ DOUBLE *totalWire, *totalPenalty, *avg_time, *avg_func ;
 		softcells only use old_aposG[1] and new_aposG[1]
 		    since they can have only one tile.
 */
-make_movebox() 
+VOID make_movebox(VOID) 
 {
     INT i ;
     INT maxtiles ;
@@ -1039,11 +1056,11 @@ make_movebox()
 /* ***************************************************************** 
    save_uloop - save uloop parameters for restart
 */
-save_uloop( fp )
+VOID save_uloop( fp )
 FILE *fp ;
 {
     fprintf(fp,"# uloop parameters:\n") ;
-    fprintf(fp,"%d %d %d\n",iterationG,acc_cntS,move_cntS);
+    fprintf(fp,"%d %d %d\n",(int)iterationG, (int)acc_cntS, (int)move_cntS);
     fprintf(fp,"%f %f\n",a_ratioS,total_costS);
 } /* end save_uloop */
 
@@ -1054,9 +1071,14 @@ INT read_uloop( fp )
 FILE *fp ;
 {
     INT error = 0 ;
-
+	long w1, w2, w3;
+	
     fscanf(fp,"%[ #:a-zA-Z]\n",YmsgG ); /* throw away comment */
-    fscanf(fp,"%ld %ld %ld\n",&iterationG,&acc_cntS,&move_cntS);
+    fscanf(fp,"%ld %ld %ld\n",&w1,&w2,&w3);
+    iterationG 	= w1;
+    acc_cntS 	= w2;
+    move_cntS 	= w3;
+    
     fscanf(fp,"%lf %lf\n",&a_ratioS,&total_costS);
     /* try to detect errors in file */
     if( acc_cntS < 0 ){
@@ -1083,13 +1105,14 @@ FILE *fp ;
 
 } /* end read_uloop */
 
-set_dump_ratio( count )
+VOID set_dump_ratio( count )
+INT count;
 {
     dumpRatioS = count ;
 } /* end dump_ratio */
 
 
-static output_move_table( flip, att, move_size )
+static VOID output_move_table( flip, att, move_size )
 INT *flip, *att ;
 DOUBLE *move_size ;
 {
@@ -1104,7 +1127,7 @@ DOUBLE *move_size ;
 
     sprintf( filename, "%s.mset", cktNameG ) ;
     fp = TWOPEN( filename, "a", ABORT ) ;
-    fprintf( fp, "I:%d ", iterationG ) ;
+    fprintf( fp, "I:%d ", (int)iterationG ) ;
 
     /* first calculate f (flip) and a (attempts) from indivial vectors */
 
@@ -1130,7 +1153,7 @@ DOUBLE *move_size ;
 
     for( i = 1; i <= NUMBER_MOVE_TYPES; i++ ){
 	/* only output moves that were attempted */
-	fprintf( fp, "%d:%d/%d %4.2le  ", i, f[i], a[i], move_size[i] ) ;
+	fprintf( fp, "%d:%d/%d %4.2le  ", (int)i, (int)f[i], (int)a[i], move_size[i] ) ;
     }
     fprintf( fp, "\n" ) ;
 
@@ -1156,7 +1179,7 @@ DOUBLE *move_size ;
 
     for( i = 1; i <= NUMBER_MOVE_TYPES; i++ ){
 	P[i] = Qm[i]/Qsum ;
-	fprintf( fp, "Qm[%d]=%4.2le P[%d]=%4.2le  ", i, Qm[i], i, Qm[i]/Qsum ) ;
+	fprintf( fp, "Qm[%d]=%4.2le P[%d]=%4.2le  ", (int)i, Qm[i], (int)i, Qm[i]/Qsum ) ;
     } /* end for( i = 1;... */
     fprintf( fp, "\n" ) ;
 

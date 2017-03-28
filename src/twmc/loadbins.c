@@ -53,8 +53,13 @@ REVISIONS:  Nov 3,  1988 - added routingFlag override for doPartitionG
 static char SccsId[] = "@(#) loadbins.c version 3.4 2/4/91" ;
 #endif
 
-#include <custom.h>
+#include <yalecad/base.h>
 #include <yalecad/debug.h>
+#include <yalecad/relpos.h>
+
+#include <custom.h>
+#include <overlap.h>
+#include <wire.h>
 
 static INT binAreaS ;
 
@@ -62,7 +67,7 @@ static INT binAreaS ;
 /* if defined the binpenalty should always remain equal to cell area */
 /* #define BINTEST */
 
-loadbins(wireAreaKnown)
+VOID loadbins(wireAreaKnown)
 BOOL wireAreaKnown ;
 {
 
@@ -285,7 +290,7 @@ BOOL routingFlag ;
    use static to make code more modular.  Only called a few times
    no problem with inefficiency.
 */
-INT get_bin_area() 
+INT get_bin_area(VOID) 
 {
     return( binAreaS ) ;
 }

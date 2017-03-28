@@ -70,21 +70,25 @@ REVISIONS:  Jul 30, 1988 - made compile switch for blocking pads.
 static char SccsId[] = "@(#) outgeo.c version 3.6 6/5/91" ;
 #endif
 
-#include <custom.h>
+#include <yalecad/base.h>
 #include <yalecad/debug.h>
 #include <yalecad/buster.h>
 #include <yalecad/file.h>
 #include <yalecad/relpos.h>
+
+#include <custom.h>
+#include <finalout.h>
 #include <pads.h>
+#include <savewolf.h>
 
 
 
-static store_pad_loc();
+static VOID store_pad_loc();
 
 
 
 
-outgeo()
+VOID outgeo(VOID)
 {
 
 FILE *fp ;
@@ -104,7 +108,7 @@ for( cell = 1 ; cell <= numcellsG ; cell++ ) {
 
     cellptr = cellarrayG[cell] ;
     fprintf(fp,"cell %s \n", cellptr->cname ) ;
-    fprintf(fp,"%d vertices ", cellptr->numsides ) ;
+    fprintf(fp,"%d vertices ", (int)(cellptr->numsides) ) ;
     output_vertices( fp, cellptr ) ;
 }
 
@@ -149,7 +153,8 @@ if( t == INT_MIN ) {
 }
 fprintf(fp,"cell %s \n", "pad.macro.l" ) ;
 fprintf(fp,"4 vertices ") ;
-fprintf(fp," %d %d %d %d %d %d %d %d\n", l, b, l, t, r, t, r, b ) ;
+fprintf(fp," %d %d %d %d %d %d %d %d\n", (int)l, (int)b, (int)l, (int)t, 
+										 (int)r, (int)t, (int)r, (int)b ) ;
 setPadMacroNum( L, ++padmacroCounter ) ;
 cellptr = cellarrayG[endpadgrpsG + L] ;
 store_pad_loc( cellptr, l, r, b, t ) ;
@@ -190,7 +195,8 @@ if( t == INT_MIN ) {
 }
 fprintf(fp,"cell %s \n", "pad.macro.t" ) ;
 fprintf(fp,"4 vertices ") ;
-fprintf(fp," %d %d %d %d %d %d %d %d\n", l, b, l, t, r, t, r, b ) ;
+fprintf(fp," %d %d %d %d %d %d %d %d\n", (int)l, (int)b, (int)l, (int)t, 
+										 (int)r, (int)t, (int)r, (int)b ) ;
 setPadMacroNum( T, ++padmacroCounter ) ;
 cellptr = cellarrayG[endpadgrpsG + T] ;
 store_pad_loc( cellptr, l, r, b, t ) ;
@@ -231,7 +237,8 @@ if( t == INT_MIN ) {
 }
 fprintf(fp,"cell %s \n", "pad.macro.r" ) ;
 fprintf(fp,"4 vertices ") ;
-fprintf(fp," %d %d %d %d %d %d %d %d\n", l, b, l, t, r, t, r, b ) ;
+fprintf(fp," %d %d %d %d %d %d %d %d\n", (int)l, (int)b, (int)l, (int)t, 
+										 (int)r, (int)t, (int)r, (int)b ) ;
 setPadMacroNum( R, ++padmacroCounter ) ;
 cellptr = cellarrayG[endpadgrpsG + R] ;
 store_pad_loc( cellptr, l, r, b, t ) ;
@@ -271,7 +278,8 @@ if( t == INT_MIN ) {
 }
 fprintf(fp,"cell %s \n", "pad.macro.b" ) ;
 fprintf(fp,"4 vertices ") ;
-fprintf(fp," %d %d %d %d %d %d %d %d\n", l, b, l, t, r, t, r, b ) ;
+fprintf(fp," %d %d %d %d %d %d %d %d\n", (int)l, (int)b, (int)l, (int)t, 
+										 (int)r, (int)t, (int)r, (int)b ) ;
 setPadMacroNum( B, ++padmacroCounter ) ;
 cellptr = cellarrayG[endpadgrpsG + B] ;
 store_pad_loc( cellptr, l, r, b, t ) ;
@@ -281,7 +289,7 @@ return ;
 
 } /* end outgeo */
 
-static store_pad_loc( cellptr, l, r, b, t )
+static VOID store_pad_loc( cellptr, l, r, b, t )
 CELLBOXPTR cellptr ;
 INT l, r, b, t ;
 {

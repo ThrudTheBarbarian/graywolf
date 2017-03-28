@@ -9,6 +9,8 @@ REVISIONS:  Mon Feb  4 02:21:54 EST 1991 - added MINTUPDATE def.
 #ifndef TEMP_H
 #define TEMP_H
 
+#include <yalecad/base.h>
+
 #define RATIOUPPERBOUND  0.15     /* control to find Tratio */
 #define RATIOLOWERBOUND  0.05     /* control to find Tratio */
 #define LOWTEMPRATIO     0.05     /* low temp anneal acceptance ratio */
@@ -38,5 +40,10 @@ REVISIONS:  Mon Feb  4 02:21:54 EST 1991 - added MINTUPDATE def.
 #define ACCEPTDAMPFACTOR2 0.25  /* damping factor for low temp's */
 #define NUMTUPDATES     400     /* max number of T updates per iteration*/
 #define MINTUPDATE      14      /* mininum # moves before update */
+
+extern VOID init_acceptance_rate(P1(VOID));
+extern DOUBLE calc_acceptance_ratio(P1(DOUBLE iteration ));
+extern INT compute_attprcel(P1(VOID)); 
+extern VOID set_tw_speed(P1(DOUBLE speed )); 
 
 #endif /* TEMP_H */

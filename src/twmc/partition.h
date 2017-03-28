@@ -9,6 +9,8 @@ REVISIONS:
 #ifndef PARTITION_H
 #define PARTITION_H
 
+#include <yalecad/base.h>
+
 #define         INITROWSEP      1.0 
 #define		EVEN_ODD( x )	( (x) & 01 )
 #define		EVEN	0
@@ -31,5 +33,12 @@ typedef	struct b_record {
     INT			y_ub	;
     struct d_field	*macro	;
 } BLOCK, *BLOCKPTR ;
+
+extern VOID config_rows(P1(VOID));
+extern VOID read_stat_file(P1(VOID));
+extern DOUBLE read_par_file(P1(VOID));
+extern VOID output_partition(P1(VOID));
+extern VOID build_mver_file( P4(INT left, INT right, INT bottom, INT top ));
+extern VOID read_gen_file(P1(VOID));
 
 #endif /* PARTITION_H */

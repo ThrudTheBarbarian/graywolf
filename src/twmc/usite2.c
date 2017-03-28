@@ -54,13 +54,20 @@ REVISIONS:  Feb  5, 1988 - changed old_apos, new_apos, old_bpos,
 static char SccsId[] = "@(#) usite2.c version 3.4 9/10/90" ;
 #endif
 
-#include <custom.h>
+#include <yalecad/base.h>
 #include <yalecad/debug.h>
+
+#include <acceptt.h>
+#include <custom.h>
+#include <nets.h>
+#include <overlap.h>
+#include <paths.h>
+#include <pins.h>
 
 static INT acellS, bcellS, mod_cellS ;
 static CELLBOXPTR acellptrS ,    bcellptrS ;
 
-BOOL usite2( /* old_apos, new_apos, old_bpos, new_bpos */ )
+BOOL usite2(VOID /* old_apos, new_apos, old_bpos, new_bpos */ )
 /* MOVEBOXPTR  *old_apos, *new_apos, *old_bpos, *new_bpos ; */
 {
 

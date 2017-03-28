@@ -67,14 +67,23 @@ REVISIONS:  Dec  3, 1988 - added forced save flag.
 static char SccsId[] = "@(#) savewolf.c version 3.12 9/16/91" ;
 #endif
 
-#include <custom.h>
-#include <temp.h>
+#include <yalecad/base.h>
 #include <yalecad/debug.h>
 #include <yalecad/file.h>
+#include <yalecad/program.h>
+#include <yalecad/random.h>
+
+#include <custom.h>
+#include <graphics.h>
+#include <reconfig.h>
+#include <savewolf.h>
+#include <temp.h>
+#include <uloop.h>
+#include <wire.h>
 
 #define MAXTIMEBEFORESAVE 600.0   /* seconds before new save 10min. */
 
-savewolf( forceSave )
+VOID savewolf( forceSave )
 BOOL forceSave ; /* if true save parameters regardless of time */
 {
 
@@ -120,12 +129,12 @@ static DOUBLE last_time = 0.0;
     save_window( fp ) ;
     save_wireest( fp ) ;
     fprintf(fp,"# configuration parameters:\n") ;
-    fprintf(fp,"#numcells %d\n", numcellsG ) ;
-    fprintf(fp,"%u\n", Yget_random_var() ) ;
-    fprintf(fp,"%d %d\n", m*(blocktG-blockbG), m*(blockrG-blocklG) ) ;
-    fprintf(fp,"%d %d\n", m*blockmxG, m*blockmyG ) ;
-    fprintf(fp,"%d %d\n",m*binWidthXG,m*binXOffstG ) ;
-    fprintf(fp,"%d %d\n",m*binWidthYG,m*binYOffstG ) ;
+    fprintf(fp,"#numcells %d\n", (int)numcellsG ) ;
+    fprintf(fp,"%u\n", (int)Yget_random_var() ) ;
+    fprintf(fp,"%d %d\n", (int)(m*(blocktG-blockbG)), (int)(m*(blockrG-blocklG)) ) ;
+    fprintf(fp,"%d %d\n", (int)(m*blockmxG), (int)(m*blockmyG) ) ;
+    fprintf(fp,"%d %d\n", (int)(m*binWidthXG),(int)(m*binXOffstG) ) ;
+    fprintf(fp,"%d %d\n", (int)(m*binWidthYG),(int)(m*binYOffstG) ) ;
     HPO(fp,slopeXG) ;
     HPO(fp,slopeYG) ;
     HPO(fp,baseWeightG) ;
@@ -136,17 +145,17 @@ static DOUBLE last_time = 0.0;
 
     for( cell = 1 ; cell <= numcellsG ; cell++ ) {
 	cellptr = cellarrayG[ cell ] ;
-	fprintf( fp , "%d %d %d %d\n", cell , cellptr->orient , 
-	    cellptr->xcenter*m, 
-	    cellptr->ycenter*m ) ;
+	fprintf( fp , "%d %d %d %d\n", (int)cell , (int)(cellptr->orient) , 
+	    (int)(cellptr->xcenter*m), 
+	    (int)(cellptr->ycenter*m) ) ;
 	if( cellptr->instptr ){
-	    fprintf( fp , "%d\n", cellptr->cur_inst ) ;
+	    fprintf( fp , "%d\n", (int)(cellptr->cur_inst) ) ;
 	}
 	if( cellptr->softflag ) {
 	    fprintf( fp , " %lf\n" , cellptr->aspect );
 	    count = 0 ;
 	    for( pin = cellptr->pinptr; pin; pin = pin->nextpin ){
-		fprintf( fp, "%d %d ", m*pin->txpos, m*pin->typos ) ;
+		fprintf( fp, "%d %d ", (int)(m*pin->txpos), (int)(m*pin->typos) ) ;
 		if( (++count % 15 ) == 0 ){
 		    fprintf( fp, "\n" ) ;
 		}
@@ -172,6 +181,11 @@ static DOUBLE last_time = 0.0;
 BOOL TW_oldinput( fp )
 FILE *fp ;
 {
+// a violation of the INT/int rules, because we're passing a pointer,
+// and sizeof(INT) doesn't match %d on a 64-bit machine. Force 32-bit
+// and transfer the data through the 32-bit variables into the sized
+// ones.
+int w1, w2, w3, w4;	
 
 #define HOWMANY  0
 INT i, cell, orient, site, terminal;
@@ -199,39 +213,64 @@ error += read_uloop( fp ) ;
 error += read_window( fp ) ;
 error += read_wireest( fp ) ;
 fscanf(fp,"%[ #:a-zA-Z]\n",YmsgG ); /* throw away comment */
-fscanf( fp, "%[ #:a-zA-Z]%d\n", YmsgG, &number_of_cells ) ; 
+fscanf( fp, "%[ #:a-zA-Z]%d\n", YmsgG, &w1 ) ;
+number_of_cells = w1;
+ 
 if( number_of_cells != numcellsG ){
     M(ERRMSG,"TW_oldinput","Number of cells in restart file in error\n");
     /* abort at this time no sense going on */
     return( FALSE ) ;
 }
-fscanf( fp, "%u", &randVarG ) ;
+fscanf( fp, "%u", &w1 ) ;
+randVarG = w1;
+
 Yset_random_seed( randVarG ) ;
-fscanf( fp, "%d %d\n", &blocktG, &blockrG ) ; 
+fscanf( fp, "%d %d\n", &w1, &w2 ) ; 
+blocktG	= w1; 
+blockrG = w2;
+
 /* set blockl and blockb to zero anticipating call to placepads */
 blocklG = blockbG = 0 ; 
-fscanf( fp, "%d %d\n", &blockmxG, &blockmyG ) ; 
-fscanf( fp, "%d %d\n", &binWidthXG, &binXOffstG ) ; 
-fscanf( fp, "%d %d\n", &binWidthYG, &binYOffstG ) ; 
+fscanf( fp, "%d %d\n", &w1, &w2 ) ; 
+blockmxG = w1;
+blockmyG = w2;
+
+fscanf( fp, "%d %d\n", &w1, &w2 ) ; 
+binWidthXG = w1;
+binXOffstG = w2;
+
+fscanf( fp, "%d %d\n", &w1, &w2 ) ; 
+binWidthYG = w1;
+binYOffstG = w2;
+
+DOUBLE D;
 HPI(fp,&slopeXG) ;
 HPI(fp,&slopeYG) ;
-HPI(fp,&baseWeightG) ;
+HPI(fp,&D) ;
+baseWeightG = (INT)D;
+
 HPI(fp,&wireFactorXG) ;
 HPI(fp,&wireFactorYG) ;
 HPI(fp,&aveChanWidG) ;
 HPI(fp,&lapFactorG) ;
 
-while( fscanf( fp , " %d %d %d %d ", &cell , &orient , 
-				    &xcenter , &ycenter ) == 4 ) {
+while( fscanf( fp , " %d %d %d %d ", &w1 , &w2 , &w3 , &w4 ) == 4 ) {
+    cell 	= w1;
+    orient	= w2;
+    xcenter	= w3;
+    ycenter = w4;
+    
     ptr = cellarrayG[ cell ] ;
 
     ptr->orient  = orient  ;
     ptr->xcenter = xcenter ;
     ptr->ycenter = ycenter ;
     ptr->boun_valid = FALSE ;
-    if( instptr = ptr->instptr ){
-	fscanf( fp , "%d", &inst ) ;
-	ptr->cur_inst = inst ;
+    
+    /* use ((...)) to avoid assignment as condition warning */
+    if(( instptr = ptr->instptr )){
+	fscanf( fp , "%d", &w1 ) ;
+	ptr->cur_inst = inst = w1;
 	/* update tiles */
 	ptr->tiles = instptr->tile_inst[inst] ;
 	ptr->numtiles = instptr->numtile_inst[inst] ;
@@ -249,9 +288,9 @@ while( fscanf( fp , " %d %d %d %d ", &cell , &orient ,
 	fscanf( fp , "%lf" , &aspect ) ;
 	ptr->aspect = aspect ;
 	for( term = ptr->pinptr; term; term = term->nextpin ){
-	    fscanf( fp, "%d %d", &(term->txpos), &(term->typos) ) ;
-	    term->txpos_orig[inst] = term->txpos ;
-	    term->typos_orig[inst] = term->typos ;
+	    fscanf( fp, "%d %d", &w1, &w2 ) ;
+	    term->txpos_orig[inst] = term->txpos = w1;
+	    term->typos_orig[inst] = term->typos = w2;
 	}
 
 	howmany = (INT) ptr->softpins[HOWMANY] ;
@@ -351,14 +390,14 @@ if( error ){ /* abort restart */
 }
 } /* end TW_oldinput */
 
-HPO(fp,d)
+VOID HPO(fp,d)
 FILE *fp;			/* high precision output */
 DOUBLE d;
 {
     fprintf(fp,"%34.32le\n",d);
 } /* end HPO */
 
-HPI(fp,d)
+VOID HPI(fp,d)
 FILE *fp;			/* high precision input */
 DOUBLE *d;
 {

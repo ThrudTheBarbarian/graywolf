@@ -65,9 +65,10 @@ REVISIONS:  Apr 23, 1988 - added fix_window for low temp anneal
 static char SccsId[] = "@(#) window.c version 3.6 11/26/90" ;
 #endif
 
-#include <custom.h>
-#include <temp.h>
+#include "custom.h"
+#include "temp.h"
 #include <yalecad/debug.h>
+#include <yalecad/random.h>
 
 #define AC0 0.90		/*** 0.75 ***/
 #define AC1 0.44		/*** 0.44 ***/
@@ -110,7 +111,7 @@ INT iteration ;
 /* ***************************************************************** 
    init_control - initialize range limiter.
 */
-init_control(first)
+VOID init_control(first)
 BOOL first ;
 {
     INT i;
@@ -162,10 +163,10 @@ BOOL first ;
 /* ***************************************************************** 
    pick_positon - pick place to move within range limiter.
 */
-pick_position(x,y,ox,oy)
+VOID pick_position(x,y,ox,oy)
 INT *x,*y,ox,oy;
 {
-    register INT i,m,n;
+    register INT i,m,n = 0;
 
     /* get exponentially distributed random number around old x */
     for (i=0; i<2; i++) {
@@ -236,11 +237,11 @@ DONEX:  *x = n;
    pick_neighborhood - pick place to move within neighborhood while
    still using range limiter.
 */
-pick_neighborhood(x,y,ox,oy,fixptr)
+VOID pick_neighborhood(x,y,ox,oy,fixptr)
 INT *x,*y,ox,oy;
 FIXEDBOXPTR fixptr ;
 {
-    register INT i,m,n;
+    register INT i,m,n = 0;
     INT xjump, yjump ;
 
 #define DIV_2   >> 1 
@@ -327,7 +328,7 @@ FIXEDBOXPTR fixptr ;
     *y = n;
 } /* end pick_neighborhood */
 
-update_window_size( iteration )
+VOID update_window_size( iteration )
 DOUBLE iteration ;
 {
     if( iteration <= HIGHTEMP ){
@@ -357,7 +358,7 @@ DOUBLE iteration ;
    
 }
 
-fix_window()
+VOID fix_window(VOID)
 {
     /*** set window to minimum for low temp anneal ***/
     xalS = min_xalphaS;
@@ -372,7 +373,7 @@ static DOUBLE ws_xalS;
 static DOUBLE ws_yalS;
 static DOUBLE ws_ratioS ;
 
-save_window( fp )
+VOID save_window( fp )
 FILE *fp ;
 {
     if( fp ){  /* if a file pointer is given write to file */

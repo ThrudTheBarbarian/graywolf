@@ -73,10 +73,14 @@ static char SccsId[] = "@(#) readnets.y version 3.8 3/6/92" ;
 #endif
 
 #include <string.h>
+
 #include <yalecad/base.h>
 #include <yalecad/message.h>
 #include <yalecad/string.h>
+
 #include <readnets.h>  /* redefine yacc and lex globals */
+
+#include <initialize.h>
 
 #undef REJECT          /* undefine TWMC macro for lex's version */ 
 #define YYDEBUG  1     /* condition compile for yacc debug */
@@ -337,7 +341,7 @@ YYSTYPE yyvs[YYSTACKSIZE];
 /* ********************* #include "readnets_l.h" *******************/
 /* ********************* #include "readnets_l.h" *******************/
 
-readnets( fp )
+VOID readnets( fp )
 FILE *fp ;
 { 
 #ifdef YYDEBUG
@@ -357,7 +361,7 @@ FILE *fp ;
 
 } /* end readnets */
 
-yyerror(s)
+int yyerror(s)
 char    *s;
 {
     extern char *cktNameG ;
@@ -365,28 +369,29 @@ char    *s;
     sprintf(YmsgG,"problem reading %s.mnet:", cktNameG );
     M( ERRMSG, "yacc", YmsgG ) ;
     sprintf(YmsgG, "line %d near '%s' : %s\n" ,
-	line_countS+1, yytext, s );
+	(int)(line_countS+1), yytext, s );
     M( ERRMSG,NULL, YmsgG ) ;
     Ymessage_error_count() ;
     set_net_error() ;
+    return 0;
 }
 
-yywrap()
+int yywrap()
 {
     return(1);
 }                      
 #define YYABORT goto yyabort
 #define YYACCEPT goto yyaccept
 #define YYERROR goto yyerrlab
-int
-yyparse()
+int yyparse()
 {
     register int yym, yyn, yystate;
 #if YYDEBUG
     register char *yys;
     extern char *getenv();
 
-    if (yys = getenv("YYDEBUG"))
+    /* use ((...)) to avoid assignment as condition warning */
+    if ((yys = getenv("YYDEBUG")))
     {
         yyn = *yys;
         if (yyn >= '0' && yyn <= '9')
@@ -403,7 +408,8 @@ yyparse()
     *yyssp = yystate = 0;
 
 yyloop:
-    if (yyn = yydefred[yystate]) goto yyreduce;
+    /* use ((...)) to avoid assignment as condition warning */
+    if ((yyn = yydefred[yystate])) goto yyreduce;
     if (yychar < 0)
     {
         if ((yychar = yylex()) < 0) yychar = 0;
@@ -413,7 +419,7 @@ yyloop:
             yys = 0;
             if (yychar <= YYMAXTOKEN) yys = yyname[yychar];
             if (!yys) yys = "illegal-symbol";
-            printf("yydebug: state %d, reading %d (%s)\n", yystate,
+            printf("yydebug: state %d, reading %d (%s)\n", (int)yystate,
                     yychar, yys);
         }
 #endif
@@ -424,7 +430,7 @@ yyloop:
 #if YYDEBUG
         if (yydebug)
             printf("yydebug: state %d, shifting to state %d\n",
-                    yystate, yytable[yyn]);
+                    (int)yystate, yytable[yyn]);
 #endif
         if (yyssp >= yyss + yystacksize - 1)
         {
@@ -455,7 +461,8 @@ yynewerror:
             sprintf( err_msg, "Found %s.\nExpected ",
                 yyname[yychar] ) ;
             two_or_more = 0 ;
-            if( test_state = yysindex[yystate] ){
+            /* use ((...)) to avoid assignment as condition warning */
+            if(( test_state = yysindex[yystate] )){
                 for( i = 1; i <= YYMAXTOKEN; i++ ){
                     expect = test_state + i ;
                 if((expect <= YYTABLESIZE) &&
@@ -470,7 +477,8 @@ yynewerror:
                      }
                  }
              }
-            if( test_state = yyrindex[yystate] ){
+            /* use ((...)) to avoid assignment as condition warning */
+            if(( test_state = yyrindex[yystate] )){
                 for( i = 1; i <= YYMAXTOKEN; i++ ){
                     expect = test_state + i ;
                 if((expect <= YYTABLESIZE) &&
@@ -494,7 +502,8 @@ yynewerror:
         } else {
             sprintf( err_msg, "Found unknown token.\nExpected ");
             two_or_more = 0 ;
-            if( test_state = yysindex[yystate] ){
+            /* use ((...)) to avoid assignment as condition warning */
+            if(( test_state = yysindex[yystate] )){
                 for( i = 1; i <= YYMAXTOKEN; i++ ){
                     expect = test_state + i ;
                 if((expect <= YYTABLESIZE) &&
@@ -509,7 +518,8 @@ yynewerror:
                      }
                  }
              }
-            if( test_state = yyrindex[yystate] ){
+            /* use ((...)) to avoid assignment as condition warning */
+            if(( test_state = yyrindex[yystate] )){
                 for( i = 1; i <= YYMAXTOKEN; i++ ){
                     expect = test_state + i ;
                 if((expect <= YYTABLESIZE) &&
@@ -557,7 +567,7 @@ yyinrecovery:
 #if YYDEBUG
                 if (yydebug)
                     printf("yydebug: state %d, error recovery shifting\
- to state %d\n", *yyssp, yytable[yyn]);
+ to state %d\n", (int)(*yyssp), (int)(yytable[yyn]));
 #endif
                 if (yyssp >= yyss + yystacksize - 1)
                 {
@@ -572,7 +582,7 @@ yyinrecovery:
 #if YYDEBUG
                 if (yydebug)
                     printf("yydebug: error recovery discarding state %d\n",
-                            *yyssp);
+                            (int)(*yyssp));
 #endif
                 if (yyssp <= yyss) goto yyabort;
                 --yyssp;
@@ -590,7 +600,7 @@ yyinrecovery:
             if (yychar <= YYMAXTOKEN) yys = yyname[yychar];
             if (!yys) yys = "illegal-symbol";
             printf("yydebug: state %d, error recovery discards token %d (%s)\n",
-                    yystate, yychar, yys);
+                    (int)yystate, (int)yychar, yys);
         }
 #endif
         yychar = (-1);
@@ -600,7 +610,7 @@ yyreduce:
 #if YYDEBUG
     if (yydebug)
         printf("yydebug: state %d, reducing by rule %d (%s)\n",
-                yystate, yyn, yyrule[yyn]);
+                (int)yystate, (int)yyn, yyrule[yyn]);
 #endif
     yym = yylen[yyn];
     yyval = yyvsp[1-yym];
@@ -726,7 +736,7 @@ case 46:
 			/* convert integer to string */
 			/* this allows integers to be used as strings */
 			/* a kluge but timberwolf's old parser supported it */
-			sprintf( bufferS,"%d", yyvsp[0].ival ) ;
+			sprintf( bufferS,"%d", (int)(yyvsp[0].ival) ) ;
 			/* now clone string */
 			yyval.string = (char *) Ystrclone( bufferS ) ;
 		    }
@@ -751,7 +761,7 @@ break;
 #if YYDEBUG
         if (yydebug)
             printf("yydebug: after reduction, shifting from state 0 to\
- state %d\n", YYFINAL);
+ state %d\n", (int)YYFINAL);
 #endif
         yystate = YYFINAL;
         *++yyssp = YYFINAL;
@@ -766,7 +776,7 @@ break;
                 if (yychar <= YYMAXTOKEN) yys = yyname[yychar];
                 if (!yys) yys = "illegal-symbol";
                 printf("yydebug: state %d, reading %d (%s)\n",
-                        YYFINAL, yychar, yys);
+                        (int)YYFINAL, (int)yychar, yys);
             }
 #endif
         }
@@ -781,7 +791,7 @@ break;
 #if YYDEBUG
     if (yydebug)
         printf("yydebug: after reduction, shifting from state %d \
-to state %d\n", *yyssp, yystate);
+to state %d\n", (int)(*yyssp), (int)yystate);
 #endif
     if (yyssp >= yyss + yystacksize - 1)
     {

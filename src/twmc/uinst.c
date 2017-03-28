@@ -53,15 +53,23 @@ REVISIONS:  Oct 3, 1989 - fixed problem with overlap calculation.
 static char SccsId[] = "@(#) uinst.c version 3.9 11/23/91" ;
 #endif
 
+#include <yalecad/base.h>
+#include <yalecad/debug.h>
+#include <yalecad/random.h>
+#include <yalecad/relpos.h>
+
+#include <acceptt.h>
 #include <custom.h>
 #include <initialize.h>
-#include <yalecad/debug.h>
-#include <yalecad/relpos.h>
+#include <nets.h>
+#include <overlap.h>
+#include <paths.h>
+#include <pins.h>
 
 #define NEWVERTICES TRUE
 #define HOWMANY     0
 
-BOOL uinst( /* old_apos, new_apos */ )
+BOOL uinst(VOID /* old_apos, new_apos */ )
 /* MOVEBOXPTR  *old_apos, *new_apos ; */
 {
 

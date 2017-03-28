@@ -59,5 +59,5 @@ static char SccsId[] = "@(#) selectpin.c version 3.3 9/5/90" ;
 BOOL selectpin( acellptr )
 CELLBOXPTR acellptr ;
 {
-
+return FALSE;
 }

@@ -61,7 +61,9 @@ static char SccsId[] = "@(#) findside.c version 3.5 2/13/91" ;
 #endif
 
 #include <custom.h>
+#include <findcost.h>
 #include <initialize.h>
+
 #include <yalecad/debug.h>
 #include <yalecad/set.h>
 
@@ -123,7 +125,7 @@ return( kmin ) ;
 
 
 /* load the side with a pin count and add factor */
-loadside( pSideArray, side , factor )
+VOID loadside( pSideArray, side , factor )
 PSIDEBOX  *pSideArray ;
 INT side ;
 DOUBLE factor ;
@@ -135,7 +137,7 @@ return ;
 } /* end loadside */
 
 
-load_soft_pins( ptr, pSideArray )
+VOID load_soft_pins( ptr, pSideArray )
 CELLBOXPTR ptr ;
 PSIDEBOX *pSideArray ;
 {

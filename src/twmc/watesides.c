@@ -52,7 +52,7 @@ static char SccsId[] = "@(#) watesides.c version 3.5 2/4/91" ;
 #include <custom.h>
 #include <yalecad/debug.h>
 
-watesides( ptr, pSideArray )
+VOID watesides( ptr, pSideArray )
 CELLBOXPTR ptr ;
 PSIDEBOX   *pSideArray ;
 {

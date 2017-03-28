@@ -9,6 +9,7 @@ REVISIONS:
 /* *****************************************************************
    static char SccsId[] = "@(#) readcells.h version 3.4 3/6/92" ;
 ***************************************************************** */
+#include <yalecad/base.h>
 
 #define yyact		CUSTOM_yyact
 #define yyback		CUSTOM_yyback
@@ -55,7 +56,21 @@ REVISIONS:
 #define yytoks		CUSTOM_yytoks
 #define yytop		CUSTOM_yytop
 #define yyunput		CUSTOM_yyunput
-#define yyv		CUSTOM_yyv
+#define yyv			CUSTOM_yyv
 #define yyval		CUSTOM_yyval
 #define yyvstop		CUSTOM_yyvstop
 #define yywrap		CUSTOM_yywrap
+
+/* Declare prototypes if required */
+extern int yyback(P2(int *, int));
+extern int yyinput(P1(void));
+extern int yylook(P1(void));
+extern void yyoutput(P1(int));
+extern int yyracc(P1(int));
+extern int yyreject(P1(void));
+extern void yyunput(P1(int));
+extern int yylex(P1(void));
+extern int yyless(P1(int));
+extern int yywrap(P1(void));
+extern int yyparse(P1(void));
+extern int yyerror(P1(char * s));

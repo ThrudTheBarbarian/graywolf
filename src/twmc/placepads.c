@@ -80,13 +80,24 @@ REVISIONS:  Oct 24, 1988 - added virtual core switch to control pad
 static char SccsId[] = "@(#) placepads.c version 3.14 11/23/91" ;
 #endif
 
-#include <custom.h>
-#include <pads.h>
-#include <dens.h>
+#include <string.h>
+
+#include <yalecad/base.h>
 #include <yalecad/debug.h>
 #include <yalecad/file.h>
+#include <yalecad/grid.h>
+#include <yalecad/program.h>
+#include <yalecad/random.h>
 #include <yalecad/string.h>
 #include <yalecad/set.h>
+#include <yalecad/system.h>
+
+#include <custom.h>
+#include <dens.h>
+#include <finalout.h>
+#include <findcost.h>
+#include <genorient.h>
+#include <pads.h>
 
 #include "config-build.h"
 
@@ -95,12 +106,12 @@ static char SccsId[] = "@(#) placepads.c version 3.14 11/23/91" ;
 #define PADKEYWORD        "pad"
 
 /* ***************** STATIC FUNCTION DEFINITIONS ******************* */
-static find_optimum_locations( P1(void) ) ;
-static place_pad( P2(PADBOXPTR pad,INT bestside ) ) ;
-static place_children( P5(PADBOXPTR pad,INT side,DOUBLE lb,DOUBLE ub,BOOL sr) ) ;
+static VOID find_optimum_locations( P1(void) ) ;
+static VOID place_pad( P2(PADBOXPTR pad,INT bestside ) ) ;
+static VOID place_children( P5(PADBOXPTR pad,INT side,DOUBLE lb,DOUBLE ub,BOOL sr) ) ;
 static INT find_cost_for_a_side(P5(PADBOXPTR pad,INT side,DOUBLE lb,DOUBLE ub,
    BOOL spacing_restricted ) ) ;
-static find_core( P1(void) ) ;
+static VOID find_core( P1(void) ) ;
 
 /* ***************** STATIC VARIABLE DEFINITIONS ******************* */
 static INT sumposS ; /* sum of the modified opt. pin pos. of pad pins */
@@ -119,7 +130,7 @@ static BOOL external_pad_programS = FALSE ;
  field to endsuper.
 ____________________________________________________________________*/
 
-placepads()
+VOID placepads(VOID)
 {
 
     if( padspacingG == EXACT_PADS ){
@@ -170,7 +181,7 @@ placepads()
 } /* end placepads */
 /* ***************************************************************** */
 
-static find_optimum_locations()
+static VOID find_optimum_locations(VOID)
 {
     INT i ;                  /* pad counter */
     INT side ;               /* loop thru valid sides */
@@ -418,7 +429,7 @@ BOOL spacing_restricted ;
  **** are set in those routines.  Otherwise set sumposS and sumtieS
  **** to their proper values.
  ***/
-static place_pad( pad, bestside )
+static VOID place_pad( pad, bestside )
 PADBOXPTR pad ;
 INT bestside ;
 {
@@ -454,7 +465,7 @@ INT bestside ;
 
 /**** RECURSIVELY SET THE PADSIDE OF ALL CHILDREN OF THE ROOT PAD TO THE
  **** PADSIDE OF THE PARENT. GIVEN THAT SIDE, SET THE OPTIMAL CXCENTER */
-static place_children( pad, side, lb, ub, spacing_restricted )
+static VOID place_children( pad, side, lb, ub, spacing_restricted )
 PADBOXPTR pad ;
 INT side ;
 DOUBLE lb, ub ;
@@ -536,7 +547,7 @@ BOOL spacing_restricted ;
 
 /* ***************************************************************** */
 #ifdef DEBUG
-print_pads( message, array, howmany )
+VOID print_pads( message, array, howmany )
 char *message ;
 PADBOXPTR *array ;
 INT howmany ;
@@ -553,8 +564,9 @@ INT howmany ;
 	cptr = cellarrayG[ptr->cellnum] ;
 	fprintf( stderr, 
 	    "pad:%s x:%d y:%d type:%d side:%d pos:%d tie:%d orient:%d\n",
-	    cptr->cname, cptr->xcenter, cptr->ycenter, ptr->hierarchy,
-	    ptr->padside, ptr->position, ptr->tiebreak, cptr->orient ) ;
+	    cptr->cname, (int)(cptr->xcenter), (int)(cptr->ycenter), (int)(ptr->hierarchy),
+	    (int)(ptr->padside), (int)(ptr->position), (int)(ptr->tiebreak), 
+	    (int)(cptr->orient) ) ;
     }
     fprintf( stderr, "\n" ) ;
 
@@ -568,7 +580,7 @@ INT howmany ;
 
 
 /* turn virtual core on and off */
-setVirtualCore( flag )
+VOID setVirtualCore( flag )
 BOOL flag ;
 {
     virtualCoreS = flag ;
@@ -576,7 +588,7 @@ BOOL flag ;
 
 /* function finds and returns core boundary region including cells */
 /* which overlap the core region */
-find_core_boundary( left, right, bottom, top )
+VOID find_core_boundary( left, right, bottom, top )
 INT *left, *right, *bottom, *top ;
 {
     BOOL rememberFlag ;
@@ -599,7 +611,7 @@ INT *left, *right, *bottom, *top ;
 
 
 /* given a cell it returns bounding box of cell in global coordinates */
-get_global_pos( cell, l, b, r, t )
+VOID get_global_pos( cell, l, b, r, t )
 INT cell ; 
 INT *l, *r, *b, *t ;
 {
@@ -624,7 +636,7 @@ INT *l, *r, *b, *t ;
 
 
 /* given a cell it returns bounding box of cell including routing area */
-get_routing_boundary( cell, ret_l, ret_b, ret_r, ret_t )
+VOID get_routing_boundary( cell, ret_l, ret_b, ret_r, ret_t )
 INT cell ; 
 INT *ret_l, *ret_r, *ret_b, *ret_t ; /* return quantities */
 {
@@ -712,7 +724,7 @@ INT cell ;
     return( 0 ) ;
 } /* end get_pad_routing */
 
-static find_core()
+static VOID find_core(VOID)
 {
     INT ominx, ominy ;
     INT omaxx, omaxy ;
@@ -812,7 +824,7 @@ static find_core()
 
 
 /* ***********************EXTERNAL ROUTINES ************************** */
-call_place_pads()
+VOID call_place_pads(VOID)
 {
     FILE *fp ;
     INT pad ;
@@ -835,8 +847,9 @@ call_place_pads()
     fp = TWOPEN( filename, "w", ABORT ) ;
     numnets = find_numnets() ;
     fprintf( fp, "core %d %d %d %d\n", 
-	coreG[X][MINI], coreG[Y][MINI], coreG[X][MAXI], coreG[Y][MAXI] ) ;
-    fprintf( fp, "pads %d numnets %d\n", numpadsG+numpadgroupsG, numnets);
+		(int)(coreG[X][MINI]), (int)(coreG[Y][MINI]), 
+		(int)(coreG[X][MAXI]), (int)(coreG[Y][MAXI]) ) ;
+    fprintf( fp, "pads %d numnets %d\n", (int)(numpadsG+numpadgroupsG), (int)numnets);
     output_pads( fp ) ;
     output_nets( fp, numnets ) ;
     TWCLOSE( fp ) ;
@@ -845,7 +858,8 @@ call_place_pads()
     /* find the path of placepads relative to main program */
     pathname = Yrelpath( argv0G, PLACEPADPATH ) ;
     if( !(YfileExists(pathname))){
-	if( twdir = TWFLOWDIR ){
+	/* use ((...)) to avoid assignment as condition warning */
+	if(( twdir = TWFLOWDIR )){
 	    sprintf( filename, "%s/bin/%s", twdir, PLACEPADPROG ) ;
 	    pathname = Ystrclone( filename ) ;
 	}
@@ -879,7 +893,8 @@ call_place_pads()
     line = 0 ;
     abort = FALSE ;
     pad = endsuperG ;
-    while( bufferptr=fgets(buffer,LRECL,fp )){
+    /* use ((...)) to avoid assignment as condition warning */
+    while(( bufferptr=fgets(buffer,LRECL,fp ))){
 	/* parse file */
 	line ++ ; /* increment line number */
 	tokens = Ystrparser( bufferptr, ": \t\n", &numtokens );
@@ -891,7 +906,7 @@ call_place_pads()
 	    /* look at first field for keyword */
 	    /* ie. pad <string> x y orient padside */
 	    if( numtokens != 6 ){
-		sprintf( YmsgG, "Syntax error on line:%d\n", line ) ;
+		sprintf( YmsgG, "Syntax error on line:%d\n", (int)line ) ;
 		M(ERRMSG, "placepads", YmsgG ) ;
 		abort = TRUE ;
 		continue ;
@@ -906,7 +921,7 @@ call_place_pads()
 	    cellptr->padptr->padside = atoi(tokens[5] ) ;
 
 	} else {
-	    sprintf( YmsgG, "Syntax error on line:%d\n", line ) ;
+	    sprintf( YmsgG, "Syntax error on line:%d\n", (int)line ) ;
 	    M(ERRMSG, "placepads", YmsgG ) ;
 	    abort = TRUE ;
 	    continue ;
@@ -923,7 +938,7 @@ call_place_pads()
 
 } /* end call_place_pads */
 
-INT find_numnets()
+INT find_numnets(VOID)
 {
     INT pad ; 
     INT numnets ; 
@@ -950,8 +965,9 @@ INT find_numnets()
     return( numnets ) ;
 } /* end find_numnets */
 
-output_nets( fp, numnets )
+VOID output_nets( fp, numnets )
 FILE *fp ;
+INT numnets;
 {
     INT net ;
     INT pincount ;
@@ -969,7 +985,7 @@ FILE *fp ;
 		/* skip over the pad connections */
 		continue ;
 	    }
-	    fprintf( fp, "%d %d ", pin->xpos, pin->ypos ) ;
+	    fprintf( fp, "%d %d ", (int)(pin->xpos), (int)(pin->ypos) ) ;
 	    if( ++pincount > 5 ){
 		pincount = 0 ;
 		fprintf( fp, "\n" ) ;

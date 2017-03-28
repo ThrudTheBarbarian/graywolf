@@ -62,7 +62,9 @@ static char SccsId[] = "@(#) config2.c version 3.3 9/5/90" ;
 #include <custom.h>
 #include <yalecad/debug.h>
 
-config2( numbinX, numbinY, wire_red_ratio )
+#include "reconfig.h"
+
+VOID config2( numbinX, numbinY, wire_red_ratio )
 INT numbinX ;
 INT numbinY ;
 DOUBLE wire_red_ratio ;
@@ -85,7 +87,8 @@ DOUBLE wire_red_ratio ;
     for( cell = 1 ; cell <= numcellsG ; cell++ ) {
 	cellptr = cellarrayG[cell] ;
 	/* look at all the instances */
-	if( instptr = cellptr->instptr ){
+	/* use ((...)) to avoid assignment as condition warning */
+	if(( instptr = cellptr->instptr )){
 	    numinst = instptr->numinstances ;
 	} else {
 	    numinst = 1 ;
@@ -133,7 +136,7 @@ DOUBLE wire_red_ratio ;
     }
 
     side = (INT)(sqrt(((DOUBLE) totalArea) / (DOUBLE) numcellsG))  ;
-    OUT2("\n\nAVERAGE CELL SIDE WITHOUT ROUTING AREA: %d\n\n",side );
+    OUT2("\n\nAVERAGE CELL SIDE WITHOUT ROUTING AREA: %d\n\n",(int)side );
 
     tempint = (INT)( temp ) + 3 ; /* d+1 tracks + roundoff */
     tempint += defaultTracksG ;
@@ -142,7 +145,7 @@ DOUBLE wire_red_ratio ;
     aveChanWidG = ( (DOUBLE) tempint / 1.8) + 2.0 ;
 
     OUT2("\n\nConfiguration Data\nInternal Channel Length:%d\n",
-							    totChanLenG ) ;
+							    (int)totChanLenG ) ;
     OUT2("Average Channel Width (un-normalized):%f\n\n", temp ) ;
     OUT2("Average Channel Width:%f\n\n", aveChanWidG ) ;
 

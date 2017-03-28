@@ -72,11 +72,16 @@ REVISIONS:  Nov  5, 1988 - free violations and modified position of
 static char SccsId[] = "@(#) compact.c version 3.12 5/5/91" ;
 #endif
 
+#include <string.h>
+
 #include <custom.h>
 #include <dens.h>
 #include <yalecad/debug.h>
 #include <yalecad/file.h>
+#include <yalecad/program.h>
+#include <yalecad/relpos.h>
 #include <yalecad/string.h>
+#include <yalecad/system.h>
 
 #include "config-build.h"
 
@@ -91,7 +96,7 @@ static char SccsId[] = "@(#) compact.c version 3.12 5/5/91" ;
 #define SCELLKEYWORD     "stdcell"
 #define TILEKEYWORD      "l"
 
-compact( compactFlag )
+VOID compact( compactFlag )
 BOOL compactFlag ; /* signals use of compaction */
 {
     char filename[LRECL] ;
@@ -107,7 +112,6 @@ BOOL compactFlag ; /* signals use of compaction */
     INT xcenter, ycenter ;
     INT xoffset, yoffset ;
     INT l, r, b, t ;
-    INT closegraphics() ;
     CELLBOXPTR cellptr ;
     TILEBOXPTR tileptr ;
     BOUNBOXPTR bounptr ;            /* bounding box pointer */
@@ -150,7 +154,7 @@ BOOL compactFlag ; /* signals use of compaction */
 
     /* NOW output data */
 
-    fprintf( fp, "numtiles:%d numcells:%d\n", numtiles, numcells ) ;
+    fprintf( fp, "numtiles:%d numcells:%d\n", (int)numtiles, (int)numcells ) ;
     for( cell = 1 ; cell <= endsuperG; cell++ ){
 	cellptr = cellarrayG[cell] ;
 	type = cellptr->celltype ;
@@ -164,12 +168,12 @@ BOOL compactFlag ; /* signals use of compaction */
 
 	if( type == CUSTOMCELLTYPE || type == SOFTCELLTYPE ){
 	    fprintf( fp, "cell %d x:%d y:%d offset:%d %d\n", 
-		cellarrayG[cell]->cellnum, xcenter, ycenter,
-		xoffset, yoffset ) ;
+		(int)(cellarrayG[cell]->cellnum), (int)xcenter, (int)ycenter,
+		(int)xoffset, (int)yoffset ) ;
 	} else {
 	    fprintf( fp, "stdcell %d x:%d y:%d offset:%d %d\n", 
-		cellarrayG[cell]->cellnum, xcenter, ycenter,
-		xoffset, yoffset ) ;
+		(int)(cellarrayG[cell]->cellnum), (int)xcenter, (int)ycenter,
+		(int)xoffset, (int)yoffset ) ;
 	}
 
 	/* setup translation of output points */
@@ -203,7 +207,7 @@ BOOL compactFlag ; /* signals use of compaction */
 
 	    /* calculate orientation for cell tiles */
 	    YtranslateC( &l,&b,&r,&t,cellptr->orient) ;
-	    fprintf( fp, "l:%d r:%d b:%d t:%d\n", l,r,b,t ) ;
+	    fprintf( fp, "l:%d r:%d b:%d t:%d\n", (int)l,(int)r,(int)b,(int)t ) ;
 
 	} /* end tiles of a cell loop */
 
@@ -211,7 +215,7 @@ BOOL compactFlag ; /* signals use of compaction */
 	if( routingTilesG ){
 	    for( rtptr = routingTilesG[cell]; rtptr; rtptr = rtptr->next){
 		fprintf( fp, "l:%d r:%d b:%d t:%d\n", 
-		    rtptr->x1, rtptr->x2, rtptr->y1, rtptr->y2 ) ;
+		    (int)(rtptr->x1), (int)(rtptr->x2), (int)(rtptr->y1), (int)(rtptr->y2) ) ;
 	    }
 	}
 
@@ -224,30 +228,31 @@ BOOL compactFlag ; /* signals use of compaction */
     /* find the path of compactor relative to main program */
     pathname = Yrelpath( argv0G, COMPACTPATH ) ;
     if( !(YfileExists(pathname))){
-	if( twdir = TWFLOWDIR ){
+	/* use ((...)) to avoid assignment as condition warning */
+	if(( twdir = TWFLOWDIR )){
 	    sprintf( filename, "%s/bin/%s", twdir, COMPACTPROG ) ;
 	    pathname = Ystrclone( filename ) ;
 	}
     }
     if( doPartitionG ){
 	sprintf( YmsgG, "%s -vn %s %d %d %d %d %d %d", pathname,
-	    cktNameG, blockrG, blocktG, track_spacingXG,track_spacingYG,
-	    track_spacingXG, track_spacingYG);
+	    cktNameG, (int)blockrG, (int)blocktG, (int)track_spacingXG,
+	     (int)track_spacingYG, (int)track_spacingXG, (int)track_spacingYG);
     } else if( compactFlag == VIOLATIONSONLY ){
 	sprintf( YmsgG, "%s -vn %s %d %d %d %d %d %d", pathname,
-	    cktNameG, blockrG, blocktG, track_spacingXG,track_spacingYG,
-	    track_spacingXG, track_spacingYG );
+	    cktNameG, (int)blockrG, (int)blocktG, (int)track_spacingXG,
+	    	(int)track_spacingYG, (int)track_spacingXG, (int)track_spacingYG );
     } else if( compactFlag == COMPACT ){
 	/*
 	sprintf( YmsgG, "%s -n %s %d %d 0 0 0 0", pathname,
 	    cktNameG, blockrG, blocktG );
 	*/
 	sprintf( YmsgG, "%s -cn %s %d %d %d %d 0 0", pathname,
-	    cktNameG, blockrG, blocktG, track_spacingXG,track_spacingYG );
+	    cktNameG, (int)blockrG, (int)blocktG, (int)track_spacingXG,(int)track_spacingYG );
 
 	D( "twsc/compact_graphics",
 	    sprintf( YmsgG, "%s -c %s %d %d %d %d 0 0", pathname,
-	    cktNameG, blockrG, blocktG, track_spacingXG,track_spacingYG);
+	    cktNameG, (int)blockrG, (int)blocktG, (int)track_spacingXG,(int)track_spacingYG);
 	) ;
     } else {
 	M( ERRMSG,"compact", "unknown compact flag\n" ) ;
@@ -271,7 +276,8 @@ BOOL compactFlag ; /* signals use of compaction */
     /* parse file */
     line = 0 ;
     abort = FALSE ;
-    while( bufferptr=fgets(buffer,LRECL,fp )){
+    /* use ((...)) to avoid assignment as condition warning */
+    while(( bufferptr=fgets(buffer,LRECL,fp ))){
 	/* parse file */
 	line ++ ; /* increment line number */
 	tokens = Ystrparser( bufferptr, ": \t\n", &numtokens );
@@ -283,7 +289,7 @@ BOOL compactFlag ; /* signals use of compaction */
 	    /* look at first field for keyword */
 	    /* ie. numtiles:5 numcells:4 */
 	    if( numtokens != 4 ){
-		sprintf( YmsgG, "Syntax error on line:%d\n", line ) ;
+		sprintf( YmsgG, "Syntax error on line:%d\n", (int)line ) ;
 		M(ERRMSG, "compact", YmsgG ) ;
 		abort = TRUE ;
 		continue ;
@@ -299,7 +305,7 @@ BOOL compactFlag ; /* signals use of compaction */
 		/* softcell 1 x:312 y:512 offet:39 40 */
 	    /* look at first field for keyword */
 	    if( numtokens != 9 ){
-		sprintf( YmsgG, "Syntax error on line:%d\n", line ) ;
+		sprintf( YmsgG, "Syntax error on line:%d\n", (int)line ) ;
 		M(ERRMSG, "compact", YmsgG ) ;
 		abort = TRUE ;
 		continue ;
@@ -315,13 +321,13 @@ BOOL compactFlag ; /* signals use of compaction */
 	    /* look at first field for keyword */
 	    /* l:-115 r:270 b:-85 t:85 */
 	    if( numtokens != 8 ){
-		sprintf( YmsgG, "Syntax error on line:%d\n", line ) ;
+		sprintf( YmsgG, "Syntax error on line:%d\n", (int)line ) ;
 		M(ERRMSG, "compact", YmsgG ) ;
 		abort = TRUE ;
 		continue ;
 	    }
 	} else {
-	    sprintf( YmsgG, "Syntax error on line:%d\n", line ) ;
+	    sprintf( YmsgG, "Syntax error on line:%d\n", (int)line ) ;
 	    M(ERRMSG, "compact", YmsgG ) ;
 	    abort = TRUE ;
 	    continue ;
@@ -341,7 +347,7 @@ BOOL compactFlag ; /* signals use of compaction */
 #define HOWMANY 0
 
 /* need accurate cell centers in density calculation */
-get_cell_centers( cell, xc, yc )
+VOID get_cell_centers( cell, xc, yc )
 INT cell ;
 INT *xc, *yc ;
 {

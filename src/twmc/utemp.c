@@ -58,11 +58,17 @@ REVISIONS:  Dec 3, 1988 - added output info for timing.
 static char SccsId[] = "@(#) utemp.c version 3.6 4/6/92" ;
 #endif
 
-#include <custom.h>
-#include <temp.h>
+#include <yalecad/base.h>
 #include <yalecad/debug.h>
 
-utemp( attempts, multi_cell_moves )
+#include <custom.h>
+#include <finalout.h>
+#include <findcost.h>
+#include <savewolf.h>
+#include <temp.h>
+#include <uloop.h>
+
+VOID utemp( attempts, multi_cell_moves )
 INT attempts ;
 BOOL multi_cell_moves ;
 {
@@ -76,7 +82,7 @@ BOOL multi_cell_moves ;
 	iterationG++ ; /* next iteration */
 	/* write iteration to the screen if not verbose */
 	if(!(verboseG )){
-	    fprintf( stdout, "%3d ", iterationG ) ;
+	    fprintf( stdout, "%3d ", (int)iterationG ) ;
 	    if(!(iterationG % 15)){
 		fprintf( stdout, "\n" ) ;
 	    }
@@ -104,7 +110,7 @@ BOOL multi_cell_moves ;
      *  * WE ARE FINISHED *
      */
     prnt_cost("\nPLACEMENT RESULTS AFTER ANNEALING ARE:\n" ) ;
-    OUT2("MAX NUMBER OF ATTEMPTED FLIPS PER T:%8d\n", attmaxG ) ;
+    OUT2("MAX NUMBER OF ATTEMPTED FLIPS PER T:%8d\n", (int)attmaxG ) ;
     /* verify incremental and current costs */
     D( "twmc/utemp", checkcost() ) ;
     return ;

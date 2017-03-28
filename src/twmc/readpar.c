@@ -79,11 +79,22 @@ static char SccsId[] = "@(#) readpar.c version 3.20 11/23/91" ;
 #endif
 
 #include <string.h>
-#include <custom.h>
+
+#include <yalecad/base.h>
 #include <yalecad/debug.h>
 #include <yalecad/file.h>
+#include <yalecad/grid.h>
+#include <yalecad/plot.h>
+#include <yalecad/program.h>
+#include <yalecad/random.h>
 #include <yalecad/string.h>
 #include <yalecad/yreadpar.h>
+
+#include <cells.h>
+#include <custom.h>
+#include <temp.h>
+#include <twstats.h>
+#include <uloop.h>
 
 #define DEFAULTLAMBDA 0.1
 #define INIT_ACCEPTANCE 0.99999
@@ -102,14 +113,14 @@ static INT gridYS = INT_MIN ;
 
 
 
-static init_read_par();
-static readparam();
-static process_readpar();
-static err_msg();
+static VOID init_read_par(VOID);
+static VOID readparam(INT parfile);
+static VOID process_readpar(VOID);
+static VOID err_msg(char * keyword);
 
 
 
-readpar()
+VOID readpar(VOID)
 {
     init_read_par() ;
     readparam( TWMC ) ;
@@ -117,7 +128,7 @@ readpar()
     process_readpar() ;
 }
 
-static init_read_par()
+static VOID init_read_par(VOID)
 {
     /* set the default values */
     offsetG     = 0  ;
@@ -163,7 +174,7 @@ static init_read_par()
 
 
 
-static readparam( parfile )
+static VOID readparam( parfile )
 INT parfile ;
 {
 
@@ -196,8 +207,8 @@ INT parfile ;
 
     OUT1( "\n\n" ) ;
 
-    while( tokens = Yreadpar_next( &lineptr, &line, &numtokens, 
-	&onNotOff, &wildcard )){
+    /* use ((...)) to avoid assignment as condition warning */
+    while(( tokens = Yreadpar_next(&lineptr, &line, &numtokens, &onNotOff, &wildcard ))){
 	readparamS = TRUE ;
 	if( numtokens == 0 ){
 	    /* skip over empty lines */
@@ -469,12 +480,12 @@ INT parfile ;
 	    if( parfile == USER ){
 		sprintf( YmsgG, 
 		"unexpected keyword in the %s.par file at line:%d\n\t%s\n", 
-		cktNameG, line, lineptr );
+		cktNameG, (int)line, lineptr );
 		M( ERRMSG, "readpar", YmsgG ) ;
 	    } else {
 		sprintf( YmsgG, 
 		"Unexpected keyword in the %s.mpar file at line:%d\n\t%s\n", 
-		cktNameG, line, lineptr );
+		cktNameG, (int)line, lineptr );
 		M( ERRMSG, "readpar", YmsgG ) ;
 	    }
 	    Ymessage_error_count() ;
@@ -483,7 +494,7 @@ INT parfile ;
     }
 } /* end readpar */
 
-static process_readpar()
+static VOID process_readpar(VOID)
 {
     char *layer ;             /* name of layer */
     INT i ;                   /* counter */
@@ -530,7 +541,7 @@ static process_readpar()
 	track_spacingXG++ ; /* to account for the -1 initialization */
 	track_spacingXG /= numv_layers ;
 	if( track_spacingXG == 0 ){
-	    track_spacingXG == 1 ;
+	    track_spacingXG = 1 ;
 	}
 	if( scale_dataG ){
 	    track_spacingXG = ceil( (DOUBLE) track_spacingXG /
@@ -541,7 +552,7 @@ static process_readpar()
 	track_spacingYG++ ; /* to account for the -1 initialization */
 	track_spacingYG /= numh_layers ;
 	if( track_spacingYG == 0 ){
-	    track_spacingYG == 1 ;
+	    track_spacingYG = 1 ;
 	}
 	if( scale_dataG ){
 	    track_spacingYG = ceil( (DOUBLE) track_spacingYG /
@@ -635,7 +646,7 @@ static process_readpar()
 		OUT1("was not entered in .mpar file\n");
 		abortS = TRUE ;
 	    } else {
-		OUT2("default.tracks.per.channel: %d\n",defaultTracksG);
+		OUT2("default.tracks.per.channel: %d\n",(int)defaultTracksG);
 	    }
 	}
 	OUT1("TimberWolf instructed to do ");
@@ -659,8 +670,8 @@ static process_readpar()
 	}
     }
 
-    OUT2("track.pitch.x: %d\n" , track_spacingXG ) ;
-    OUT2("track.pitch.y: %d\n" , track_spacingYG ) ;
+    OUT2("track.pitch.x: %d\n" , (int)track_spacingXG ) ;
+    OUT2("track.pitch.y: %d\n" , (int)track_spacingYG ) ;
     OUT2("chip.aspect.ratio: %g\n" , chipaspectG ) ;
     OUT2("init_acc: %4.2f\n", init_accG ) ;
 
@@ -675,7 +686,7 @@ static process_readpar()
     return ;
 } /* end process_readpar */
 
-static err_msg( keyword ) 
+static VOID err_msg( keyword ) 
 char *keyword ;
 {
     OUT2("The value for %s was", keyword );
@@ -683,7 +694,7 @@ char *keyword ;
     abortS = TRUE ;
 }/* end err_msg */
 
-BOOL sc_output()
+BOOL sc_output(VOID)
 {
     return( sc_outputS ) ;
 } /* end sc_output */

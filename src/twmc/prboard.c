@@ -50,17 +50,21 @@ REVISIONS:  Jul 30, 1988 - fixed output for softcells and added
 static char SccsId[] = "@(#) prboard.c version 3.6 4/18/91" ;
 #endif
 
-#include <custom.h>
+#include <yalecad/base.h>
 #include <yalecad/debug.h>
+#include <yalecad/grid.h>
 
-grid_cells()
+#include "custom.h"
+#include "findcost.h"
+
+VOID grid_cells(VOID)
 {
 
-INT xcenter , ycenter, remainder ;
+INT xcenter , ycenter ;
 INT cell ;
 INT old_left, old_bottom ;/* original xy center of cell before gridding */
 INT delta_x, delta_y ;       /* delta to move cell lower left to grid */
-INT left, right, bottom, top ;            /* sides of cell bounding box */
+INT left, bottom ;            /* sides of cell bounding box */
 CELLBOXPTR cellptr ;
 BOUNBOXPTR bounptr ;
 
@@ -79,9 +83,7 @@ BOUNBOXPTR bounptr ;
 	ycenter = cellptr->ycenter ;
 
 	left = bounptr->l ;
-	right = bounptr->r ;
 	bottom = bounptr->b ;
-	top = bounptr->t ;
 
 	/* add offset */
 	old_left = left += xcenter ;

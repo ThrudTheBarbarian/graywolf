@@ -86,16 +86,16 @@ static INT  output_typeS ;      /* describe the type of circuit */
 
 
 
-static output_pin();
+static VOID output_pin();
 static INT find_cell();
-static process_analog_net();
+static VOID process_analog_net();
 static INT find_cell();
-static output_matches();
+static VOID output_matches();
 
 
 
 
-outpin()
+VOID outpin(VOID)
 {
 
     INT net ;               /* counter */
@@ -132,7 +132,7 @@ outpin()
 } /* end outpins */
 
 
-static output_pin( pinptr )
+static VOID output_pin( pinptr )
 PINBOXPTR pinptr ;
 {
     INT i ;              /* softpin counter */
@@ -190,16 +190,16 @@ PINBOXPTR pinptr ;
 	D( "twmc/outpin",
 	    if( x % track_spacingXG ){
 		fprintf( stderr, "Pin %s on cell %d x not on grid\n",
-		    pinptr->pinname, cell ) ;
+		    pinptr->pinname, (int)cell ) ;
 	    }
 	    if( y % track_spacingYG ){
 		fprintf( stderr, "Pin %s on cell %d x not on grid\n",
-		    pinptr->pinname, cell ) ;
+		    pinptr->pinname, (int)cell ) ;
 	    }
 	) ;
 
 	fprintf(fpS,"pin %s x %d y %d cell %d layer %d PinOrEquiv 1",
-	    pinptr->pinname, x, y , cell, pinptr->layer ) ;
+	    pinptr->pinname, (int)x, (int)y , (int)cell, (int)(pinptr->layer) ) ;
 	if( pinptr->analog ){
 	    current = pinptr->analog->current ;
 	    if( current > NO_CURRENT_SPECIFIED ){
@@ -219,7 +219,7 @@ PINBOXPTR pinptr ;
 		eqptr->typos[instance],          /* cell relative */
 		cellptr->xcenter, cellptr->ycenter ) ; /* center */
 	    fprintf(fpS,"pin %s  x %d  y %d  cell %d layer %d PinOrEquiv 0",
-		pinptr->pinname, x, y , cell, pinptr->layer ) ;
+		pinptr->pinname, (int)x, (int)y , (int)cell, (int)(pinptr->layer) ) ;
 	    if( pinptr->analog ){
 		current = pinptr->analog->current ;
 		if( current > NO_CURRENT_SPECIFIED ){
@@ -246,7 +246,7 @@ PINBOXPTR pinptr ;
 		cellptr->xcenter, cellptr->ycenter ) ; /* center */
 
 	    fprintf(fpS,"pin %s  x %d  y %d  cell %d layer %d PinOrEquiv 0",
-		child->pinname, x, y , cell, child->layer ) ;
+		child->pinname, (int)x, (int)y , (int)cell, (int)(child->layer) ) ;
 	    if( pinptr->analog ){
 		current = pinptr->analog->current ;
 		if( current > NO_CURRENT_SPECIFIED ){
@@ -258,7 +258,7 @@ PINBOXPTR pinptr ;
     }
 } /* end output_pin */
 
-static process_analog_net( netptr )
+static VOID process_analog_net( netptr )
 NETBOXPTR netptr ;
 {
     INT i, j ;           /* counters */
@@ -295,7 +295,7 @@ NETBOXPTR netptr ;
     /* output any common points first */
     for( i = 0; i < aptr->num_common_points; i++ ){
 	cpt = aptr->common_pts[i] ;
-	fprintf( fpS, "common_point %d\n", cpt->num_pins  ) ;
+	fprintf( fpS, "common_point %d\n", (int)(cpt->num_pins)  ) ;
 	len = 0 ;
 	howmany = cpt->num_pins - 1 ;
 	for( j = 0; j <= howmany; j++ ){
@@ -323,7 +323,7 @@ NETBOXPTR netptr ;
 		    fprintf( fpS, "\n" ) ;
 		}
 		fprintf( fpS, "%s %d", pinname,
-		    find_cell( termarrayG[pin]->cell ) ) ;
+		    (int)find_cell( termarrayG[pin]->cell ) ) ;
 	    }
 	    fprintf( fpS, "\n" ) ;
 	    
@@ -345,7 +345,7 @@ NETBOXPTR netptr ;
 		    fprintf( fpS, "\n" ) ;
 		}
 		fprintf( fpS, "%s %d", pinname,
-		    find_cell( termarrayG[pin]->cell ) ) ;
+		    (int)find_cell( termarrayG[pin]->cell ) ) ;
 	    }
 	    fprintf( fpS, "\n" ) ;
 	    
@@ -372,7 +372,7 @@ INT side ;
     return( side2cellS[side] ) ;
 } /* end getPadMacroNum */
 
-setPadMacroNum( side, cellnum )
+VOID setPadMacroNum( side, cellnum )
 INT side ;
 INT cellnum ;
 {
@@ -418,12 +418,12 @@ INT cell ;
 
 } /* end findTerminal */
 
-INT get_circuit_type()
+INT get_circuit_type(VOID)
 {
     return( output_typeS ) ;
 } /* end get_circuit_type */
 
-static output_matches()
+static VOID output_matches()
 {
     INT i, j ;
     INT net ;

@@ -55,8 +55,15 @@ REVISIONS:  Mar 29, 1989 - changed tileptr argument to pos.
 static char SccsId[] = "@(#) wireest.c version 3.6 3/7/91" ;
 #endif
 
-#include <custom.h>
+#include <yalecad/base.h>
 #include <yalecad/debug.h>
+#include <yalecad/linalg.h>
+#include <yalecad/program.h>
+
+#include <custom.h>
+#include <pins.h>
+#include <wire.h>
+#include <savewolf.h>
 
 #ifdef MACRO 
 #define CHECK_ROUTING( routing )           \
@@ -88,13 +95,13 @@ static DOUBLE bdylengthS ;
 
 
 
-static check_routing();
+static VOID check_routing(INT *routing);
 
 
 
 /*******************************************************************/
 
-wireestxy( pos, xc, yc ) 
+VOID wireestxy( pos, xc, yc ) 
 MOVEBOXPTR pos ;
 INT xc, yc ;
 {
@@ -266,7 +273,7 @@ INT xc, yc ;
 } /* end wireestxy */
 /*********************************************************************/
 
-wireestxy2( pos, xc, yc ) 
+VOID wireestxy2( pos, xc, yc ) 
 MOVEBOXPTR pos ;
 INT xc, yc ;
 {
@@ -346,7 +353,7 @@ FILE *fp ;
 
 } /* end read_wire_est */
 
-resize_wire_params()
+VOID resize_wire_params(VOID)
 {
     blocklS = (DOUBLE) blocklG ;
     blockbS = (DOUBLE) blockbG ;
@@ -355,7 +362,7 @@ resize_wire_params()
 } /* end resize_wire_params */
 
 
-static check_routing( routing )
+static VOID check_routing( routing )
 INT *routing ;
 {
     if( *routing < 0 ){
@@ -370,7 +377,7 @@ INT *routing ;
 /* ***************************************************************** 
    save_wireest - save wireest parameters for restart
 */
-save_wireest( fp )
+VOID save_wireest( fp )
 FILE *fp ;
 {
     fprintf(fp,"# wireest parameters:\n") ;

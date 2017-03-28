@@ -52,10 +52,17 @@ REVISIONS:  Feb 5, 1988 - changed old_apos, new_apos to global
 static char SccsId[] = "@(#) usite1.c version 3.4 9/10/90" ;
 #endif
 
-#include <custom.h>
+#include <yalecad/base.h>
 #include <yalecad/debug.h>
 
-BOOL usite1( /* old_apos, new_apos */ )
+#include <acceptt.h>
+#include <custom.h>
+#include <nets.h>
+#include <overlap.h>
+#include <paths.h>
+#include <pins.h>
+
+BOOL usite1(VOID /* old_apos, new_apos */ )
 /* MOVEBOXPTR  *old_apos, *new_apos ; */
 {
 

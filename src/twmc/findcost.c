@@ -63,7 +63,7 @@ static char SccsId[] = "@(#) findcost.c version 3.7 11/23/91" ;
 #include <yalecad/relpos.h>
 #include <yalecad/debug.h>
 
-findcost()
+INT findcost(VOID)
 {
 
 NETBOXPTR netptr ;
@@ -284,7 +284,7 @@ return( cost ) ;
 } /* end findcost */
 
 #ifdef DEBUG
-checkcost()
+VOID checkcost(VOID)
 {
 
     INT incr_funccost, incr_penalty, incr_time ;

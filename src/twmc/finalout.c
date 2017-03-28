@@ -78,6 +78,23 @@ static char SccsId[] = "@(#) finalout.c (Yale) version 3.15 7/24/91" ;
 
 #include <custom.h>
 #include <yalecad/debug.h>
+#include <yalecad/draw.h>
+#include <yalecad/program.h>
+
+#include <bins.h>
+#include <compact.h>
+#include <finalout.h>
+#include <findcost.h>
+#include <graphics.h>
+#include <main.h>
+#include <overlap.h>
+#include <pads.h>
+#include <partition.h>
+#include <paths.h>
+#include <pins.h>
+#include <reconfig.h>
+#include <savewolf.h>
+#include <wire.h>
 
 /* redefine flags for easier reading */
 #define VIOLATIONSONLY   FALSE
@@ -87,7 +104,12 @@ static char SccsId[] = "@(#) finalout.c (Yale) version 3.15 7/24/91" ;
 #define NOCONSTRAINTS    FALSE
 #define CONSTRAINTS      TRUE
 
-finalout()
+/* Forward declarations */
+static VOID Output(INT cycle );
+static VOID finalout_check_graphics(VOID);
+
+
+VOID finalout(VOID)
 {
 
 INT c ;
@@ -139,7 +161,7 @@ placepads() ;
 
 /* before channel graph generation and global routing let use tweak */
 /* placement if desired */
-check_graphics() ;
+finalout_check_graphics() ;
 
 if( !scale_dataG ){ 
     /* reload bins to get new overlap penalty */
@@ -155,7 +177,7 @@ if( doCompactionG > 0 || quickrouteG ) {
     rmain( NOCONSTRAINTS ) ;
     gmain( UPDATE_ROUTING ) ;
     adapt_wire_estimator() ;
-    check_graphics() ;
+    finalout_check_graphics() ;
 
     if( quickrouteG ){
 	return ;
@@ -164,7 +186,7 @@ if( doCompactionG > 0 || quickrouteG ) {
     for( c = 1 ; c <= doCompactionG ; c++ ) {
 
 	funccostG = findcost() ;
-	sprintf(YmsgG,"\n\nCompactor Pass Number: %d begins with:\n", c ) ;
+	sprintf(YmsgG,"\n\nCompactor Pass Number: %d begins with:\n", (int)c ) ;
 	prnt_cost( YmsgG ) ;
 
 	wirecosts() ;
@@ -173,9 +195,9 @@ if( doCompactionG > 0 || quickrouteG ) {
 	grid_cells() ;      /* force cells to grid locations */
 	compact(COMPACT);   /* remove white space */
 	reorigin() ;
-	check_graphics() ;
+	finalout_check_graphics() ;
 
-	sprintf(YmsgG,"\n\nCompactor Pass Number: %d after cost:\n", c ) ;
+	sprintf(YmsgG,"\n\nCompactor Pass Number: %d after cost:\n", (int)c ) ;
 	prnt_cost( YmsgG ) ;
 
 	Output( c ) ;
@@ -188,7 +210,7 @@ if( doCompactionG > 0 || quickrouteG ) {
 	    rmain( NOCONSTRAINTS ) ;
 	    gmain( UPDATE_ROUTING ) ;
 	    adapt_wire_estimator() ;
-	    check_graphics() ;
+	    finalout_check_graphics() ;
 	}
 
     } /* end compaction - global route loop */
@@ -211,7 +233,7 @@ return ;
 
 
 
-Output( cycle )
+static VOID Output( cycle )
 INT cycle ;
 {
 
@@ -228,7 +250,7 @@ INT cycle ;
 } /* end Output */
 
 /* print out the current cost to the user */
-prnt_cost( out_string ) 
+VOID prnt_cost( out_string ) 
 char *out_string ;
 {
     INT xspan ;
@@ -236,30 +258,30 @@ char *out_string ;
 
     funccostG = findcost() ;
     OUT2("%s", out_string ) ;
-    OUT2("   routing cost        :%d\n", funccostG ) ;
-    OUT2("   overlap penalty     :%d\n", binpenalG);
-    OUT2("   lapFactor * overlap :%d\n", penaltyG);
-    OUT2("   timing penalty      :%d\n", timingpenalG );
-    OUT2("+  timeFactor * timepen:%d\n", timingcostG );
+    OUT2("   routing cost        :%d\n", (int)funccostG ) ;
+    OUT2("   overlap penalty     :%d\n", (int)binpenalG);
+    OUT2("   lapFactor * overlap :%d\n", (int)penaltyG);
+    OUT2("   timing penalty      :%d\n", (int)timingpenalG );
+    OUT2("+  timeFactor * timepen:%d\n", (int)timingcostG );
     OUT1("-------------------------------------\n" ) ; 
     OUT2("   total cost          :%d\n",
-	(funccostG + penaltyG + timingcostG) ) ;
+	(int)(funccostG + penaltyG + timingcostG) ) ;
     wirecosts() ;
 
     find_core_boundary( &blocklG, &blockrG, &blockbG, &blocktG ) ;
     OUT5("\n\nCORE Bounding Box: l:%d r:%d b:%d t:%d\n",
-	    blocklG , blockrG , blockbG , blocktG ) ;
+	    (int)blocklG , (int)blockrG , (int)blockbG , (int)blocktG ) ;
     xspan = blockrG - blocklG ;
     yspan = blocktG - blockbG ;
-    OUT2( "   xspan     = %d\n", xspan ) ;
-    OUT2( "   yspan     = %d\n", yspan ) ;
+    OUT2( "   xspan     = %d\n", (int)xspan ) ;
+    OUT2( "   yspan     = %d\n", (int)yspan ) ;
     OUT2( "   core area = %4.2le\n\n",  (DOUBLE) xspan * (DOUBLE) yspan );
     OUT1("-------------------------------------\n" ) ; 
     Ymessage_flush() ;
 
 }/* end print_current_cost */
 
-check_graphics()
+static VOID finalout_check_graphics(VOID)
 {
     if( doGraphicsG && wait_for_userG ){
 	G( TWmessage( "TimberWolfMC waiting for your response" ) ) ;

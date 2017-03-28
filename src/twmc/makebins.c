@@ -55,7 +55,7 @@ static char SccsId[] = "@(#) makebins.c version 3.3 9/5/90" ;
 #include <custom.h>
 #include <yalecad/debug.h>
 
-makebins( numbins )
+VOID makebins( numbins )
 INT numbins ;
 {
 
@@ -75,8 +75,8 @@ maxBinYG = (INT) ybins ;
 /* bins will be labeled [0..maxBinsXG] for a total of maxBinsXG+1 bins */
 maxBinXG++ ;
 maxBinYG++ ;
-OUT2("maxBinXG automatically set to:%d\n", maxBinXG );
-OUT2("maxBinYG automatically set to:%d\n", maxBinYG );
+OUT2("maxBinXG automatically set to:%d\n", (int)maxBinXG );
+OUT2("maxBinYG automatically set to:%d\n", (int)maxBinYG );
 
 binptrG = (BINBOXPTR **)Ysafe_malloc( (1+maxBinXG)*sizeof(BINBOXPTR *)) ; 
 for( i = 0 ; i <= maxBinXG ; i++ ) {

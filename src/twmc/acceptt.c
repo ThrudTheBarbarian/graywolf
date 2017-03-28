@@ -48,14 +48,18 @@ REVISIONS:
 static char SccsId[] = "@(#) acceptt.c version 3.3 9/5/90" ;
 #endif
 
-#include <custom.h>
+#include <yalecad/base.h>
 #include <yalecad/debug.h>
+#include <yalecad/quicksort.h>
+#include <yalecad/random.h>
+
+#include <custom.h>
 
 #define MASK 0x3ff
 
 static DOUBLE table1S[1024] , table2S[1024] , table3S[1024] ;
  
-init_table()
+VOID init_table(VOID)
 {
     INT i2 ;
     table1S[0] = 1.0 ;

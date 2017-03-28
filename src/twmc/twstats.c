@@ -49,50 +49,53 @@ REVISIONS:  Jan 30, 1989 - added number of net info at beginning of run.
 static char SccsId[] = "@(#) twstats.c version 3.3 9/5/90" ;
 #endif
 
-#include <custom.h>
+#include <yalecad/base.h>
 #include <yalecad/debug.h>
+#include <yalecad/log.h>
+
+#include <custom.h>
 
 #define MAXPININFO 100
 static INT maxpinS = 0 ;
 
 
-twstats()
+VOID twstats(VOID)
 {
     INT temp ;
     DOUBLE reduction ;
 
 OUT3("\nInitial Wiring Cost: %d   Final Wiring Cost: %d\n",
-						icostG , fcostG ) ;
+						(int)icostG , (int)fcostG ) ;
 if( icostG != 0 ) {
     temp = 100 - (INT)( (DOUBLE)fcostG / (DOUBLE)icostG * 100.0 ) ;
-    OUT2("############ Percent Wire Cost Reduction: %d\n\n", temp ) ;
+    OUT2("############ Percent Wire Cost Reduction: %d\n\n", (int)temp ) ;
 }
 
 OUT3("\nInitial Wire Length: %d   Final Wire Length: %d\n",
-					    iwireG, fwireG ) ;
+					    (int)iwireG, (int)fwireG ) ;
 if( icostG != 0 ) {
     temp = 100 - (INT)( (DOUBLE) fwireG / (DOUBLE) iwireG * 100.0 ) ;
-    OUT2("*********** Percent Wire Length Reduction: %d\n\n", temp ) ;
+    OUT2("*********** Percent Wire Length Reduction: %d\n\n", (int)temp ) ;
 }
 
 OUT3("\nInitial Horiz. Wire: %d   Final Horiz. Wire: %d\n",
-					    iwirexG , fwirexG ) ;
+					    (int)iwirexG , (int)fwirexG ) ;
 if( iwirexG != 0 ) {
     temp = 100 - (INT)( (DOUBLE)fwirexG / (DOUBLE)iwirexG * 100.0 ) ;
-    OUT2("$$$$$$$$$ Percent H-Wire Length Reduction: %d\n\n", temp ) ;
+    OUT2("$$$$$$$$$ Percent H-Wire Length Reduction: %d\n\n", (int)temp ) ;
 }
 OUT3("\nInitial Vert. Wire: %d   Final Vert. Wire: %d\n",
-					    iwireyG , fwireyG ) ;
+					    (int)iwireyG , (int)fwireyG ) ;
 if( iwireyG != 0 ) {
     temp = 100 - (INT)( (DOUBLE)fwireyG / (DOUBLE)iwireyG * 100.0 ) ;
-    OUT2("@@@@@@@@@ Percent V-Wire Length Reduction: %d\n\n", temp ) ;
+    OUT2("@@@@@@@@@ Percent V-Wire Length Reduction: %d\n\n", (int)temp ) ;
 }
 
 OUT1("\nStatistics:\n");
-OUT2("Number of Cells: %d\n", numcellsG );
-OUT2("Number of Pads: %d\n", numpadsG );
-OUT2("Number of Nets: %d \n", numnetsG ) ;
-OUT2("Number of Pins: %d \n", numpinsG ) ;
+OUT2("Number of Cells: %d\n", (int)numcellsG );
+OUT2("Number of Pads: %d\n", (int)numpadsG );
+OUT2("Number of Nets: %d \n", (int)numnetsG ) ;
+OUT2("Number of Pins: %d \n", (int)numpinsG ) ;
 
 /* write wire reduction to log file */
 if( avg_funcG > 0 ){
@@ -107,13 +110,13 @@ return ;
 
 static INT printPinS = 0 ;
 
-set_print_pin( pin )
+VOID set_print_pin( pin )
 INT pin ;
 {
     printPinS = pin ;
 }
 
-prnt_netinfo() 
+VOID prnt_netinfo(VOID) 
 {
 
 SHORT numpins ;
@@ -123,7 +126,7 @@ NETBOXPTR dimptr ;
 PINBOXPTR termptr ;
 
 if( printPinS ){
-    OUT2("\n\nPIN LISTING MODE ON FOR NETS WITH %d PINS\n", printPinS ) ; 
+    OUT2("\n\nPIN LISTING MODE ON FOR NETS WITH %d PINS\n", (int)printPinS ) ; 
     OUT1(    "-----------------------------------------\n" ) ; 
 }
 
@@ -143,11 +146,11 @@ for( net = 1 ; net <= numnetsG ; net++ ) {
     if( printPinS ){
 	if( numpins == printPinS ){
 	    OUT4( "A net with %d pin[s]:net%d - %s\n" , 
-		printPinS, net, netarrayG[net]->nname ) ;
+		(int)printPinS, (int)net, netarrayG[net]->nname ) ;
 	    for( termptr=dimptr->pins;termptr;termptr=termptr->next){
 		cell = termptr->cell ;
 		OUT4( "\tpinname:%s cellname:%s cellnum:%d\n",
-		    termptr->pinname, cellarrayG[cell]->cname, cell ) ;
+		    termptr->pinname, cellarrayG[cell]->cname, (int)cell ) ;
 	    }
 	}
     }
@@ -164,17 +167,17 @@ for( net = 1 ; net <= numnetsG ; net++ ) {
 for( n = 1 ; n < MAXPININFO ; n++ ) {
     if( net_pin_num[ n ] ){
 	OUT3( "The number of nets with %2d pins is %d\n",
-		 n , net_pin_num[ n ] ) ;
+		 (int)n , (int)(net_pin_num[ n ]) ) ;
     }
 }
 OUT3( "The number of nets with %d pins or more is %d\n",
-	      MAXPININFO,net_pin_num[ MAXPININFO ] ) ;
-OUT2( "The total number of nets is: %d\n", numnetsG ) ;
-OUT2( "The maximum number of pins on a single net is: %d\n", maxpinS ) ;
+	      (int)MAXPININFO, (int)(net_pin_num[ MAXPININFO ]) ) ;
+OUT2( "The total number of nets is: %d\n", (int)numnetsG ) ;
+OUT2( "The maximum number of pins on a single net is: %d\n", (int)maxpinS ) ;
 
 } /* end prnt_netinfo */
 
-get_max_pin()
+INT get_max_pin(VOID)
 {
     return( maxpinS ) ;
 } /* end get_max_pin */

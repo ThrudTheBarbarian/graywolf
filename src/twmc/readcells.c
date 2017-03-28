@@ -760,7 +760,7 @@ YYSTYPE yyvs[YYSTACKSIZE];
 /* ********************* #include "readcells_l.h" *******************/
 /* ********************* #include "readcells_l.h" *******************/
 
-readcells( fp )
+VOID readcells( fp )
 FILE *fp ;
 { 
 #ifdef YYDEBUG
@@ -777,18 +777,19 @@ FILE *fp ;
 
 } /* end readcells */
 
-yyerror(s)
+int yyerror(s)
 char    *s;
 {
     sprintf(YmsgG,"problem reading %s.[m]cel:", cktNameG );
     M( ERRMSG, "readcells", YmsgG ) ;
     sprintf(YmsgG, "  line %d near '%s' : %s\n" ,
-	line_countS+1, yytext, s );
+	(int)(line_countS+1), yytext, s );
     M( ERRMSG, NULL, YmsgG ) ;
     setErrorFlag() ;
+    return 0;
 }
 
-yywrap()
+int yywrap()
 {
     return(1);
 }                      
@@ -797,14 +798,15 @@ yywrap()
 #define YYACCEPT goto yyaccept
 #define YYERROR goto yyerrlab
 int
-yyparse()
+yyparse(void)
 {
     register int yym, yyn, yystate;
 #if YYDEBUG
     register char *yys;
     extern char *getenv();
 
-    if (yys = getenv("YYDEBUG"))
+    /* use ((...)) to avoid assignment as condition warning */
+    if ((yys = getenv("YYDEBUG")))
     {
         yyn = *yys;
         if (yyn >= '0' && yyn <= '9')
@@ -821,7 +823,8 @@ yyparse()
     *yyssp = yystate = 0;
 
 yyloop:
-    if (yyn = yydefred[yystate]) goto yyreduce;
+    /* use ((...)) to avoid assignment as condition warning */
+    if ((yyn = yydefred[yystate])) goto yyreduce;
     if (yychar < 0)
     {
         if ((yychar = yylex()) < 0) yychar = 0;
@@ -873,7 +876,8 @@ yynewerror:
             sprintf( err_msg, "Found %s.\nExpected ",
                 yyname[yychar] ) ;
             two_or_more = 0 ;
-            if( test_state = yysindex[yystate] ){
+            /* use ((...)) to avoid assignment as condition warning */
+            if(( test_state = yysindex[yystate] )){
                 for( i = 1; i <= YYMAXTOKEN; i++ ){
                     expect = test_state + i ;
                 if((expect <= YYTABLESIZE) &&
@@ -888,7 +892,8 @@ yynewerror:
                      }
                  }
              }
-            if( test_state = yyrindex[yystate] ){
+            /* use ((...)) to avoid assignment as condition warning */
+            if(( test_state = yyrindex[yystate] )){
                 for( i = 1; i <= YYMAXTOKEN; i++ ){
                     expect = test_state + i ;
                 if((expect <= YYTABLESIZE) &&
@@ -912,7 +917,8 @@ yynewerror:
         } else {
             sprintf( err_msg, "Found unknown token.\nExpected ");
             two_or_more = 0 ;
-            if( test_state = yysindex[yystate] ){
+            /* use ((...)) to avoid assignment as condition warning */
+            if(( test_state = yysindex[yystate] )){
                 for( i = 1; i <= YYMAXTOKEN; i++ ){
                     expect = test_state + i ;
                 if((expect <= YYTABLESIZE) &&
@@ -927,7 +933,8 @@ yynewerror:
                      }
                  }
              }
-            if( test_state = yyrindex[yystate] ){
+            /* use ((...)) to avoid assignment as condition warning */
+            if(( test_state = yyrindex[yystate] )){
                 for( i = 1; i <= YYMAXTOKEN; i++ ){
                     expect = test_state + i ;
                 if((expect <= YYTABLESIZE) &&
@@ -1068,7 +1075,7 @@ case 22:
 {
 			sprintf(YmsgG,
 			    "cell at line %d does not have any pins\n",
-			    line_countS+1);
+			    (int)(line_countS+1));
 			M( WARNMSG,"readcells", YmsgG ) ;
 		    }
 break;
@@ -1076,7 +1083,7 @@ case 29:
 {
 			sprintf(YmsgG,
 			    "cell at line %d does not have any pins\n",
-			    line_countS+1);
+			    (int)(line_countS+1));
 			M( WARNMSG,"readcells", YmsgG ) ;
 		    }
 break;
@@ -1090,7 +1097,7 @@ case 32:
 {
 			sprintf(YmsgG,
 			    "pad at line %d does not have any pins\n",
-			    line_countS+1);
+			    (int)(line_countS+1));
 			M( WARNMSG,"readcells", YmsgG ) ;
 		    }
 break;
@@ -1405,7 +1412,7 @@ case 151:
 			/* convert integer to string */
 			/* this allows integers to be used as strings */
 			/* a kluge but timberwolf's old parser supported it */
-			sprintf( bufferS,"%d", yyvsp[0].ival ) ;
+			sprintf( bufferS,"%d", (int)yyvsp[0].ival ) ;
 			/* now clone string */
 			yyval.string = (char *) Ystrclone( bufferS ) ;
 		    }
@@ -1430,7 +1437,7 @@ break;
 #if YYDEBUG
         if (yydebug)
             printf("yydebug: after reduction, shifting from state 0 to\
- state %d\n", YYFINAL);
+ state %d\n", (int)YYFINAL);
 #endif
         yystate = YYFINAL;
         *++yyssp = YYFINAL;
@@ -1445,7 +1452,7 @@ break;
                 if (yychar <= YYMAXTOKEN) yys = yyname[yychar];
                 if (!yys) yys = "illegal-symbol";
                 printf("yydebug: state %d, reading %d (%s)\n",
-                        YYFINAL, yychar, yys);
+                        (int)YYFINAL, (int)yychar, yys);
             }
 #endif
         }
@@ -1460,7 +1467,7 @@ break;
 #if YYDEBUG
     if (yydebug)
         printf("yydebug: after reduction, shifting from state %d \
-to state %d\n", *yyssp, yystate);
+to state %d\n", (int)(*yyssp), (int)yystate);
 #endif
     if (yyssp >= yyss + yystacksize - 1)
     {

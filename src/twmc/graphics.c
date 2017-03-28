@@ -85,18 +85,33 @@ static char SccsId[] = "@(#) graphics.c (Yale) version 3.17 10/18/91" ;
 #endif
 
 #ifndef NOGRAPHICS
-
 #include <string.h>
-#include <custom.h>
-#include <dens.h>
-#include <analog.h>
+#include <unistd.h>
+
+#include <yalecad/base.h>
 #include <yalecad/debug.h>
 #include <yalecad/relpos.h>
 #include <yalecad/colors.h>
 #include <yalecad/draw.h>
 #include <yalecad/dialog.h>
+#include <yalecad/grid.h>
+#include <yalecad/mst.h>
 #include <yalecad/system.h>
+
+#include <analog.h>
+#include <bins.h>
+#include <cells.h>
+#include <custom.h>
+#include <dens.h>
+#include <findcost.h>
+#include <genorient.h>
+#include <graphics.h>
+#include <initialize.h>
 #include <menus.h>
+#include <pads.h>
+#include <twstats.h>
+#include <uloop.h>
+#include <wire.h>
 
 
 #define CELLEST     0
@@ -165,15 +180,17 @@ static BOOL drawFS = FALSE ;
 
 /* Forward references */
 
-INT draw_the_data() ;
-static draw_fs();
-static edit_cell();
-static edit_field_string();
-static edit_field_case();
-static fix_the_cell();
-static fix_the_cell2();
+INT draw_the_data(VOID) ;
+static VOID draw_fs(CELLBOXPTR cptr );
+static VOID edit_cell(INT cell);
+static VOID edit_field_string(TWDIALOGPTR dialog, INT field, char *string );
+static VOID edit_field_case(TWDIALOGPTR dialog, INT field, INT initcase );
+static VOID fix_the_cell(INT cell);
+static VOID fix_the_cell2(INT cell);
+static VOID twmc_draw_a_cell(INT cell );
+static VOID draw_neighbors(INT cell );
 
-initMCGraphics( argc, argv, windowId )
+VOID initMCGraphics( argc, argv, windowId )
 INT argc, windowId ;
 char *argv[] ;
 {
@@ -231,7 +248,7 @@ char *argv[] ;
 
 } /* end initMCGraphics */
 
-setGraphicWindow() 
+VOID setGraphicWindow(VOID) 
 {
     INT  expand ;
     INT  minx ;
@@ -269,7 +286,7 @@ setGraphicWindow()
 
 /* set what we are going to draw on a dump to the screen */
 /* placement data, compaction data , etc. are valid */
-set_graphic_context( context )
+VOID set_graphic_context( context )
 INT context ;
 {
     if( context == PARTITION_PLACEMENT ){
@@ -280,7 +297,7 @@ INT context ;
 } /* end set_graphic_context */ 
 
 /* heart of the graphic system processes user input */
-process_graphics()
+VOID process_graphics(VOID)
 {
 
     INT x1, y1, x2, y2 ; /* coordinates for fixing cells and neighhds */
@@ -362,7 +379,7 @@ process_graphics()
 	case TELL_POINT:
 	    TWmessage( "Pick a point" ) ;
 	    TWgetPt( &x, &y ) ;
-	    sprintf( YmsgG,"The point is (%d,%d)",x,y ) ;
+	    sprintf( YmsgG,"The point is (%d,%d)",(int)x,(int)y ) ;
 	    TWmessage( YmsgG ) ;
 	    break ;
 	case TRANSLATE:
@@ -396,7 +413,8 @@ process_graphics()
 	    TWforceRedraw() ;
 	    break ;
 	case EDIT_CELL:
-	    if( selectCellS = pick_cell() ){
+	    /* use ((...)) to avoid assignment as condition warning */
+	    if((selectCellS = pick_cell() )){
 		edit_cell( selectCellS ) ;
 		TWforceRedraw() ;
 		selectCellS = 0 ;
@@ -618,7 +636,7 @@ process_graphics()
 
 
 /* find the cell in question */
-INT pick_cell()
+INT pick_cell(VOID)
 {
 
     INT i ;
@@ -654,7 +672,7 @@ INT pick_cell()
     } else if( match_count == 1 ){
 	draw_the_data() ; /* draw the data with highlight on */
 	TWcheckExposure() ;
-	sprintf( YmsgG, "Selected cell:%d - %s", cell,
+	sprintf( YmsgG, "Selected cell:%d - %s", (int)cell,
 	    cellarrayG[selectCellS]->cname ) ;
 	TWmessage( YmsgG ) ;
 	return( selectCellS ) ;
@@ -674,7 +692,7 @@ INT pick_cell()
 			TWcheckExposure() ;
 
 			/* give directions */
-			sprintf( YmsgG, "Selected cell:%d - %s", cell,
+			sprintf( YmsgG, "Selected cell:%d - %s", (int)cell,
 			    cellarrayG[selectCellS]->cname ) ;
 			TWmessage( YmsgG ) ;
 			(void) sleep( (unsigned) 2 ) ;
@@ -695,7 +713,7 @@ INT pick_cell()
 
 /* the graphics program can draw the results at each desired */
 /* timestep. */
-INT draw_the_data()
+INT draw_the_data(VOID)
 {
 
     INT  i ;
@@ -789,7 +807,7 @@ INT draw_the_data()
 		bp = binptrG[x][y] ;
 		if( drawLabelS ){
 		    /* name the cell */
-		    sprintf(label,"%d", bp->penalty ) ; 
+		    sprintf(label,"%d", (int)(bp->penalty) ) ; 
 		    labelptr = label ;
 		} else {
 		    labelptr = NULL ;
@@ -856,7 +874,8 @@ INT draw_the_data()
 	    } else {
 		labelptr = NULL ;
 	    }
-	    if( aptr = curPin->analog ){
+	    /* use ((...)) to avoid assignment as condition warning */
+	    if(( aptr = curPin->analog )){
 		TWarb_init() ;
 		cellptr = cellarrayG[curPin->cell] ;
 		ASSERTNCONT( cellptr, "draw_the_data","cellptr NULL\n" ) ;
@@ -889,7 +908,8 @@ INT draw_the_data()
 
 } /* end draw_the_data */
 
-twmc_draw_a_cell( cell )
+static VOID twmc_draw_a_cell( cell )
+INT cell;
 {
     INT  pt ;
     INT  xc, yc ;
@@ -921,7 +941,7 @@ twmc_draw_a_cell( cell )
     yc =  cptr->ycenter ;
     if( drawLabelS ){
 	/* name the cell */
-	sprintf(label,"C%d:%s",cell, cptr->cname ) ; 
+	sprintf(label,"C%d:%s",(int)cell, cptr->cname ) ; 
 	labelptr = label ;
     } else {
 	labelptr = NULL ;
@@ -1007,7 +1027,7 @@ twmc_draw_a_cell( cell )
 
 } /* end TWdrawCell */
 
-static draw_fs( cptr )
+static VOID draw_fs( cptr )
 CELLBOXPTR cptr ;
 {
     INT x[10], y[10] ;   /* only 10 points to an F */
@@ -1049,7 +1069,7 @@ CELLBOXPTR cptr ;
 } /* end draw_fs */
 
 /* draw the neighborhood of a cell if it exists */
-draw_neighbors( cell )
+static VOID draw_neighbors( cell )
 INT cell ;
 {
 
@@ -1090,20 +1110,20 @@ INT cell ;
 } /* end draw_neighbors */
 
 /* avoid dump when we don't want it */
-dsetDump( flag )
+VOID dsetDump( flag )
 BOOL flag ;
 {
     avoidDump = flag ;
 } /* end dsetDump */
 
 /* get dump flag */
-BOOL dgetDump()
+BOOL dgetDump(VOID)
 {
     return( avoidDump ) ;
 }
 
 /* dumps the data to a file for future study */
-graphics_dump() 
+VOID graphics_dump(VOID) 
 {
     /* now change mode to dump to file */
     TWsetMode(1) ;
@@ -1113,7 +1133,7 @@ graphics_dump()
     TWsetMode(0) ;
 } /* end graphics_dump() */
 
-static edit_cell( cell )
+static VOID edit_cell( cell )
 INT cell ;
 {
 
@@ -1154,14 +1174,14 @@ INT cell ;
     /* the cell name */
     sprintf( name, "Name:    %s", ptr->cname ) ;
     edit_field_string( dialogS, NAMEF, name ) ;
-    sprintf( cellnum, "Number:  %d", ptr->cellnum ) ;
+    sprintf( cellnum, "Number:  %d", (int)(ptr->cellnum) ) ;
     edit_field_string( dialogS, CELLNUMF, cellnum ) ;
 
     /* now set the x y centers */
-    sprintf( xcenter, "%d", ptr->xcenter ) ;
+    sprintf( xcenter, "%d", (int)(ptr->xcenter) ) ;
     edit_field_string( dialogS, XCENTERF, xcenter ) ;
 
-    sprintf( ycenter, "%d", ptr->ycenter ) ;
+    sprintf( ycenter, "%d", (int)(ptr->ycenter) ) ;
     edit_field_string( dialogS, YCENTERF, ycenter ) ;
 
     /* set orientation */
@@ -1188,7 +1208,8 @@ INT cell ;
 
     /* initialization complete */
 
-    if( answer = TWdialog( dialogS, DIALOGNAME, NULL) ) {
+    /* use ((...)) to avoid assignment as condition warning */
+    if(( answer = TWdialog( dialogS, DIALOGNAME, NULL) )) {
 
 	/* if answer field has changed update position */
 	if( answer[XCENTERF].bool ){
@@ -1238,7 +1259,7 @@ INT cell ;
 	} else if( status == 1 ){
 	    sprintf( YmsgG, 
 	    "Orientation set to valid orientation:%d",
-		ptr->orient ) ;
+		(int)(ptr->orient) ) ;
 	    TWmessage( YmsgG ) ;
 	    (void) sleep( (unsigned) 3 ) ;
 	    movedCellS = TRUE ;
@@ -1262,7 +1283,7 @@ INT cell ;
 } /* end edit_tiles */
 
 
-static edit_field_string( dialog, field, string )
+static VOID edit_field_string( dialog, field, string )
 TWDIALOGPTR dialog;    /* dialog record */
 INT field ;
 char *string ;
@@ -1271,7 +1292,7 @@ char *string ;
 
 } /* end edit_field_string */
 
-static edit_field_case( dialog, field, initcase )
+static VOID edit_field_case( dialog, field, initcase )
 TWDIALOGPTR dialog;    /* dialog record */
 INT field ;
 INT initcase ;
@@ -1282,7 +1303,7 @@ INT initcase ;
 
 } /* end edit_field_case */
 
-set_graphics_wait_menu( menus )
+VOID set_graphics_wait_menu( menus )
 TWMENUBOX menus[] ;
 {
     INT i ;   /* counter */
@@ -1302,7 +1323,7 @@ TWMENUBOX menus[] ;
     }
 }
 
-static fix_the_cell( cell )
+static VOID fix_the_cell( cell )
 INT cell ;
 {
     INT i ; /* counter */
@@ -1318,7 +1339,7 @@ INT cell ;
     cellarrayG[cell]->orientList[HOWMANYORIENT] = 1 ;
 } /* end fix_the_cell */
 
-static fix_the_cell2( cell )
+static VOID fix_the_cell2( cell )
 INT cell ;
 {
     INT x1, y1 ;
@@ -1331,7 +1352,7 @@ INT cell ;
     x1 = cellarrayG[cell]->xcenter ;
     y1 = cellarrayG[cell]->ycenter ;
     sprintf( YmsgG, "Fixing cell:%d - %s @ (%d,%d)",
-	cell, cellarrayG[cell]->cname, x1, y1 ) ;
+	(int)cell, cellarrayG[cell]->cname, (int)x1, (int)y1 ) ;
     TWmessage( YmsgG ) ;
     determine_origin( &x1, &y1, leftNotRight, bottomNotTop ) ; 
     /* fix cell at x1, y1 using orign from determine origin */

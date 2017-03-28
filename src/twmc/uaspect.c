@@ -57,10 +57,17 @@ REVISIONS:  Jul 22, 1988 - deleted aspect0 field in CELLBOX record.
 static char SccsId[] = "@(#) uaspect.c version 3.5 4/27/91" ;
 #endif
 
-#include <custom.h>
-#include <initialize.h>
+#include <yalecad/base.h>
 #include <yalecad/debug.h>
 #include <yalecad/relpos.h>
+
+#include "acceptt.h"
+#include "custom.h"
+#include "initialize.h"
+#include "nets.h"
+#include "overlap.h"
+#include "paths.h"
+#include "pins.h"
 
 #define NEWVERTICES TRUE
 
@@ -75,11 +82,9 @@ PINBOXPTR  pin ;
 MOVEBOXPTR newtile ; 
 BOUNBOXPTR bounptr ;
 VERTBOXPTR vert ;
-SOFTBOXPTR spin ;
 DOUBLE aspFactor , val ;
 INT cost, newpenalty, newbinpenal ;
 INT Hdiv2, Wdiv2 ;
-INT site, aorient ;
 INT i, inst ;
 INT oleft, obottom, oright, otop ;
 INT newtimepenalty, newtimepenal ;
@@ -90,7 +95,6 @@ INT *ynew ;
 
 
 acellptr = cellarrayG[ a ]    ;
-aorient  = acellptr->orient  ;
 inst = acellptr->cur_inst ;
 
 
@@ -236,7 +240,7 @@ if( acceptt( funccostG + penaltyG + timingcostG - cost - newpenalty
 
 
 
-initialize_aspect_ratios()
+VOID initialize_aspect_ratios(VOID)
 {
     INT i ;                        /* counter */
     INT binX, binY ;               /* set initial bins */

@@ -56,15 +56,21 @@ REVISIONS:  Fri Jan 25 18:15:36 PST 1991 - added numpins to equations
 static char SccsId[] = "@(#) wireratio.c version 3.9 3/10/92" ;
 #endif
 
-#include <custom.h> 
-#include <dens.h> 
+#include <yalecad/base.h>
 #include <yalecad/debug.h>
 #include <yalecad/file.h>
+#include <yalecad/linalg.h>
+#include <yalecad/program.h>
+#include <custom.h> 
+#include <dens.h> 
+#include <pins.h> 
+#include <savewolf.h> 
+#include <wire.h> 
 #include <gsl/gsl_vector.h>
 #include <gsl/gsl_matrix.h>
 #include <gsl/gsl_linalg.h>
 
-gsl_matrix_disp( mptr, rows, cols )
+void gsl_matrix_disp( mptr, rows, cols )
 gsl_matrix *mptr ;
 int rows, cols;
 {
@@ -79,7 +85,7 @@ int rows, cols;
     fprintf( stderr, "\n" ) ;
 } /* end gsl_matrix_disp */
 
-gsl_vector_disp( vptr, rows )
+void gsl_vector_disp( vptr, rows )
 gsl_vector *vptr ;
 int rows;
 {
@@ -91,7 +97,7 @@ int rows;
     fprintf( stderr, "\n" ) ;
 } /* end gsl_vector_disp */
 
-static set_pins( A, center, loc, tile_side, sidepins, count )
+static VOID set_pins( A, center, loc, tile_side, sidepins, count )
 gsl_matrix *A ;              /* the matrix holding x y positions */
 INT    center ;
 INT    loc ;
@@ -116,7 +122,7 @@ INT    count ;
     }
 } /* end  set_pins */
 
-adapt_wire_estimator()
+VOID adapt_wire_estimator(VOID)
 {
     INT i ;                 /* coefficient counter */
     INT cell ;              /* cell counter */

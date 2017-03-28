@@ -52,20 +52,23 @@ REVISIONS:  Sun Jan 20 21:34:36 PST 1991 - ported to AIX.
 static char SccsId[] = "@(#) sortpad.c version 3.6 3/12/91" ;
 #endif
 
+#include <yalecad/base.h>
+#include <yalecad/debug.h>
+#include <yalecad/quicksort.h>
+
 #include <custom.h>
 #include <pads.h>
-#include <yalecad/debug.h>
 
 
 
-static INT compare_pads();
-static INT sort_by_pos();
-static install_pad_groups();
-static permute_pads();
+static INT compare_pads(P2(void *padptr1, void *padptr2));
+static INT sort_by_pos(P2(void *padptr1, void *padptr2));
+static VOID install_pad_groups( PADBOXPTR pad, INT *position );
+static VOID permute_pads(PADBOXPTR pad);
 
 
 
-sort_pads()
+VOID sort_pads(VOID)
 {
     INT i ;                /* pad counter */
     INT pos ;              /* position in place array */
@@ -115,12 +118,12 @@ sort_pads()
 
 /*** compare_pads() RETURNS TRUE IF ARG1 > ARG2 BY ITS OWN RULES **/
 static INT compare_pads( padptr1, padptr2 )
-PADBOXPTR *padptr1, *padptr2 ;
+void *padptr1, *padptr2 ;
 {
     PADBOXPTR pad1, pad2;
 
-    pad1 = *padptr1 ;
-    pad2 = *padptr2 ;
+    pad1 = *((PADBOXPTR *)padptr1) ;
+    pad2 = *((PADBOXPTR *)padptr2) ;
 
     if( pad1->padside != pad2->padside) {
 	return( pad1->padside - pad2->padside ) ;
@@ -149,13 +152,13 @@ PADBOXPTR *padptr1, *padptr2 ;
 /* ***************************************************************** */
 
 static INT sort_by_pos( padptr1, padptr2 )
-PADBOXPTR *padptr1, *padptr2 ;
+void *padptr1, *padptr2 ;
 {
     PADBOXPTR pad1, pad2;
     BOOL pad1fixed, pad2fixed ;
 
-    pad1 = *padptr1 ;
-    pad2 = *padptr2 ;
+    pad1 = *((PADBOXPTR *)padptr1) ;
+    pad2 = *((PADBOXPTR *)padptr2) ;
 
     if( pad1->padside != pad2->padside) {
 	return( pad1->padside - pad2->padside ) ;
@@ -185,7 +188,7 @@ PADBOXPTR *padptr1, *padptr2 ;
 } /* end sort_by_pos */
 /* ***************************************************************** */
 
-static install_pad_groups( pad, position )
+static VOID install_pad_groups( pad, position )
 PADBOXPTR pad ;
 INT *position ;
 {
@@ -222,7 +225,7 @@ INT *position ;
 } /* end install_pad_groups */
 /* ***************************************************************** */
 
-static permute_pads( pad )
+static VOID permute_pads( pad )
 PADBOXPTR pad ;
 {
     INT tmp ;                 /* used to reverse permutable pads */

@@ -46,7 +46,7 @@ static char SccsId[] = "@(#) perimeter.c version 3.4 12/16/90" ;
 #include <yalecad/debug.h>
 
 
-perimeter( A, numcorners )
+INT perimeter( A, numcorners )
 YBUSTBOXPTR A ;
 INT numcorners ;
 {

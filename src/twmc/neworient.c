@@ -49,8 +49,9 @@ static char SccsId[] = "@(#) neworient.c version 3.4 4/18/91" ;
 
 #include <custom.h>
 #include <yalecad/debug.h>
+#include <yalecad/random.h>
 
-newOrient( cellptr , range )
+INT newOrient( cellptr , range )
 CELLBOXPTR cellptr ;
 INT range ;
 {

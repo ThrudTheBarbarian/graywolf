@@ -74,10 +74,13 @@ REVISIONS:  Apr 23, 1990 - working version of softpin placement for
 static char SccsId[] = "@(#) placepin.c version 3.18 11/23/91" ;
 #endif
 
-#include <custom.h>
+#include <yalecad/base.h>
 #include <yalecad/debug.h>
-#include <initialize.h>
+#include <yalecad/quicksort.h>
 #include <yalecad/relpos.h>
+
+#include <custom.h>
+#include <initialize.h>
 
 #undef  NONE
 #define NONE      0
@@ -134,34 +137,35 @@ static BOOL softequivS ;      /* true if soft equivs are present */
 BOOL contiguous_pinsG = TRUE ;
 
 /* ****** static FUNCTION definitions ******** */
-static find_optimal_locations( P1(BOOL newVertFlag ));
+static VOID find_optimal_locations( P1(BOOL newVertFlag ));
 static INT find_cost_for_a_side( P5( PINBOXPTR pin, INT side, DOUBLE lb, DOUBLE ub, BOOL spacing_restricted )) ;
-static determine_bbox( P2( INT net, INT cell )) ;
-static place_pin( P4( PINBOXPTR pin, INT pos, INT tiebreak, INT side ) ) ;
-static place_children( P5( PINBOXPTR pin, INT side, DOUBLE lb, DOUBLE ub,
+static VOID determine_bbox( P2( INT net, INT cell )) ;
+static VOID place_pin( P4( PINBOXPTR pin, INT pos, INT tiebreak, INT side ) ) ;
+static VOID place_children( P5( PINBOXPTR pin, INT side, DOUBLE lb, DOUBLE ub,
 			    BOOL spacing_restricted ) ) ;
-static set_hardpin_pos( P2( PINBOXPTR pin, BOOL newVertFlag ) );
-static sort_softpins() ;
-static INT compare_pins( P2( PINBOXPTR *pinptr1, PINBOXPTR *pinptr2 ) ) ;
-static INT sort_by_pos( P2( PINBOXPTR *pinptr1, PINBOXPTR *pinptr2 ) ) ;
-static install_pin_groups( P1( PINBOXPTR pin ) ) ;
-static permute_pg( P1( PINBOXPTR pin ) ) ;
-static space_pins() ;
-static place_soft_equivs() ;
-static find_next_free_spotm( P3( SIDEBOXPTR sideptr, PINBOXPTR pin, INT *pos )) ;
+static VOID set_hardpin_pos( P2( PINBOXPTR pin, BOOL newVertFlag ) );
+static VOID sort_softpins() ;
+static INT compare_pins( P2( void *pinptr1, void *pinptr2 ) ) ;
+static INT sort_by_pos( P2( void *pinptr1, void *pinptr2 ) ) ;
+static VOID install_pin_groups( P1( PINBOXPTR pin ) ) ;
+static VOID permute_pg( P1( PINBOXPTR pin ) ) ;
+static VOID space_pins() ;
+static VOID place_soft_equivs() ;
+static VOID find_next_free_spotm( P3( SIDEBOXPTR sideptr, PINBOXPTR pin, INT *pos )) ;
 static BOOL find_next_free_spotg(P3( SIDEBOXPTR sideptr, PINBOXPTR pin, INT *pos )) ;
-static init_side_array( P1( BOOL newVertFlag ) ) ;
-static side_to_global() ;
-static find_hardpin_side()  ;
+static VOID init_side_array( P1( BOOL newVertFlag ) ) ;
+static VOID side_to_global() ;
+static VOID find_hardpin_side()  ;
 
 /* ****** global FUNCTION definitions ******** */
-extern init_wire_est() ;
+/*extern init_wire_est() ;
 extern set_up_pinplace() ;
 extern set_pin_verbosity( P1(BOOL flag ) ) ;
 extern update_pins( P1( BOOL initialFlag ) ) ;
 extern print_pins( P3( char *message , PINBOXPTR *array , INT howmany ) ) ;
 extern INT *find_pin_sides( P1( INT cell ) ) ;
 extern INT find_tile_side( P3( INT center, INT loc, INT direction ) ) ;
+*/
 /* ################################################################## */
 
 /*-------------------------------------------------------------------
@@ -172,7 +176,7 @@ extern INT find_tile_side( P3( INT center, INT loc, INT direction ) ) ;
  pins along the sides and returns all answers in the pin->t?pos_new
  fields.  No calculation to funccost or timing penalty is performed.
 ____________________________________________________________________*/
-placepin( cell, newVertFlag )
+VOID placepin( cell, newVertFlag )
 INT cell ;
 BOOL newVertFlag ; /* use the x_new field if true otherwise use x field */
 {
@@ -222,7 +226,7 @@ BOOL newVertFlag ; /* use the x_new field if true otherwise use x field */
 } /* end placepins */
 /* ***************************************************************** */
 
-static find_optimal_locations( newVertFlag )
+static VOID find_optimal_locations( newVertFlag )
 BOOL newVertFlag ;
 {
     INT i, j ;               /* pin counters */
@@ -542,7 +546,7 @@ BOOL spacing_restricted ;
 /* ***************************************************************** */
 
 /* find the bounding box of this net without this cell */
-static determine_bbox( net, cell )
+static VOID determine_bbox( net, cell )
 INT net ;  /* calculate this net */
 INT cell ; /* exclude this cell */
 {
@@ -600,7 +604,7 @@ INT cell ; /* exclude this cell */
 /* ***************************************************************** */
 
 /**** SET XPOS OF THE PIN TO DESIRED POSITION.  *****/
-static place_pin( pin, pos, tiebreak, side )
+static VOID place_pin( pin, pos, tiebreak, side )
 PINBOXPTR pin;
 INT       pos;
 INT       tiebreak;
@@ -617,7 +621,7 @@ INT       side;
 
 /**** RECURSIVELY SET THE SIDE OF ALL CHILDREN OF THE ROOT PIN TO THE
  **** PADSIDE OF THE PARENT. GIVEN THAT SIDE, SET THE OPTIMAL POSITION */
-static place_children( pin, side, lb, ub, spacing_restricted )
+static VOID place_children( pin, side, lb, ub, spacing_restricted )
 PINBOXPTR pin ;
 INT side ;
 DOUBLE lb, ub ;
@@ -711,7 +715,7 @@ BOOL spacing_restricted ;
 /* ***************************************************************** */
 
 /**** SET XPOS OF THE PIN TO DESIRED POSITION.  *****/
-static set_hardpin_pos( pin, newVertFlag )
+static VOID set_hardpin_pos( pin, newVertFlag )
 PINBOXPTR pin;
 BOOL newVertFlag ;
 {
@@ -750,7 +754,7 @@ BOOL newVertFlag ;
 			   PIN SORTING ROUTINES
 ***********************************************************************/
 
-static sort_softpins()
+static VOID sort_softpins()
 {
     INT i ;                /* pin counter */
     INT pos ;              /* position in place array */
@@ -810,13 +814,13 @@ static sort_softpins()
 
 /*** compare_pins() RETURNS TRUE IF ARG1 > ARG2 BY ITS OWN RULES **/
 static INT compare_pins( pinptr1, pinptr2 )
-PINBOXPTR *pinptr1, *pinptr2 ;
+void *pinptr1, *pinptr2 ;
 {
     PINBOXPTR pin1, pin2;
     SOFTBOXPTR spin1, spin2;
 
-    pin1 = *pinptr1 ;
-    pin2 = *pinptr2 ;
+    pin1 = (PINBOXPTR)(* ((PINBOXPTR *)pinptr1));
+    pin2 = (PINBOXPTR)(* ((PINBOXPTR *)pinptr2));
     spin1 = pin1->softinfo ;
     spin2 = pin2->softinfo ;
 
@@ -865,14 +869,14 @@ PINBOXPTR *pinptr1, *pinptr2 ;
 /* ***************************************************************** */
 
 static INT sort_by_pos( pinptr1, pinptr2 )
-PINBOXPTR *pinptr1, *pinptr2 ;
+void *pinptr1, *pinptr2 ;
 {
 
     PINBOXPTR pin1, pin2;
     SOFTBOXPTR spin1, spin2;
 
-    pin1 = *pinptr1 ;
-    pin2 = *pinptr2 ;
+    pin1 = (PINBOXPTR)(* ((PINBOXPTR *)pinptr1));
+    pin2 = (PINBOXPTR)(* ((PINBOXPTR *)pinptr2));
     spin1 = pin1->softinfo ;
     spin2 = pin2->softinfo ;
 
@@ -912,7 +916,7 @@ PINBOXPTR *pinptr1, *pinptr2 ;
 /* ***************************************************************** */
 
 /* install the pin groups and set numpinS */
-static install_pin_groups( pin )
+static VOID install_pin_groups( pin )
 PINBOXPTR pin ;
 {
     INT i ;                      /* pin counter */
@@ -951,7 +955,7 @@ PINBOXPTR pin ;
 } /* end install_pin_groups */
 /* ***************************************************************** */
 
-static permute_pg( pin )
+static VOID permute_pg( pin )
 PINBOXPTR pin ;
 {
     INT j, k ;                /* used to reverse pins */
@@ -1023,7 +1027,7 @@ PINBOXPTR pin ;
 } /* end permute_pg */
 /* ***************************************************************** */
 
-static space_pins()
+static VOID space_pins()
 {
 
     INT i ;                     /* counter on pins */
@@ -1140,7 +1144,8 @@ static space_pins()
 	    fprintf( stderr, 
 	    "pin:%s signal:%s side:%d oldpos:%d pos:%d pintype:%d\n",
 		pin->pinname, netarrayG[pin->net]->nname, 
-		spin->side, pin->typos_new, pin->txpos_new, pin->type ) ;
+		(int)(spin->side), (int)(pin->typos_new), 
+		(int)(pin->txpos_new), (int)(pin->type) ) ;
 		
 	}
 	fprintf( stderr, "\n\n" ) ;
@@ -1148,7 +1153,7 @@ static space_pins()
 
 } /* end space_pins */
 
-static place_soft_equivs()
+static VOID place_soft_equivs()
 {
     INT i ;                     /* counter on pins */
     INT j ;
@@ -1215,7 +1220,7 @@ static place_soft_equivs()
 } /* end place_softequivs */
 
 /* minimize the amount of overflow on this side */
-static find_next_free_spotm( sideptr, pin, pos )
+static VOID find_next_free_spotm( sideptr, pin, pos )
 SIDEBOXPTR sideptr ;
 PINBOXPTR pin ;
 INT *pos ;
@@ -1247,7 +1252,7 @@ INT *pos ;
 		if( *pos >= sideptr->end ){
 		    /* overflow on this side */
 		    sprintf( YmsgG, 
-		    "overflow for cell:%d pin:%s\n", pin->cell, pin->pinname ) ;
+		    "overflow for cell:%d pin:%s\n", (int)(pin->cell), pin->pinname ) ;
 		    M( WARNMSG, "space_pins", YmsgG ) ;
 		}
 	    }
@@ -1259,7 +1264,7 @@ INT *pos ;
 		if( *pos <= sideptr->start ){
 		    /* overflow on this side */
 		    sprintf( YmsgG, 
-		    "overflow for cell:%d pin:%s\n", pin->cell, pin->pinname ) ;
+		    "overflow for cell:%d pin:%s\n", (int)(pin->cell), pin->pinname ) ;
 		    M( WARNMSG, "space_pins", YmsgG ) ;
 		}
 	    }
@@ -1330,7 +1335,7 @@ INT *pos ;
 } /* find_next_free_spotg */
 /* ***************************************************************** */
 
-static side_to_global()
+static VOID side_to_global()
 {
     INT     i;
     INT     side ;
@@ -1395,10 +1400,10 @@ static side_to_global()
 
 	D( "twmc/side_to_global",
 	    fprintf( stderr, 
-	    "pin:%s signal:%s side:%d txpos:%d typos:%d xpos:%d ypos:%d\n",
+	    "pin:%s signal:%s side:%d txpos:%d typos:%d xpos:%d ypos:%d type:%d\n",
 		pin->pinname, netarrayG[pin->net]->nname, 
-		spin->side, pin->txpos_new, pin->typos_new,
-		pin->newx,  pin->newy, pin->type ) ;
+		(int)(spin->side), (int)(pin->txpos_new), (int)(pin->typos_new),
+		(int)(pin->newx),  (int)(pin->newy), (int)(pin->type) ) ;
 		
 	    fprintf( stderr, "\n\n" ) ;
 	) ; /* end of debug */
@@ -1406,7 +1411,7 @@ static side_to_global()
     } /* end for loop */
 } /* end side_to_global() */
 
-set_up_pinplace()
+VOID set_up_pinplace(VOID)
 {
     INT i ;                       /* counter */
     INT j ;                       /* counter */
@@ -1428,7 +1433,8 @@ set_up_pinplace()
 	ptrS = cellarrayG[i] ;
 	if( ptrS->softflag ){
 
-	    if( instptr = ptrS->instptr ){
+	    /* use ((...)) to avoid assignment as condition warning */
+	    if(( instptr = ptrS->instptr )){
 		numinst = ptrS->instptr->numinstances ;
 		for( j = 0; j < numinst ; j++ ){
 		    maxsideS = MAX( maxsideS, instptr->numsides[j] ) ;
@@ -1445,7 +1451,8 @@ set_up_pinplace()
 		if( pin->net != last_net ){
 		    last_net = pin->net ;
 		    /* allocate space for net list */
-		    if( tmp = ptrS->nets ){
+		    /* use ((...)) to avoid assignment as condition warning */
+		    if(( tmp = ptrS->nets )){
 			nlist = ptrS->nets = (GLISTPTR)
 			    Ysafe_malloc(sizeof(GLISTBOX));
 			nlist->next = tmp ;
@@ -1475,7 +1482,8 @@ set_up_pinplace()
 	ptrS = cellarrayG[i] ;
 	if( ptrS->softflag ){
 	    /* need to initialize each instance */
-	    if( instptr = ptrS->instptr ){
+	    /* use ((...)) to avoid assignment as condition warning */
+	    if(( instptr = ptrS->instptr )){
 		numinst = ptrS->instptr->numinstances ;
 		for( j = 0; j < numinst; j++ ){
 		    ptrS->numsides = instptr->numsides[j] ;
@@ -1513,7 +1521,7 @@ set_up_pinplace()
 
 } /* end set_up_pinplace */
 
-static init_side_array( newVertFlag )
+static VOID init_side_array( newVertFlag )
 BOOL newVertFlag ; /* use _new fields if true use x, y otherwise */
 {
 
@@ -1584,14 +1592,15 @@ BOOL newVertFlag ; /* use _new fields if true use x, y otherwise */
 
 	D( "twmc/sidearray",
 	fprintf( stderr, "x:%d y:%d start:%d end:%d loc:%d len:%d D:%d\n",
-	    this_side->x, this_side->y, this_side->start, this_side->end,
-	    this_side->loc, this_side->length, this_side->direction ) ;
+	    (int)(this_side->x), (int)(this_side->y), 
+	    (int)(this_side->start), (int)(this_side->end),
+	    (int)(this_side->loc), (int)(this_side->length), (int)(this_side->direction) ) ;
 	) ;
     }
 } /* end init_side_array() */
 
 /* find the side that the hardpin is nearest. */
-static find_hardpin_side() 
+static VOID find_hardpin_side() 
 {
     
     INT i ;                        /* counter */
@@ -1655,7 +1664,7 @@ static find_hardpin_side()
 } /* end find_hardpin_side() */
 
 
-update_pins( initialFlag )  /* initialize pin placement */
+VOID update_pins( initialFlag )  /* initialize pin placement */
 BOOL initialFlag ;/* if TRUE set all fields;if FALSE update orig fields */
 {
     INT howmany ;        /* number of cells with soft pins */
@@ -1700,9 +1709,9 @@ BOOL initialFlag ;/* if TRUE set all fields;if FALSE update orig fields */
 		    fprintf( stderr, 
 			"pin:%10s signal:%8s side:%d tx:%d x:%d ",
 			pin->pinname, netarrayG[pin->net]->nname, 
-			spin->side, pin->txpos, pin->xpos ) ;
+			(int)(spin->side), (int)(pin->txpos), (int)(pin->xpos) ) ;
 		    fprintf( stderr, "ty:%d y:%d pintype:%d\n",
-			pin->typos, pin->ypos, pin->type ) ;
+			(int)(pin->typos), (int)(pin->ypos), (int)(pin->type) ) ;
 		} /* end for loop on pins */
 		fprintf( stderr, "\n\n" ) ;
 
@@ -1711,7 +1720,7 @@ BOOL initialFlag ;/* if TRUE set all fields;if FALSE update orig fields */
     } /* end test on existence of soft cells */
 } /* initial pinplace */
 
-set_pin_verbosity( flag ) 
+VOID set_pin_verbosity( flag ) 
 BOOL flag ;
 {
     tell_overflowS = flag ;
@@ -1824,7 +1833,7 @@ INT center, loc, direction ;
     return( 0 ) ;
 } /* end find_tile_side */
 
-init_wire_est()
+VOID init_wire_est(VOID)
 {
     INT i ;                       /* counter */
     INT j ;                       /* counter */
@@ -1836,7 +1845,8 @@ init_wire_est()
     for( i = 1; i <= numcellsG ; i++ ){ 
 	ptrS = cellarrayG[i] ;
 
-	if( instptr = ptrS->instptr ){
+	/* use ((...)) to avoid assignment as condition warning */
+	if(( instptr = ptrS->instptr )){
 	    numinst = ptrS->instptr->numinstances ;
 	    for( j = 0; j < numinst ; j++ ){
 		maxsides = MAX( maxsides, instptr->numsides[j] ) ;
@@ -1883,8 +1893,9 @@ INT howmany ;
 	sptr = ptr->softinfo ;
 	fprintf( stderr, 
 	    "pin:%s pos:%d tie:%d type:%d side:%d order:%d fixed:%d\n",
-	    ptr->pinname, ptr->txpos_new, ptr->typos_new, sptr->hierarchy,
-	    sptr->side, sptr->ordered, sptr->fixed ) ;
+	    ptr->pinname, (int)(ptr->txpos_new), (int)(ptr->typos_new), 
+	    (int)(sptr->hierarchy), (int)(sptr->side), 
+	    (int)(sptr->ordered), (int)(sptr->fixed) ) ;
     }
     fprintf( stderr, "\n" ) ;
 

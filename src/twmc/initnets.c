@@ -50,10 +50,16 @@ REVISIONS:  Thu Dec 20 00:02:54 EST 1990 - made net cap and res.
 static char SccsId[] = "@(#) initnets.c version 1.5 10/18/91" ;
 #endif
 
-#include <custom.h>
-#include <analog.h>
+#include <string.h>
+
 #include <yalecad/hash.h>
 #include <yalecad/debug.h>
+#include <yalecad/program.h>
+
+#include <analog.h>
+#include <custom.h>
+#include <initialize.h>
+#include <paths.h>
 #include <readnets.h>  /* redefine yacc and lex globals */
 
 #define HOWMANY      0
@@ -72,7 +78,7 @@ static ANETPTR aptrS ;      /* current analog net information record */
 static COMMONPTR commonS ;  /* current common point record */
 
 /* initialization before parsing nets */
-init_nets()
+VOID init_nets(VOID)
 {
     YHASHPTR getNetTable() ;
     numpathsG = 0 ;
@@ -83,7 +89,7 @@ init_nets()
 
 
 /* cleanup after parsing nets */
-cleanup_nets()
+VOID cleanup_nets(VOID)
 {
     if( abortFlagS ){
 	closegraphics() ;
@@ -95,7 +101,7 @@ cleanup_nets()
     add_paths_to_cells() ;
 } /* end cleanup_nets */
 
-set_net_error()
+VOID set_net_error(VOID)
 {
     abortFlagS = TRUE ;
 } /* end set_net_error */
@@ -125,7 +131,7 @@ char *netname ;
     }
 } /* end find_net */
 
-add_path( pathFlag, net )
+VOID add_path( pathFlag, net )
 BOOL pathFlag ;
 char *net ;
 {
@@ -164,7 +170,7 @@ char *net ;
 
 } /* end add_path */
 
-end_path(lower_bound, upper_bound, priority )
+VOID end_path(lower_bound, upper_bound, priority )
 INT lower_bound, upper_bound, priority ;
 {
     GLISTPTR nets, path_ptr, tempPath ;
@@ -186,7 +192,8 @@ INT lower_bound, upper_bound, priority ;
 	    net_number = nets->p.net ;
 	    dimptr = netarrayG[net_number] ;
 
-	    if( tempPath = dimptr->paths ){
+	    /* use ((...)) to avoid assignment as condition warning */
+	    if(( tempPath = dimptr->paths )){
 		path_ptr = dimptr->paths = 
 		(GLISTPTR) Ysafe_malloc( sizeof(GLISTBOX) ) ;
 		path_ptr->next = tempPath ;
@@ -204,7 +211,7 @@ INT lower_bound, upper_bound, priority ;
 } /* end function end_path */
 
 
-build_path_array()
+VOID build_path_array(VOID)
 {
     INT i ;
     PATHPTR curPtr ;
@@ -216,17 +223,17 @@ build_path_array()
     }
 } /* end build_path_array */
 
-PATHPTR get_path_list()
+PATHPTR get_path_list(VOID)
 {
     return( pathPtrS ) ;
 } /* end get_path_list */
 
-INT get_total_paths()
+INT get_total_paths(VOID)
 {
     return( total_num_pathS ) ;
 } /* end get_total_paths */
 
-add_paths_to_cells()
+VOID add_paths_to_cells(VOID)
 {
     INT i, j ;
     INT howmany ;
@@ -255,7 +262,8 @@ add_paths_to_cells()
 	}
 	/* now add UNIQUE list of paths to this cell */
 	for( pathlist=enum_path_set(); pathlist; pathlist=pathlist->next){
-	    if( tempPath = ptr->paths ){
+	    /* use ((...)) to avoid assignment as condition warning */
+	    if(( tempPath = ptr->paths )){
 		path_ptr = ptr->paths = 
 		    (GLISTPTR) Ysafe_malloc( sizeof(GLISTBOX) ) ;
 		path_ptr->next = tempPath ;
@@ -270,7 +278,7 @@ add_paths_to_cells()
     }
 } /* end add_paths_to_cells */
 
-init_analog( net )
+VOID init_analog( net )
 char *net ;
 {
     INT  anet ;
@@ -290,19 +298,19 @@ char *net ;
 
 } /* end init_analog */
 
-set_cap_upper_bound( cap )
+VOID set_cap_upper_bound( cap )
 DOUBLE cap ;
 {
     aptrS->cap_upper_bound = cap ;
 } /* end set_cap_upper_bound */
 
-set_res_upper_bound( res )
+VOID set_res_upper_bound( res )
 DOUBLE res ;
 {
     aptrS->res_upper_bound = res ;
 } /* end set_res_upper_bound */
 
-set_net_type( net_type )
+VOID set_net_type( net_type )
 INT net_type ;
 {
     switch( net_type ){
@@ -318,13 +326,13 @@ INT net_type ;
     }
 } /* end set_net_type */
 
-set_max_voltage_drop( drop )
+VOID set_max_voltage_drop( drop )
 DOUBLE drop ;
 {
     aptrS->max_drop = drop ;
 } /* end set_max_voltage_drop */
 
-add_common_pt()
+VOID add_common_pt(VOID)
 {
 
     INT pt ;         /* current number of common pts */
@@ -341,9 +349,9 @@ add_common_pt()
     }
     commonS = aptrS->common_pts[pt-1] = 
 	(COMMONPTR) Ysafe_calloc( 1, sizeof(COMMONBOX) ) ;
-    commonS->common_set = NIL(INT) ;
-    commonS->cap_match = NIL(INT) ;
-    commonS->res_match = NIL(INT) ;
+    commonS->common_set = NIL(INT*) ;
+    commonS->cap_match = NIL(INT*) ;
+    commonS->res_match = NIL(INT*) ;
     commonS->num_pins = 0 ;
 
 } /* end common_pt */
@@ -367,7 +375,7 @@ char *pin ;
     return( 0 ) ;
 }
 
-add2common( cell, pin )
+VOID add2common( cell, pin )
 char *cell ;
 char *pin ;
 {
@@ -400,7 +408,7 @@ char *pin ;
 
 } /* add2common */
 
-common_cap( cell, pin )
+VOID common_cap( cell, pin )
 char *cell ;
 char *pin ;
 {
@@ -433,7 +441,7 @@ char *pin ;
 
 } /* end common_cap */
 
-common_res( cell, pin )
+VOID common_res( cell, pin )
 char *cell ;
 char *pin ;
 {
@@ -466,7 +474,7 @@ char *pin ;
 } /* end common_res */
 
 
-start_net_capmatch( netname )
+VOID start_net_capmatch( netname )
 char *netname ;
 {
     INT net ;         /* index in netarray */
@@ -485,7 +493,7 @@ char *netname ;
     match[1] = net ;
 } /* end start_net_capmatch */
 
-add_net_capmatch( netname )
+VOID add_net_capmatch( netname )
 char *netname ;
 {
     INT net ;         /* index in netarray */
@@ -502,7 +510,7 @@ char *netname ;
     net_cap_matchG[numcapmatchS][howmany] = net ;
 } /* end add_netcapmatch */
 
-start_net_resmatch( netname )
+VOID start_net_resmatch( netname )
 char *netname ;
 {
     INT net ;         /* index in netarray */
@@ -521,7 +529,7 @@ char *netname ;
     match[1] = net ;
 } /* end start_net_resmatch */
 
-add_net_resmatch( netname )
+VOID add_net_resmatch( netname )
 char *netname ;
 {
     INT net ;         /* index in netarray */

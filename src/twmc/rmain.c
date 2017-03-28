@@ -54,7 +54,10 @@ static char SccsId[] = "@(#) rmain.c version 3.6 2/23/91" ;
 #include <yalecad/debug.h>
 #include <yalecad/file.h>
 #include <yalecad/string.h>
+#include <yalecad/system.h>
+
 #include <custom.h>
+#include <savewolf.h>
 
 #include "config-build.h"
 
@@ -62,7 +65,7 @@ static char SccsId[] = "@(#) rmain.c version 3.6 2/23/91" ;
 #define GROUTEPATH      "../Mickey"
 
 
-rmain( constraint_flag )
+VOID rmain( constraint_flag )
 BOOL constraint_flag ;
 {
     INT closegraphics() ;
@@ -100,7 +103,8 @@ BOOL constraint_flag ;
     /* find the path of compactor relative to main program */
     pathname = Yrelpath( argv0G, GROUTEPATH ) ;
     if( !(YfileExists(pathname))){
-	if( twdir = TWFLOWDIR ){
+	/* use ((...)) to avoid assignment as condition warning */
+	if(( twdir = TWFLOWDIR )){
 	    sprintf( filename, "%s/bin/%s", twdir, GROUTEPROG ) ;
 	    pathname = Ystrclone( filename ) ;
 	}

@@ -55,10 +55,17 @@ REVISIONS:  May 16, 1989 - removed most doPartitionG conditions.
 static char SccsId[] = "@(#) penalties.c version 3.8 9/16/91" ;
 #endif
 
-#include <custom.h>
-#include <temp.h>
+#include <yalecad/base.h>
 #include <yalecad/debug.h>
 #include <yalecad/file.h>
+#include <yalecad/plot.h>
+
+#include "bins.h"
+#include "custom.h"
+#include "reconfig.h"
+#include "savewolf.h"
+#include "temp.h"
+
 #define DEBUGLAPFACTOR
 
 #define DAMPFACTOR       0.015    /* damping factor on overlap penalty */
@@ -181,7 +188,8 @@ DOUBLE percentDone ;
 
     /* this is an override mechanism to setting parameters */
     sprintf( filename, "%s.lap", cktNameG ) ;
-    if( fp = TWOPEN( filename, "r", NOABORT )){
+    /* use ((...)) to avoid assignment as condition warning */
+    if(( fp = TWOPEN( filename, "r", NOABORT ))){
 	HPI( fp, &lapFactorG ) ;
 	TWCLOSE( fp ) ;
     }
@@ -242,7 +250,7 @@ DOUBLE calc_init_lapFactor( totFunc, totPen )
 DOUBLE totFunc ;
 DOUBLE totPen ;
 {
-    DOUBLE factor ;
+    DOUBLE factor = 0;
 #ifdef DEBUGLAPFACTOR
     extern DOUBLE saveLapFactorG ;
 #endif
@@ -299,7 +307,7 @@ DOUBLE avgdTime ;
 
 } /* end calc_init_timeFactor */
 
-DOUBLE calc_init_coreFactor( ) 
+DOUBLE calc_init_coreFactor(VOID) 
 {
 
     /* -------------------------------------------------------------- 

@@ -49,10 +49,17 @@ REVISIONS:
 static char SccsId[] = "@(#) upinswap.c version 3.3 9/5/90" ;
 #endif
 
-#include <custom.h>
-#include <initialize.h>
+#include <yalecad/base.h>
 #include <yalecad/debug.h>
 #include <yalecad/relpos.h>
+
+#include <acceptt.h>
+#include <custom.h>
+#include <initialize.h>
+#include <genorient.h>
+#include <paths.h>
+#include <pins.h>
+#include <nets.h>
 
 #define CURVERTICES FALSE
 
@@ -116,7 +123,7 @@ INT a ;
 } /* end upinswap */
 
 
-check_pin( a )
+VOID check_pin( a )
 INT a ;
 {
     INT x, y, l, r, t, b;

@@ -81,7 +81,9 @@ static char SccsId[] = "@(#) fixcell.c version 3.9 11/23/91" ;
 #endif
 
 #include <string.h>
+
 #include <custom.h>
+#include <initialize.h>
 #include <yalecad/base.h>
 #include <yalecad/debug.h>
 
@@ -400,7 +402,7 @@ INT left, bottom, right, top ;
 
 /* build active cell list from cells that aren't fixed */
 VOID
-build_active_array()
+build_active_array(VOID)
 {
     INT i, cell ;
     CELLBOXPTR cptr ;
@@ -462,7 +464,7 @@ build_active_array()
 /* softPinArray will contain the cellptrs of all softcells which */
 /* have pins that can move.  The zeroth element will contain howmany */
 VOID
-build_soft_array()
+build_soft_array(VOID)
 {
 
 #define HOWMANY 0  /* this tells the size of the array */
@@ -533,7 +535,7 @@ char *left_not_right, *bottom_not_top ;
     }
 } /* end determine_origin */
 
-delete_fix_constraint( cell )
+VOID delete_fix_constraint( cell )
 INT cell ;
 {
     CELLBOXPTR ptr ;

@@ -61,7 +61,7 @@ FBOX ,
  *   the best possible location in the site.
  */
 
-findLoc( pinptr, lArray, nPinLocs, HorV ) 
+INT findLoc( pinptr, lArray, nPinLocs, HorV ) 
 PINBOXPTR pinptr ;
 BOOL HorV ;
 INT nPinLocs ;

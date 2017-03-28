@@ -100,11 +100,38 @@ static char SccsId[] = "@(#) main.c version 3.27 11/23/91" ;
 /* turn on condition compile for globals */
 #define  MAIN_DEFS
 #define  CUSTOM_DEFS
-#include <custom.h>
 
+#include <yalecad/base.h>
 #include <yalecad/debug.h>
 #include <yalecad/cleanup.h>
 #include <yalecad/file.h>
+#include <yalecad/plot.h>
+#include <yalecad/program.h>
+#include <yalecad/random.h>
+#include <yalecad/system.h>
+#include <yalecad/stat.h>
+
+
+#include <acceptt.h>
+#include <cells.h>
+#include <check.h>
+#include <config.h>
+#include <custom.h>
+#include <finalout.h>
+#include <findcost.h>
+#include <genorient.h>
+#include <graphics.h>
+#include <readpar.h>
+#include <temp.h>
+#include <main.h>
+#include <nets.h>
+#include <overlap.h>
+#include <pads.h>
+#include <savewolf.h>
+#include <twstats.h>
+#include <uloop.h>
+#include <wire.h>
+
 
 #define  VERSION            "v2.2"
 #define  EXPECTEDMEMORY     (1024 * 1024) 
@@ -118,13 +145,11 @@ static BOOL debugS ;     /* whether to enable debug code */
 static INT  windowIdS ;  /* the master window id if given */
 static DOUBLE  wire_red_ratioS = NOREDUCTION ; /* wire reduction */
 
-/* Forward declarations */
+/* forward declarations */
+static VOID yaleIntro(VOID);
 
-VOID syntax();
-INT closegraphics();
-
-main( argc , argv )
-INT argc ;
+int main( argc , argv )
+int argc ;
 char *argv[] ;
 {
 
@@ -133,8 +158,7 @@ char *argv[] ;
 	    arguments[LRECL], /* pointer to argument options */
 	    *ptr,             /* pointer to argument options */
 	    *Ystrclone() ;
-    INT     yaleIntro(),
-	    attempts,
+	INT	 	attempts,
 	    arg_count ;       /* argument counter */
     INT     rememberWire, /* variables for writing history of run */
 	    rememberPenal,
@@ -321,7 +345,8 @@ char *argv[] ;
 	}
 	/* check to see if .mest file was created */
 	new_wire_estG = FALSE ;
-	if( fp = TWOPEN( filename, "r", NOABORT )){
+	/* use ((...)) to avoid assignment as condition warning */
+	if(( fp = TWOPEN( filename, "r", NOABORT ))){
 	    if( read_wire_est( fp ) ){
 		new_wire_estG = TRUE ;
 	    }
@@ -378,8 +403,8 @@ char *argv[] ;
 	    }
 	}
 
-	OUT2("\n\n\nTHE ROUTE COST OF THE CURRENT PLACEMENT: %d",funccostG );
-	OUT2("\nTHE PENALTY OF THE CURRENT PLACEMENT: %d\n", penaltyG ) ;
+	OUT2("\n\n\nTHE ROUTE COST OF THE CURRENT PLACEMENT: %d",(int)funccostG );
+	OUT2("\nTHE PENALTY OF THE CURRENT PLACEMENT: %d\n", (int)penaltyG ) ;
 	FLUSHOUT();
 
 
@@ -467,7 +492,7 @@ char *argv[] ;
 	    funccostG = findcost() ;
 	    OUT1("\n\n\n");
 	    OUT3("parameter adjust: route:%d  penalty:%d\n",
-		funccostG, penaltyG ) ;
+		(int)funccostG, (int)penaltyG ) ;
 	    FLUSHOUT();
 
 	    /* call controllers a second time to update factors */
@@ -489,7 +514,7 @@ char *argv[] ;
 
 	    funccostG  = findcost() ;
 	    OUT1("\n\n\nThe New Cost Values after readjustment:\n\n");
-	    OUT3("route:%d  penalty:%d\n\n\n", funccostG, penaltyG ) ;
+	    OUT3("route:%d  penalty:%d\n\n\n", (int)funccostG, (int)penaltyG ) ;
 	    FLUSHOUT();
 
 
@@ -513,9 +538,9 @@ char *argv[] ;
 	    }
 	    funccostG = findcost() ;
 	    OUT2("\n\n\nTHE ROUTE COST OF THE CURRENT PLACEMENT: %d\n"
-						      , funccostG ) ;
+						      , (int)funccostG ) ;
 	    OUT2("\n\nTHE PENALTY OF THE CURRENT PLACEMENT: %d\n" ,
-							 penaltyG ) ;
+							 (int)penaltyG ) ;
 	    FLUSHOUT() ;
 
 	    /* startup graphics */
@@ -573,9 +598,10 @@ char *argv[] ;
     Ymessage_close() ;
     YexitPgm(OK) ;
 
+	return  0;
 } /* end main routine */
 
-INT yaleIntro() 
+static VOID yaleIntro(VOID) 
 {
     fprintf(fpoG,"\n%s\n",YmsgG) ;
     fprintf(fpoG,"Authors: Carl Sechen, Bill Swartz, Kai-Win Lee\n");
@@ -591,7 +617,7 @@ INT yaleIntro()
 
 /* this routine takes information about run and write to history file */
 /* to accumulate data about runs */
-writeResults( wire, penal, rand )
+VOID writeResults( wire, penal, rand )
 INT wire, penal, rand ;
 {
     FILE *fpdebug ;
@@ -608,23 +634,24 @@ INT wire, penal, rand ;
     fprintf( fpdebug, 
 	"%4.2le\t%4.2le\t%4.2le\t%4.2le\t%d\t%d\t%d\t%4.2le\t%34.32le\n", 
 	(DOUBLE) wire, (DOUBLE) penal,
-	(DOUBLE) funccostG, (DOUBLE) penaltyG, bdxlengthG, bdylengthG, 
-	rand, (DOUBLE) bdxlengthG * bdylengthG, wire_red_ratioS ) ;
+	(DOUBLE) funccostG, (DOUBLE) (int)penaltyG, (int)bdxlengthG, (int)bdylengthG, 
+	(int)rand, (DOUBLE) bdxlengthG * bdylengthG, wire_red_ratioS ) ;
     TWCLOSE( fpdebug ) ;
 } /* end writeResults */
 
 /* close graphics window on fault */
 
-INT closegraphics( )
+INT closegraphics(VOID)
 {
     if( doGraphicsG ){
 	G( TWcloseGraphics() ) ;
     }
+    return 0;
 } /* end closegraphics */
 
 /* give user correct syntax */
 
-VOID syntax()
+VOID syntax(VOID)
 {
    M(ERRMSG,NULL,"\n" ) ; 
    M(MSG,NULL,"Incorrect syntax.  Correct syntax:\n");
@@ -678,14 +705,14 @@ char *arguments ;
     strcat( arguments, " " ) ;
     /* now build the values */
     if( scale_dataG ){
-	sprintf( temp, "%d ", scale_dataG ) ;
+	sprintf( temp, "%d ", (int)scale_dataG ) ;
 	strcat( arguments, temp ) ;
     }
     /* now the design name */
     strcat( arguments, cktNameG ) ;
     /* now pass graphics window if necessary */
     if( window ){
-	sprintf( temp, " %d", window ) ;
+	sprintf( temp, " %d", (int)window ) ;
 	strcat( arguments, temp ) ;
 	return(TRUE) ;
     } else {
@@ -693,12 +720,12 @@ char *arguments ;
     }
 } /* end function get_arg_string() */
 
-BOOL get_batch_mode()
+BOOL get_batch_mode(VOID)
 {
     return( batchS ) ;
 } /* end get_batch_mode */
 
-set_wiring_reduction( reduction )
+VOID set_wiring_reduction( reduction )
 DOUBLE reduction ;
 {
     wire_red_ratioS = reduction ;

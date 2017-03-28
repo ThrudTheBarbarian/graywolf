@@ -84,12 +84,13 @@ static char SccsId[] = "@(#) genorient.c (Yale) version 3.13 5/5/91" ;
 #endif
 
 #include <custom.h>
+#include <genorient.h>
 #include <pads.h>
 #include <yalecad/debug.h>
 #include <yalecad/relpos.h>
 
 /* genorient works on range [lowerBound..upperBound] inclusive */
-genorient(lowerBound, upperBound)
+VOID genorient(lowerBound, upperBound)
 INT lowerBound, upperBound ;
 {
 
@@ -182,7 +183,8 @@ INT lowerBound, upperBound ;
 	    } else {
 		inverse = Ytrans_inv_orient( orient ) ;
 	    }
-	    if( instptr = ptr->instptr ){
+	    /* use ((...)) to avoid assignment as condition warning */
+	    if((instptr = ptr->instptr )){
 		numinst = instptr->numinstances ;
 	    } else {
 		numinst = 1 ;
@@ -277,7 +279,7 @@ INT lowerBound, upperBound ;
 /* regenorient works on range [lowerBound..upperBound] inclusive */
 /* recalculates the bounding boxes and updates all the views */
 /* works in an incremental manner */
-regenorient(lowerBound, upperBound)
+VOID regenorient(lowerBound, upperBound)
 INT lowerBound, upperBound ;
 {
 
@@ -325,7 +327,7 @@ INT lowerBound, upperBound ;
 
 
 /* trans_bbox - translate bounding box into 8 views */
-trans_bbox( ptr ) 
+VOID trans_bbox( ptr ) 
 CELLBOXPTR ptr ;
 {
 
@@ -355,7 +357,7 @@ BOUNBOXPTR boun0, bounptr ;
 } /* end trans_bbox() */ 
 
 /* allocate space for and load termarray */
-loadTermArray()
+VOID loadTermArray(VOID)
 {
     INT net ;
     PINBOXPTR pinptr ;
@@ -368,7 +370,7 @@ loadTermArray()
     }
 } /* end loadTermArray */
 
-translate_numpins( ptr ) 
+VOID translate_numpins( ptr ) 
 CELLBOXPTR ptr ;
 {
     INT pt ;                        /* point counter */

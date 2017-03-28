@@ -119,16 +119,24 @@ REVISIONS:  Oct 27, 1988 - added add_cell_to_group, initializeCorner
 #ifndef lint
 static char SccsId[] = "@(#) initialize.c version 3.24 10/18/91" ;
 #endif
-
 #include <string.h>
-#include <custom.h>
-#include <pads.h>
-#include <analog.h>
-#include <initialize.h>
+
 #include <yalecad/buster.h>
 #include <yalecad/hash.h>
 #include <yalecad/debug.h>
+#include <yalecad/program.h>
 #include <yalecad/string.h>
+
+#include <analog.h>
+#include <cells.h>
+#include <custom.h>
+#include <findcost.h>
+#include <genorient.h>
+#include <initialize.h>
+#include <pads.h>
+#include <pins.h>
+#include <twstats.h>
+#include <wire.h>
 
 
 /* below is what we expect to be a large floorplanning input */
@@ -198,26 +206,26 @@ PINBOXPTR findTerminal() ;
 
 
 
-static check_pos();
-
+/* ################### Forward declarations ########################### */
+static VOID check_pos(char *pinname, INT xpos, INT ypos);
 
 
 /* set processing switch to avoid work when an error is found */
-setErrorFlag()
+VOID setErrorFlag(VOID)
 {
 errorFlagS = TRUE ;
 } /* end setErrorFlag */
 /* ***************************************************************** */
 
 /* return the net hash table */
-YHASHPTR getNetTable()
+YHASHPTR getNetTable(VOID)
 {
 return( netTableS ) ;
 } /* end getNetTable */
 /* ***************************************************************** */
 
 /* initialize global and static information */
-initCellInfo()
+VOID initCellInfo(VOID)
 {
 numcellsG = 0 ;
 numnetsG = 0 ;
@@ -255,7 +263,7 @@ cellarrayG = (CELLBOXPTR *)Ysafe_malloc(cellAllocS*sizeof(CELLBOXPTR));
 /* ***************************************************************** */
 
 /* cleanup operations at the end of readcells */
-cleanupReadCells()
+VOID cleanupReadCells(VOID)
 {
     INT cell ;           /* cell counter */
     PADBOXPTR padptr ;   /* current pad */
@@ -336,7 +344,7 @@ Ybuster_free() ;
 /* ***************************************************************** */
 
 /* add another cell to cell list and initialize fields */
-addCell( cellName, cellType )
+VOID addCell( cellName, cellType )
 char *cellName ;
 CELLTYPE  cellType ;
 {
@@ -475,7 +483,7 @@ portFlagS = FALSE ;
 /* ***************************************************************** */
 
 /* perform cleanup operations on a cell */
-endCell()
+VOID endCell(VOID)
 {
 ERRORABORT() ;
 
@@ -534,7 +542,7 @@ BOOL direction ;
 
 /* ***************************************************************** */
 
-fixCell( fixedType, xloc, lorR, yloc, borT, xloc2, lorR2, yloc2, borT2 )
+VOID fixCell( fixedType, xloc, lorR, yloc, borT, xloc2, lorR2, yloc2, borT2 )
 INT fixedType ;  /* valid types - neighborhood. point, group */
 INT xloc, yloc, xloc2, yloc2 ;
 char *lorR, *borT, *lorR2, *borT2 ;
@@ -612,7 +620,7 @@ if( fixedType != POINTFLAG ){
 
 } /* end fixCell */
 
-processCorners( numcorners )
+VOID processCorners( numcorners )
 INT numcorners ;
 {
 char *buster_msg ;           /* message string to used by buster */
@@ -758,7 +766,8 @@ ptrS->xcenter = xcenterS ;
 ptrS->ycenter = ycenterS ;
     
 tile = NIL(TILEBOXPTR) ;
-while( busterptr = Ybuster() ){
+/* use ((...)) to avoid assignment as condition warning */
+while(( busterptr = Ybuster() )){
     /* l = busterptr[1].x */
     /* r = busterptr[4].x */
     /* b = busterptr[1].y */
@@ -790,7 +799,7 @@ ptrS->orig_aspect = ptrS->aspect =
 } /* end processCorners */
 /* ***************************************************************** */
 
-addCorner( xpos, ypos )
+VOID addCorner( xpos, ypos )
 INT xpos, ypos ;
 {
 if( ++cornerCountS >= tileptAllocS ){
@@ -819,7 +828,7 @@ maxyS = MAX( maxyS, ypos ) ;
 } /* end addCorner */
 /* ***************************************************************** */
 
-initializeCorner( cell )
+VOID initializeCorner( cell )
 INT cell ;
 {
 ptrS = cellarrayG[cell] ;
@@ -828,7 +837,7 @@ cornerCountS = 0 ;
 } /* end initializeCorner */
 /* ***************************************************************** */
 
-addClass( class )
+VOID addClass( class )
 INT class ;
 {
 ERRORABORT() ;
@@ -842,7 +851,7 @@ if( ptrS->class >= 0 ){
 /* ***************************************************************** */
 
 /* first in the list is the initial orientation */
-initOrient( orient )
+VOID initOrient( orient )
 INT orient ;
 {
 ERRORABORT() ;
@@ -853,7 +862,7 @@ addOrient( orient ) ;
 /* ***************************************************************** */
 
 /* addOrient sets orientation valid for this cell */
-addOrient( orient )
+VOID addOrient( orient )
 INT orient ;
 {
 ERRORABORT() ;
@@ -866,7 +875,7 @@ ptrS->orientList[HOWMANYORIENT]++ ;
 /* if this routine is called it means we are reading the input of
    a previous TimberWolf run.  
 */
-set_cur_orient( orient )
+VOID set_cur_orient( orient )
 INT orient ;
 {
 ERRORABORT() ;
@@ -876,7 +885,7 @@ ptrS->orient = orient ;
 /* ***************************************************************** */
 
 /* load aspect ratios */
-addAspectBounds( lowerBound, upperBound )
+VOID addAspectBounds( lowerBound, upperBound )
 DOUBLE lowerBound, upperBound ;
 {
 ERRORABORT() ;
@@ -898,7 +907,8 @@ char *pinName, *signal ;
 
     notInTable = TRUE ;
     totPinS++ ; /* count the pins over all instances */
-    if( data = (INT *) Yhash_search( netTableS, signal, NULL, FIND ) ){
+    /* use ((...)) to avoid assignment as condition warning */
+    if(( data = (INT *) Yhash_search( netTableS, signal, NULL, FIND ) )){
 	netx = *data ;
 	notInTable = FALSE ;
     } else {
@@ -915,7 +925,7 @@ char *pinName, *signal ;
     if( cellinstanceS ){
 	if( notInTable ){
 	    sprintf(YmsgG,"No match for net:%s in primary instance:%s\n",
-		pinName, *ptrS->cname ) ;
+		pinName, ptrS->cname ) ;
 	    M( ERRMSG, "addPinAndNet", YmsgG ) ;
 	    errorFlagS = TRUE ;
 	}
@@ -986,7 +996,7 @@ char *pinName, *signal ;
 } /* add pin and net */
 /* ***************************************************************** */
 
-addPin( pinName, signal, layer, pinType )
+VOID addPin( pinName, signal, layer, pinType )
 char *pinName ;
 char *signal ;
 INT layer ;
@@ -1084,7 +1094,7 @@ INT pinType ;
 } /* end addPin */
 /* ***************************************************************** */
 
-set_pin_pos( xpos, ypos )
+VOID set_pin_pos( xpos, ypos )
 INT xpos, ypos ;
 {
     INT side ;
@@ -1122,20 +1132,20 @@ INT xpos, ypos ;
 } /* end set_pin_pos */
 /* ***************************************************************** */
 
-static check_pos( pinname, xpos, ypos )
+static VOID check_pos( pinname, xpos, ypos )
 char *pinname ;
 INT xpos, ypos ;
 {
     if( xpos < minxS || xpos > maxxS || ypos < minyS || ypos > maxyS ){
 	sprintf( YmsgG, "Pin:%s cell:%s @(%d,%d) is outside cell boundary\n",
-	    pinname, curCellNameS, xpos, ypos ) ;
+	    pinname, curCellNameS, (int)xpos, (int)ypos ) ;
 	M( ERRMSG, "check_pos", YmsgG ) ;
 	setErrorFlag() ;
     }
 } /* end check_pos */
 
 /* add an equivalent pin-updates the pin position to effective position */
-addEquivPin( pinName, layer, xpos, ypos, pinType )
+VOID addEquivPin( pinName, layer, xpos, ypos, pinType )
 char *pinName ;
 INT layer ; 
 INT xpos, ypos ;
@@ -1180,7 +1190,8 @@ INT pinType ;
     }
 
     /* now save locations of equivalent pins for later output */
-    if( temp = pinS->eqptr ){
+    /* use ((...)) to avoid assignment as condition warning */
+    if(( temp = pinS->eqptr )){
 	eqptr = pinS->eqptr = (EQUIVPTR) Ysafe_malloc(sizeof(EQUIVBOX)) ;
 	eqptr->next = temp ;
     } else {
@@ -1216,14 +1227,14 @@ INT pinType ;
 } /* end addEquivPin */
 /* ***************************************************************** */
 
-set_restrict_type( object )
+VOID set_restrict_type( object )
 INT object ;
 {
     cur_restrict_objS = object ;
 }
 /* ***************************************************************** */
 
-addSideRestriction( side )
+VOID addSideRestriction( side )
 INT side ;
 {
 INT howmany ;
@@ -1233,10 +1244,10 @@ EQUIVPTR eqptr ;
 ERRORABORT() ;
 if( side < 0 || side > cornerCountS ) {
     M(ERRMSG,"addSideRestriction","value of side out of range");
-    sprintf(YmsgG,"\n\tside:%d  range:1 to %d ", side, 
-	cornerCountS ) ;
+    sprintf(YmsgG,"\n\tside:%d  range:1 to %d ", (int)side, 
+	(int)cornerCountS ) ;
     M(MSG,NULL,YmsgG);
-    sprintf(YmsgG, "current cell is:%d\n", totalcellsG ) ;
+    sprintf(YmsgG, "current cell is:%d\n", (int)totalcellsG ) ;
     M(MSG,NULL,YmsgG);
     setErrorFlag() ;
 }
@@ -1267,11 +1278,11 @@ switch( cur_restrict_objS ){
 	break ;
 } /* end switch on current object */
 
-} /* end addSideRestriction *
+} /* end addSideRestriction */
 /* ***************************************************************** */
 
 
-add_pinspace( lower, upper )
+VOID add_pinspace( lower, upper )
 DOUBLE lower ;
 DOUBLE upper ;
 {
@@ -1319,7 +1330,7 @@ DOUBLE upper ;
 } /* end add_pinspace */
 /* ***************************************************************** */
 
-add_soft_array()
+VOID add_soft_array(VOID)
 {
     INT i ;
     PINBOXPTR *sarray ; 
@@ -1338,7 +1349,7 @@ add_soft_array()
 }
 /* end add_soft_array */
 
-start_pin_group( pingroup, permute )
+VOID start_pin_group( pingroup, permute )
 char *pingroup ;
 BOOL permute ;
 {
@@ -1416,7 +1427,7 @@ spin->parent = NULL ;
 /* ***************************************************************** */
 
 /* add this pad to the current pad group */
-add2pingroup( pinName, ordered ) 
+VOID add2pingroup( pinName, ordered ) 
 char *pinName ;
 BOOL ordered ;  /* ordered flag is true if padgroup is fixed */
 {
@@ -1510,7 +1521,7 @@ return ;
 } /* end add2pingroup */
 /* ***************************************************************** */
 
-addSideSpace( lower, upper )
+VOID addSideSpace( lower, upper )
 DOUBLE lower ;
 DOUBLE upper ;
 {
@@ -1540,7 +1551,7 @@ DOUBLE upper ;
 } /* end addSideSpace */
 /* ***************************************************************** */
 
-addPadSide( side  )
+VOID addPadSide( side  )
 char *side ;
 {
 
@@ -1578,7 +1589,8 @@ char *side ;
 /* ***************************************************************** */
 
 /* set whether a pad group can be permuted */
-setPermutation( permuteFlag ) 
+VOID setPermutation( permuteFlag ) 
+INT permuteFlag;
 {
 ERRORABORT() ;
 pptrS->permute = permuteFlag ;
@@ -1586,7 +1598,7 @@ pptrS->permute = permuteFlag ;
 /* ***************************************************************** */
 
 /* add this pad to the current pad group */
-add2padgroup( padName, ordered ) 
+VOID add2padgroup( padName, ordered ) 
 char *padName ;
 BOOL ordered ;  /* ordered flag is true if pad is ordered in padgroup */
 {
@@ -1656,7 +1668,7 @@ return ;
 
 } /* end add2PadGroup */
 /* ***************************************************************** */
-add_cell_to_group( cellName ) 
+VOID add_cell_to_group( cellName ) 
 char *cellName ;
 {
 GLISTPTR tempCell ;
@@ -1671,7 +1683,8 @@ if(!(data = (INT *) Yhash_search( cellTableS, cellName, NULL, FIND ))){
 } 
 cell = *data ;
 
-if( tempCell = curGroupS->cells ){
+/* use ((...)) to avoid assignment as condition warning */
+if(( tempCell = curGroupS->cells )){
     curGroupS->cells = (GLISTPTR) Ysafe_malloc( sizeof(GLISTBOX) ) ;
     curGroupS->cells->next = tempCell ;
 } else { /* start list */
@@ -1683,7 +1696,7 @@ cptr = cellarrayG[cell] ;
 if( cptr->group_nested ){
     /* group_nest field should be NULL if cell is not nested */
     sprintf( YmsgG, "cell %d:%s appears in more than one group\n",
-	cell, cptr->cname ) ;
+	(int)cell, cptr->cname ) ;
     M(ERRMSG,"add_cell_to_group",YmsgG ) ;
     errorFlagS = TRUE ;
 } else {
@@ -1698,7 +1711,7 @@ cptr->class = unique_classG ;
 } /* end add_cell_to_group */
 
 /* add a cell to the instance array of the defining cell */
-add_instance( instName )
+VOID add_instance( instName )
 char *instName ;
 {
     if( cellinstanceS++ == 0 ){
@@ -1760,12 +1773,12 @@ char *instName ;
 
 } /* end add_cell_instance */
 
-INT get_tile_count()
+INT get_tile_count(VOID)
 {
     return( tileptAllocS / 2 ) ;
 } /* end get_tile_count() */
 
-add_analog( numcorners )
+VOID add_analog( numcorners )
 INT numcorners ;
 {
     ERRORABORT() ;
@@ -1786,8 +1799,8 @@ INT numcorners ;
 	analogS->num_corners = numcorners ;
 	cornerCountS = 0 ;
     } else {
-	analogS->x_contour = NIL(INT) ;
-	analogS->y_contour = NIL(INT) ;
+	analogS->x_contour = NIL(INT*) ;
+	analogS->y_contour = NIL(INT*) ;
 	analogS->num_corners = 0 ;
     }
     analogS->current = INIT_CURRENT ;
@@ -1796,7 +1809,7 @@ INT numcorners ;
 
 } /* end add_analog */
 
-add_pin_contour( x, y )
+VOID add_pin_contour( x, y )
 INT x, y ;
 {
     if( cornerCountS >= analogS->num_corners ){
@@ -1812,8 +1825,9 @@ INT x, y ;
 } /* end start_pin_contour */
 
 
-add_current( current )
-FLOAT current ;
+VOID add_current( current )
+/* K&R automatically promotes to double from a float*/
+DOUBLE current ;
 {
     if(!(analogS)){
 	add_analog( 0 ) ;
@@ -1821,8 +1835,9 @@ FLOAT current ;
     analogS->current = current ;
 } /* end add_current */
 
-add_power( power )
-FLOAT power ;
+VOID add_power( power )
+/* K&R automatically promotes to double from a float*/
+DOUBLE power ;
 {
     if(!(analogS)){
 	add_analog( 0 ) ;
@@ -1830,7 +1845,7 @@ FLOAT power ;
     analogS->power = power ;
 } /* end add_power */
 
-no_layer_change()
+VOID no_layer_change(VOID)
 {
     if(!(analogS)){
 	add_analog( 0 ) ;
@@ -1838,7 +1853,7 @@ no_layer_change()
     analogS->no_layer_change = TRUE ;
 } /* end no_cross_under */
 
-process_pin()
+VOID process_pin(VOID)
 {
     INT i ;                      /* point counter */
     INT side ;                   /* current side for pin */
