@@ -64,16 +64,25 @@ static char SccsId[] = "@(#) autoflow.c version 2.4 4/21/91" ;
 #endif
 
 #include <string.h>
+
 #include <yalecad/base.h>
-#include <yalecad/message.h>
 #include <yalecad/debug.h>
+#include <yalecad/draw.h>
+#include <yalecad/file.h>
+#include <yalecad/message.h>
+
 #include <globals.h>
+
+#include <autoflow.h>
+#include <graphics.h>
+#include <io.h>
+#include <program.h>
 
 #define STARTOBJECT  0          /* start of the graph */
 #define ERROR        -1         /* error from YgetFileTime() */
 static INT objectS ;            /* the last program that was run */
 
-auto_flow()
+VOID auto_flow(VOID)
 {
 
     ADJPTR     adjptr ;         /* current edge in graph */
@@ -126,7 +135,7 @@ auto_flow()
 
 } /* end autoflow */
 
-exec_single_prog()
+VOID exec_single_prog(VOID)
 {
     ADJPTR     adjptr ;         /* current edge in graph */
     ADJPTR     get_edge_from_user(); /* decides which way to travel */
@@ -168,7 +177,7 @@ exec_single_prog()
 	} else {
 	    strcpy( filename, fdepend->fname ) ;
 	}
-	if(!(YfileExists( filename,TRUE )) && !(fdepend->optional) ){
+	if(!(YfileExists( filename)) && !(fdepend->optional) ){
 	    sprintf( YmsgG, "ERROR:input file %s does not exist",
 		filename ) ;
 	    G( TWmessage( YmsgG ) ) ;
@@ -185,7 +194,7 @@ exec_single_prog()
     G( draw_the_data() ) ;
 } /* end exec_single_prog */
 
-report_problem( adjptr )
+VOID report_problem( adjptr )
 ADJPTR adjptr ;
 {
     sprintf( YmsgG, "Trouble executing %s", 
@@ -217,7 +226,7 @@ ADJPTR adjptr ;
 	} else {
 	    strcpy( filename, fdepend->fname ) ;
 	}
-	if(!(YfileExists( filename,TRUE ))){
+	if(!(YfileExists( filename ))){
 	    continue ;
 	}
 	ftime = YgetFileTime( filename ) ;
@@ -236,7 +245,8 @@ ADJPTR adjptr ;
     *  3. No given output files program is assumed to always be executed.
     *  ************************************************************* */
     /* first make check if no output files exist program is executed */
-    if( fdepend = adjptr->ofiles ){
+    /* use ((...)) to avoid assignment as condition warning */
+    if(( fdepend = adjptr->ofiles )){
 	/* program may not need to be executed */
 	needtoExecute = FALSE ;
     } else {
@@ -250,7 +260,7 @@ ADJPTR adjptr ;
 	} else {
 	    strcpy( filename, fdepend->fname ) ;
 	}
-	if(!(YfileExists( filename,TRUE ))){
+	if(!(YfileExists( filename ))){
 	    /* one of the output files doesn't exist */
 	    needtoExecute = TRUE ;
 	    continue ;
@@ -271,7 +281,7 @@ ADJPTR adjptr ;
 } /* end BOOL check_dependencies */
 
 /* allow graphics loop to change the object */
-autoflow_set_object( object )
+VOID autoflow_set_object( object )
 INT object ;
 {
     objectS = object ;

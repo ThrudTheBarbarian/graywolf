@@ -51,16 +51,26 @@ static char SccsId[] = "@(#) findflow.c version 1.4 4/18/91" ;
 #endif
 
 #include <stdio.h>
+#include <string.h>
 
-#include <globals.h>
+#include <yalecad/base.h>
 #include <yalecad/debug.h>
 #include <yalecad/file.h>
+#include <yalecad/log.h>
+#include <yalecad/program.h>
 #include <yalecad/string.h>
+#include <yalecad/system.h>
 
 #ifndef NOGRAPHICS
 #include <yalecad/draw.h>
 #include <yalecad/colors.h>
 #endif
+
+#include <globals.h>
+
+#include <autoflow.h>
+#include <main.h>
+
 
 FILE *find_flow_file( general_mode, debug, filename )
 BOOL general_mode, debug ;
@@ -128,12 +138,14 @@ char *filename ;
     if( flow_dirG ){
 	/* first try absolute path */
 	sprintf( filename, "%s/%s.%s", flow_dirG, prefix, suffix ) ;
-	if( fp = TWOPEN( filename, "r", NOABORT ) ){
+	/* use ((...)) to avoid assignment as condition warning */
+	if(( fp = TWOPEN( filename, "r", NOABORT ) )){
 	    return( fp ) ;
 	}
 	/* next try relative to TimberWolf root directory. */
 	sprintf( filename, "%s/bin/flow/%s/%s.%s", twdirG, flow_dirG, prefix, suffix ) ;
-	if( fp = TWOPEN( filename, "r", NOABORT ) ){
+	/* use ((...)) to avoid assignment as condition warning */
+	if(( fp = TWOPEN( filename, "r", NOABORT ) )){
 	    return( fp ) ;
 	}
 	/* if we get here we have trouble we must abort.  Write msg */
@@ -160,7 +172,7 @@ char *filename ;
 } /* end find_flow_file */
 
 /* call syntax if necessary and then read result */
-INT find_design_type()
+INT find_design_type(VOID)
 {
     ADJBOX syntax_info ;
     FBOX infile ;
@@ -224,7 +236,8 @@ INT find_design_type()
     sprintf( buffer, "%s.stat", cktNameG ) ;
     fin = TWOPEN( buffer,"r", ABORT ) ;
 
-    while( bufferptr = fgets( buffer, LRECL, fin ) ){
+    /* use ((...)) to avoid assignment as condition warning */
+    while(( bufferptr = fgets( buffer, LRECL, fin ) )){
 	tokens = Ystrparser( bufferptr, ":\t\n", &numtokens ) ;
 	if( numtokens != 2 ){
 	    continue ;

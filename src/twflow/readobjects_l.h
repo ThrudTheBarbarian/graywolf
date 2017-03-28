@@ -3,6 +3,22 @@
 #else
 # include "stdio.h"
 #endif
+
+/* Declare prototypes if required */
+#include <yalecad/base.h>   
+extern int yyback(P2(int *, int));
+extern int yyinput(P1(void));
+extern int yylook(P1(void));
+extern void yyoutput(P1(int));
+extern int yyracc(P1(int));
+extern int yyreject(P1(void));
+extern void yyunput(P1(int));
+extern int yylex(P1(void));
+extern int yyless(P1(int));
+extern int yywrap(P1(void));
+extern int yyparse(P1(void));
+extern int yyerror(P1(char * s));
+
 # define U(x) ((x)&0377)
 # define NLSTATE yyprevious=YYNEWLINE
 # define BEGIN yybgin = yysvec + 1 +
@@ -21,7 +37,7 @@ int yyleng; extern char yytext[];
 int yymorfg;
 extern char *yysptr, yysbuf[];
 int yytchar;
-#ifdef linux
+#if defined(linux) || defined(__APPLE__)
 FILE *yyin =NULL, *yyout =NULL;
 #else
 FILE *yyin ={stdin}, *yyout ={stdout};
@@ -61,7 +77,7 @@ static INT screen() ;
 static INT check_line_count() ;
 
 # define YYNEWLINE 10
-yylex(){
+int yylex(){
 int nstr; extern int yyprevious;
 while((nstr = yylook()) >= 0)
 yyfussy: switch(nstr){
@@ -168,10 +184,10 @@ char *s ;
 {
     if( s ){
 	if( strlen(s) >= YYLMAX ){
-	    sprintf(YmsgG,"comment beginning at line %d ",line_countS+1 );
+	    sprintf(YmsgG,"comment beginning at line %d ",(int)(line_countS+1));
 	    M( ERRMSG, "lex", YmsgG ) ;
 	    sprintf(YmsgG,"exceeds maximum allowed length:%d chars.\n", 
-		YYLMAX );
+		(int)YYLMAX );
 	    M( MSG, NULL, YmsgG ) ;
 	    setErrorFlag() ;
 	}
@@ -181,6 +197,7 @@ char *s ;
 	    }
 	}
     }
+    return 0;
 } /* end check_line_count */
 int yyvstop[] ={
 0,
@@ -501,7 +518,7 @@ char *yysptr = yysbuf;
 int *yyfnd;
 extern struct yysvf *yyestate;
 int yyprevious = YYNEWLINE;
-yylook(){
+int yylook(){
 	register struct yysvf *yystate, **lsp;
 	register struct yywork *yyt;
 	struct yysvf *yyz;
@@ -511,7 +528,7 @@ yylook(){
 	int debug;
 # endif
 	char *yylastch;
-#ifdef linux
+#if defined(linux) || defined(__APPLE__)
 	if (yyin == NULL) yyin = stdin;
 	if (yyout == NULL) yyout = stdout;
 #endif
@@ -651,8 +668,9 @@ yylook(){
 # endif
 		}
 	}
-yyback(p, m)
+int yyback(p, m)
 	int *p;
+	int m;
 {
 if (p==0) return(0);
 while (*p)
@@ -663,20 +681,20 @@ while (*p)
 return(0);
 }
 	/* the following are only used in the lex library */
-yyinput(){
-#ifdef linux
+int yyinput(){
+#if defined(linux) || defined(__APPLE__)
 	if (yyin == NULL) yyin = stdin;
 #endif
 	return(input());
 	}
-yyoutput(c)
+void yyoutput(c)
   int c; {
-#ifdef linux
+#if defined(linux) || defined(__APPLE__)
 	if (yyout == NULL) yyout = stdout;
 #endif
 	output(c);
 	}
-yyunput(c)
+void yyunput(c)
    int c; {
 	unput(c);
 	}

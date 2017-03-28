@@ -57,11 +57,15 @@ static char SccsId[] = "@(#) program.c version 2.3 4/21/91" ;
 #endif
 
 #include <string.h>
+
 #include <yalecad/base.h>
+#include <yalecad/debug.h>
+#include <yalecad/draw.h>
+#include <yalecad/file.h>
+#include <yalecad/log.h>
 #include <yalecad/message.h>
 #include <yalecad/string.h>
-#include <yalecad/file.h>
-#include <yalecad/debug.h>
+
 #include <globals.h>
 
 #define  DESIGNNAME   "$"
@@ -109,7 +113,7 @@ ADJPTR adjptr ;
 	} else if( strcmp( argv[i], WINDOWID ) == STRINGEQ ){
 	    /* save state of graphics before call if necessary */
 	    if( graphicsG ){
-		G( sprintf( window_name, "%d", TWsaveState() ) ) ;
+		G( sprintf( window_name, "%d", (int)TWsaveState() ) ) ;
 		stateSaved = TRUE ;
 	    }
 	    strcat( command, window_name ) ;

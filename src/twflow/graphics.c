@@ -67,13 +67,20 @@ static char SccsId[] = "@(#) graphics.c version 2.6 4/21/91" ;
 #endif
 
 #include <string.h>
+#include <unistd.h>
+
 #include <yalecad/base.h>
-#include <yalecad/message.h>
-#include <yalecad/draw.h>
-#include <yalecad/string.h>
 #include <yalecad/colors.h>
 #include <yalecad/debug.h>
+#include <yalecad/draw.h>
+#include <yalecad/message.h>
+#include <yalecad/program.h>
+#include <yalecad/string.h>
+
 #include <globals.h>
+
+#include <autoflow.h>
+#include <graphics.h>
 
 #define SLEEPTIME     (unsigned) 2
 #define DATADIR       "./DATA"
@@ -99,7 +106,7 @@ static ADJPTR selectedEdgeS = NULL ;     /* current selected edge */
 
 #include <menus.h>
 
-init_graphics(argc,argv,windowId)
+VOID init_graphics(argc,argv,windowId)
 INT argc ;
 char *argv[] ;
 INT windowId ;
@@ -111,7 +118,7 @@ INT windowId ;
     } 
     if( windowId ){
 	/* init windows as a parasite */
-	fprintf( stderr,"windowId:%d\n", windowId ) ;
+	fprintf( stderr,"windowId:%d\n", (int)windowId ) ;
 	if( !( TWinitParasite(argc,argv,TWnumcolors(),TWstdcolors(),
 	    FALSE, MENU, draw_the_data, windowId ))){
 	    M(ERRMSG,"initgraphics","Aborting graphics.");
@@ -131,7 +138,7 @@ INT windowId ;
 } /* end init_graphics */
 
 /* draw_the_data routine draws compaction graph */
-INT draw_the_data()
+INT draw_the_data(VOID)
 {
 
     INT  i ;
@@ -142,7 +149,7 @@ INT draw_the_data()
 
     /* graphics is turned off */
     if( !graphicsG ){
-	return ;
+	return -1;
     }
 
     TWstartFrame() ;
@@ -177,12 +184,13 @@ INT draw_the_data()
     if( YdebugAssert() ){
 	sleep( SLEEPTIME ) ;
     }
+    return 0;
 
 } /* end draw_the_data */
 
 
 /* heart of the graphic system processes user input */
-process_graphics()
+VOID process_graphics(VOID)
 {
 
     INT selection ;     /* the users pick */
@@ -249,7 +257,7 @@ process_graphics()
 	case TELL_POINT:
 	    TWmessage( "Pick a point" ) ;
 	    TWgetPt( &x, &y ) ;
-	    sprintf( YmsgG,"The point is (%d,%d)",x,y ) ;
+	    sprintf( YmsgG,"The point is (%d,%d)",(int)x,(int)y ) ;
 	    TWmessage( YmsgG ) ;
 	    break ;
 	case TRANSLATE:
@@ -346,14 +354,14 @@ BOOL direction ;
 
 
 /* the corresponding handshake to set the highlighted drawing object */
-graphics_set_object( object )
+VOID graphics_set_object( object )
 INT object ;
 {
     selectedObjS = object ;     /* set the current selected object */
 } /* graphics_set_object */
 
 /* find the object in question */
-INT find_obj()
+INT find_obj(VOID)
 {
 
     INT i ;

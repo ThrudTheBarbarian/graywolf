@@ -71,11 +71,15 @@ static char SccsId[] = "@(#) readobjects.y version 2.5 4/21/91" ;
 #endif
 
 #include <string.h>
-#include <globals.h>
-#include <yalecad/message.h>  /* use message routines for errors. */
-#include <yalecad/file.h>     /* file opening insert file. */
+
+#include <yalecad/base.h>   
 #include <yalecad/debug.h>    /* use debug utilities. */
+#include <yalecad/file.h>     /* file opening insert file. */
+#include <yalecad/message.h>  /* use message routines for errors. */
 #include <yalecad/string.h>
+
+#include <globals.h>
+#include <io.h>
 
 #undef REJECT          /* undefine TWMC macro for lex's version */ 
 
@@ -305,7 +309,7 @@ YYSTYPE yyvs[YYSTACKSIZE];
 /* ********************* #include "readobjects_l.h" *******************/
 /* ********************* #include "readobjects_l.h" *******************/
 
-readobjects( fp, filename )
+VOID readobjects( fp, filename )
 FILE *fp ;
 char *filename ;
 { 
@@ -326,18 +330,19 @@ char *filename ;
 
 } /* end readobjects */
 
-yyerror(s)
+int yyerror(s)
 char    *s;
 {
     sprintf(YmsgG,"problem reading:%s\n", filenameS );
     M( ERRMSG, "yacc", YmsgG ) ;
     sprintf(YmsgG, "  line %d near '%s' : %s\n\n" ,
-	line_countS+1, yytext, s );
+	(int)(line_countS+1), yytext, s );
     M( MSG,NULL, YmsgG ) ;
     setErrorFlag() ;
+    return 0;
 }
 
-yywrap()
+int yywrap(VOID)
 {
     return(1);
 }                      
@@ -345,7 +350,7 @@ yywrap()
 #define YYACCEPT goto yyaccept
 #define YYERROR goto yyerrlab
 int
-yyparse()
+yyparse(VOID)
 {
     register int yym, yyn, yystate;
 #if YYDEBUG
@@ -369,7 +374,8 @@ yyparse()
     *yyssp = yystate = 0;
 
 yyloop:
-    if (yyn = yydefred[yystate]) goto yyreduce;
+    /* use ((...)) to avoid assignment as condition warning */
+    if ((yyn = yydefred[yystate])) goto yyreduce;
     if (yychar < 0)
     {
         if ((yychar = yylex()) < 0) yychar = 0;
@@ -658,7 +664,7 @@ case 34:
 			/* convert integer to string */
 			/* this allows integers to be used as strings */
 			/* a kluge but twolf's old parser supported it */
-			sprintf( bufferS,"%d", yyvsp[0].ival ) ;
+			sprintf( bufferS,"%d", (int)(yyvsp[0].ival) ) ;
 			/* now clone string */
 			yyval.string = (char *) Ystrclone( bufferS ) ;
 		    }

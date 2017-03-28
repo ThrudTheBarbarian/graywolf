@@ -80,9 +80,14 @@ static char SccsId[] = "@(#) io.c version 2.2 4/21/91" ;
 #endif
 
 #include <string.h>
-#include <globals.h>
+
+#include <yalecad/base.h>
 #include <yalecad/debug.h>
 #include <yalecad/file.h>
+#include <yalecad/program.h>
+
+#include <globals.h>
+#include <io.h>
 
 #define START     "start"
 #define OPTIONAL  '*'
@@ -116,13 +121,13 @@ static EDGEPTR edgeListS = NULL ;        /* list of drawable edges */
     } \
 } \
 
-setErrorFlag()
+VOID setErrorFlag(VOID)
 {
     errorFlagS = TRUE ;
 }
 /* ***************** ERROR HANDLING ****************************** */
 
-init( numobj )
+VOID init( numobj )
 INT numobj ;
 {
     INT i ;
@@ -153,7 +158,7 @@ INT numobj ;
 } /* end init */
 
 /* create a new object */
-add_object( pname, node )
+VOID add_object( pname, node )
 char *pname ;
 INT node ;
 {
@@ -169,7 +174,7 @@ INT node ;
 } /* end add_object */
 
 
-add_pdependency( fromNode ) 
+VOID add_pdependency( fromNode ) 
 INT fromNode ;
 {
     OBJECTPTR from, to ;
@@ -186,7 +191,8 @@ INT fromNode ;
     to   = objS ;
 
     /* create backward edge since we are given edges in dependency form */
-    if( temp = to->adjB ){
+    /* use ((...)) to avoid assignment as condition warning */
+    if(( temp = to->adjB )){
 	/* add at end of the list */
 	for( ; temp->next ; temp = temp->next ) ;
 	newE = temp->next = (ADJPTR) Ysafe_malloc(sizeof(ADJBOX)) ;
@@ -201,7 +207,8 @@ INT fromNode ;
     newE->marked = FALSE ;
 
     /* now create forward edge */
-    if( temp = from->adjF ){
+    /* use ((...)) to avoid assignment as condition warning */
+    if(( temp = from->adjF )){
 	/* add at end of the list */
 	for( ; temp->next ; temp = temp->next ) ;
 	newE = temp->next = (ADJPTR) Ysafe_malloc(sizeof(ADJBOX)) ;
@@ -217,7 +224,7 @@ INT fromNode ;
 
 } /* end add_pdependency */
 
-add_path( pathname )
+VOID add_path( pathname )
 char *pathname ;
 {
     ERRORABORT() ;
@@ -225,22 +232,24 @@ char *pathname ;
 } /* end add_path */
 
 /* set file type */
-set_file_type( type )
+VOID set_file_type( type )
 BOOL type ;
 {
     inputNotOutputS = type ;
 } /* end set_file_type */
 
-add_fdependency( file ) 
+VOID add_fdependency( file ) 
 char *file ;
 {
     INT len ;
     FPTR temp, newF ;
 
     ERRORABORT() ;
-    if( inputNotOutputS ){
+    /* use ((...)) to avoid assignment as condition warning */
+    if(( inputNotOutputS )){
 	/* now create list of files program depends on */
-	if( temp = edgeListS->ifiles ){
+	/* use ((...)) to avoid assignment as condition warning */
+	if(( temp = edgeListS->ifiles )){
 	    newF = edgeListS->ifiles = (FPTR) Ysafe_malloc(sizeof(FBOX)) ;
 	    /* hook to rest of list */
 	    newF->next = temp ;
@@ -251,7 +260,8 @@ char *file ;
 	}
     } else {
 	/* now create list of files program depends on */
-	if( temp = edgeListS->ofiles ){
+	/* use ((...)) to avoid assignment as condition warning */
+	if(( temp = edgeListS->ofiles )){
 	    newF = edgeListS->ofiles = (FPTR) Ysafe_malloc(sizeof(FBOX)) ;
 	    /* hook to rest of list */
 	    newF->next = temp ;
@@ -273,7 +283,7 @@ char *file ;
     newF->fname = file ;
 } /* end add_fdependency */
 
-add_args( argument )
+VOID add_args( argument )
 char *argument ;
 {
     ERRORABORT() ;
@@ -282,7 +292,7 @@ char *argument ;
     edgeListS->argv[edgeListS->argc++] = argument ;
 } /* end add_args */
 
-add_box( l, b, r, t )
+VOID add_box( l, b, r, t )
 INT l, b, r, t ;
 {
     ERRORABORT() ;
@@ -304,7 +314,7 @@ INT l, b, r, t ;
     data but we want to make it easy for the user.  It's not much trouble
     anyway.
 - - - - - - -- - - - - - - - - - - - - - - - - - - - - - - - - - - */
-start_edge( fromNode )
+VOID start_edge( fromNode )
 INT fromNode ;
 {
     EDGEPTR temp ;
@@ -317,7 +327,8 @@ INT fromNode ;
 	return ;
     }
 
-    if( temp = edgeListS ){
+    /* use ((...)) to avoid assignment as condition warning */
+    if(( temp = edgeListS )){
 	edgeListS = (EDGEPTR) Ysafe_malloc(sizeof(EDGEBOX)) ;
 	/* hook to rest of list */
 	edgeListS->next = temp ;
@@ -339,7 +350,7 @@ INT fromNode ;
     
 } /* end start_edge */
 
-add_line( x1, y1, x2, y2 )
+VOID add_line( x1, y1, x2, y2 )
 INT x1, y1, x2, y2 ;
 {
 
@@ -347,7 +358,8 @@ INT x1, y1, x2, y2 ;
 
     ERRORABORT() ;
 
-    if( temp = edgeListS->dlist ){
+    /* use ((...)) to avoid assignment as condition warning */
+    if(( temp = edgeListS->dlist )){
 	dptr = edgeListS->dlist = (DPTR) Ysafe_malloc(sizeof(DBOX)) ;
 	/* hook to rest of list */
 	dptr->next = temp ;
@@ -391,7 +403,7 @@ BOOL direction ;
 
 /* process lines */
 /* Now add the drawn lines to the graph data structure */
-process_arcs()
+VOID process_arcs(VOID)
 {
     ADJPTR adjptr ;
     EDGEPTR edge ;
@@ -407,7 +419,7 @@ process_arcs()
 	adjptr = findEdge( edge->from, edge->to, FORWARD ) ;
 	if( !(adjptr) ){
 	    sprintf( YmsgG, "Inconsistently defined edge %d -> %d \n",
-		edge->from, edge->to ) ;
+		(int)(edge->from), (int)(edge->to) ) ;
 	    M( ERRMSG, "process_arcs", YmsgG ) ;
 	    setErrorFlag() ;
 	    continue ;
@@ -421,7 +433,7 @@ process_arcs()
 	adjptr = findEdge( edge->to, edge->from, BACKWARD ) ;
 	if( !(adjptr) ){
 	    sprintf( YmsgG, "Inconsistently defined edge %d -> %d \n",
-		edge->to, edge->from ) ;
+		(int)(edge->to), (int)(edge->from) ) ;
 	    M( ERRMSG, "process_arcs", YmsgG ) ;
 	    setErrorFlag() ;
 	    continue ;
@@ -450,7 +462,7 @@ process_arcs()
 } /* end process_arcs */
 
 /* clean edges so everything must be checked */
-unmark_edges()
+VOID unmark_edges(VOID)
 {
     INT i ;                   /* counter */
     OBJECTPTR o ;             /* object pointer */
@@ -471,7 +483,7 @@ unmark_edges()
 
 #include <yalecad/draw.h>
 
-set_window()
+VOID set_window(VOID)
 {
     INT xpand ;   /* make output look nice */
     INT min, max ; /* make into square */

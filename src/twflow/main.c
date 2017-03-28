@@ -69,24 +69,38 @@ static char SccsId[] = "@(#) main.c version 2.8 4/21/91" ;
 
 #include <stdio.h>
 #include <signal.h>
+
+#include <yalecad/base.h>
 #include <yalecad/cleanup.h>
+#include <yalecad/debug.h>
+#include <yalecad/draw.h>
+#include <yalecad/file.h>
+#include <yalecad/log.h>
 #include <yalecad/message.h>
 #include <yalecad/program.h>
 #include <yalecad/string.h>
-#include <yalecad/file.h>
-#include <yalecad/debug.h>
+#include <yalecad/system.h>
 
 #define GLOBAL_DEFS
 #include <globals.h>
 
+#include <autoflow.h>
+#include <graphics.h>
+#include <main.h>
+#include <readobjects.h>
+
 #include "config-build.h"
+
+static VOID syntax(VOID);
+static VOID yaleIntro(VOID);
+
 
 #define EXPECTEDMEMORY  (256 * 1024)  /* 256k is more than enough */
 #define NULLWINDOW      0
 #define VERSION         "2.1" 
 
-main( argc , argv )
-INT argc ;
+int main( argc , argv )
+int argc ;
 char *argv[] ;
 {
 
@@ -246,7 +260,8 @@ char *argv[] ;
     /* the flow directory.  */
     if(!(flow_dirG)){
 	sprintf( filename, "%s/bin/flow/flow", twdirG ) ;
-	if( flow_dirG = Yfile_slink( filename )){
+	/* use ((...)) to avoid assignment as condition warning */
+	if(( flow_dirG = Yfile_slink( filename ))){
 	    flow_dirG = Ystrclone( flow_dirG ) ;
 	} else {
 	    G( TWcloseGraphics() ) ;
@@ -281,7 +296,7 @@ char *argv[] ;
 
 
 /* give user correct syntax */
-syntax()
+static VOID syntax(VOID)
 {
    M(ERRMSG,NULL,"\n" ) ; 
    M(MSG,NULL,"Incorrect syntax.  Correct syntax:\n");
@@ -304,7 +319,7 @@ syntax()
    YexitPgm(MASTERFAIL);
 } /* end syntax */
 
-VOID yaleIntro() 
+static VOID yaleIntro(VOID) 
 {
     char message[LRECL] ;
 
@@ -316,7 +331,7 @@ VOID yaleIntro()
 } /* end yaleIntro */
 
 
-show_flows()
+VOID show_flows(VOID)
 {
    char command[LRECL] ; 
    /* now show user the flow directories */ 
