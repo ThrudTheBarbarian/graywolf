@@ -51,11 +51,16 @@ static char Ybase_HId[] = "@(#) base.h version 1.34 3/5/92" ;
 */
 #endif /* YALE */
 
+#ifndef STDINT_H
+#  define STDINT_H
+#  include <stdint.h>	/* For portable 64/32-bit ints */
+#endif
+
 #ifndef STDIO_H
 #define STDIO_H
 #include <stdio.h> 
-#ifdef linux
-#include <stdlib.h>	/* needed for atof() */
+#if defined(linux) || defined(__APPLE__)
+#include <stdlib.h>	/* needed for atof/i() */
 #endif
 #endif
 
@@ -77,13 +82,17 @@ static char Ybase_HId[] = "@(#) base.h version 1.34 3/5/92" ;
 
 /* Somewhat more rigorous 64-bit compatibility added by Tim, May 2, 2011 */
 #ifndef SIZEOF_VOID_P
-#define SIZEOF_VOID_P 32
+#  if defined(__APPLE__) || defined(linux) 
+#    define SIZEOF_VOID_P 64
+#  else
+#    define SIZEOF_VOID_P 32
+#  endif
 #endif
 
 #if SIZEOF_VOID_P == 32
-typedef int INT ;
+typedef int32_t INT ;
 #elif SIZEOF_VOID_P == 64
-typedef long INT ;
+typedef int64_t INT ;
 #else
 ERROR: Cannot compile without knowing the size of a pointer.  See Ylib/include/base.h
 #endif
@@ -94,6 +103,7 @@ typedef unsigned long UNSIGNED_INT ;
 typedef short SHORT ;
 typedef long LONG ;
 typedef float FLOAT ;
+
 /* typedef double to have ability to change to float */
 /* some machines float will be natural size.            */
 typedef double DOUBLE ;
@@ -164,7 +174,7 @@ typedef long SHORT_LONG ;
 
 #endif /* ultrix, linux */
 
-#if defined(THINK_C) || defined(linux)
+#if defined(THINK_C) || defined(linux) || defined(__APPLE__)
 #define PROTOTYPES_OK
 #endif /* Mac, linux */
 
@@ -240,6 +250,6 @@ typedef INT *VOIDPTR ;
 #define ROUND(value)  ( (INT)(value + 0.5)) 
 
 /* Always include memory defintions */
-#include <yalecad/okmalloc.h>
+#include "yalecad/okmalloc.h"
 
 #endif /* YBASE_H */

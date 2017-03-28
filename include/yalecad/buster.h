@@ -21,7 +21,7 @@ REVISIONS:  May  1, 1990 - made sure we cannot match the 0
 static char YbusterId[] = "@(#) buster.h version 1.5 4/18/91" ;
 #endif
 
-#include <yalecad/base.h>
+#include "yalecad/base.h"
 
 typedef struct ybustbox {
     INT x ;
@@ -29,7 +29,7 @@ typedef struct ybustbox {
 } YBUSTBOX , *YBUSTBOXPTR ;
 
 
-extern Ybuster_init() ;
+extern VOID Ybuster_init(P1(VOID)) ;
 /* 
 Arguments:
     none
@@ -40,7 +40,7 @@ Function:
     into tiles.
 */
 
-extern Ybuster_addpt( P2( INT x, INT y ) ) ;
+extern VOID Ybuster_addpt( P2( INT x, INT y ) ) ;
 /* 
 Arguments:
     INT x, y ;
@@ -48,7 +48,7 @@ Function:
     Add a point to the current arbitrary figure.
 */
 
-extern YBUSTBOXPTR Ybuster() ;
+extern YBUSTBOXPTR Ybuster(P1(VOID)) ;
 /* 
 Arguments:
     none
@@ -61,7 +61,7 @@ Function:
 	ptr[3].x, ptr[3].y if ptr is the returned pointer.
 */
 
-extern Ybuster_free() ;
+extern VOID Ybuster_free(P1(VOID)) ;
 /* 
 Arguments:
     none
@@ -80,5 +80,10 @@ Function:
     on an error to describe the current object to be busted.
     This makes for better user messages.
 */
+
+/* API call-able externally */
+
+extern VOID Ybuster_check_rect_init( P1(char *user_string) );
+extern BOOL Ybuster_check_rect( P4(INT xx1, INT yy1, INT xx2, INT yy2 ) ) ;
 
 #endif /* YBUSTER_H */

@@ -52,4 +52,10 @@ NOTE also need to give mean calculated from above
 */
 extern DOUBLE Ystat_var( P4(VOIDPTR array,INT number_elements,
 			    INT  size_element, DOUBLE mean ) ) ;
+
+/* From stats.c */
+extern VOID Yprint_stats(P1(FILE *fout));
+extern DOUBLE Ycpu_time(P1(VOID));
+
+
 #endif /* YSTAT_H */

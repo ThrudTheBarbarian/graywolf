@@ -21,9 +21,35 @@ REVISIONS:  Jan 24, 1989 - added selective turnoff of print debug
 #ifndef DEBUG_H
 #define DEBUG_H
 
+#include "yalecad/base.h"
+
+/* ************** function prototypes ************** */
+extern BOOL Ydebug( P1(char *routine) ) ;
+/* 
+Function:
+    Return TRUE if the given routine has been turned on for debug.
+    It returns FALSE otherwise.
+*/
+
+/* ASSERTIONS are always on */
+extern BOOL YdebugAssert(P1(VOID)) ;
+/* 
+Function:
+    Returns TRUE if debug is on.  It returns FALSE otherwise.
+*/
+
+extern VOID YdebugWrite(P1(VOID)) ;
+/* 
+Function:
+    Write the debug data structure to a file.
+*/
+
+extern VOID YsetDebug( P1(BOOL flag ) ) ;
+
+
 #ifdef DEBUG
 
-#include <yalecad/message.h>
+#include "yalecad/message.h"
 
 /* ---------------------------------------------------------------
    The assertions differ from the D macro in that the test is
@@ -108,6 +134,19 @@ REVISIONS:  Jan 24, 1989 - added selective turnoff of print debug
 	    return(NULL) ; \
     }}}
 
+#define ASSERTNRETURNX(test_xz,routine_xz,userMsg_xz, ret_xz) \
+    {if (YdebugAssert()) {\
+	if (!(test_xz)) {\
+	    char assertMsg_xz[LRECL] ; \
+	    sprintf( assertMsg_xz,\
+		"Assertion failed in file %s, line %d:\n\t",\
+		__FILE__, __LINE__ ) ;\
+	    M(ERRMSG,routine_xz,assertMsg_xz ) ;\
+	    sprintf( assertMsg_xz, "%s\n", userMsg_xz ) ;\
+	    M(MSG,NULL,assertMsg_xz) ;\
+	    return(ret_xz) ; \
+    }}}
+
 
 
 /* ASSERT and if not true exit program thru cleanup handler */
@@ -121,7 +160,7 @@ REVISIONS:  Jan 24, 1989 - added selective turnoff of print debug
 	    M(ERRMSG,routine_xz,assertMsg_xz ) ;\
 	    sprintf( assertMsg_xz, "%s\n", userMsg_xz ) ;\
 	    M(MSG,NULL,assertMsg_xz) ;\
-	    YcleanupHandler( -1, NULL ) ; \
+	    YcleanupHandler( -1 ) ; \
     }}}
 
 
@@ -149,33 +188,6 @@ REVISIONS:  Jan 24, 1989 - added selective turnoff of print debug
 	    { function_xz \
     }}}}
 
-/* ************** function prototypes ************** */
-extern BOOL Ydebug( P1(char *routine) ) ;
-/* 
-Function:
-    Return TRUE if the given routine has been turned on for debug.
-    It returns FALSE otherwise.
-*/
-
-/* ASSERTIONS are always on */
-extern BOOL YdebugAssert() ;
-/* 
-Function:
-    Returns TRUE if debug is on.  It returns FALSE otherwise.
-*/
-
-extern YdebugWrite() ;
-/* 
-Function:
-    Write the debug data structure to a file.
-*/
-
-extern YsetDebug( P1(BOOL flag ) ) ;
-/* 
-Function:
-    Turn the debug functions on or off.  It will cause the evaluation
-    of the dbg file in the current working directory.
-*/
 
 #else  /* remove debug code from source */
 
@@ -183,7 +195,9 @@ Function:
 #define ASSERTNBREAK(a_xz,b_xz,c_xz) 
 #define ASSERTNCONT(a_xz,b_xz,c_xz) 
 #define ASSERTNRETURN(a_xz,b_xz,c_xz) 
-#define ASSERTNFAULT(a_xz,b_xz,c_xz) 
+#define ASSERTNRETURN2(a_xz,b_xz,c_xz)
+#define ASSERTNRETURNX(a_xz,b_xz,c_xz,d_xz)
+#define ASSERTNFAULT(a_xz,b_xz,c_xz)
 #define ASSERTNQUERY(a_xz,b_xz,c_xz) 
 #define ASSERTNFUNC(a_xz,b_xz,c_xz) 
 #define D(x_xz,func_xz)      
@@ -215,6 +229,8 @@ Function:
 #define ASSERTNBREAK(a_xz,b_xz,c_xz) 
 #define ASSERTNCONT(a_xz,b_xz,c_xz) 
 #define ASSERTNRETURN(a_xz,b_xz,c_xz) 
+#define ASSERTNRETURN2(a_xz,b_xz,c_xz)
+#define ASSERTNRETURNX(a_xz,b_xz,c_xz,d_xz)
 #define ASSERTNFAULT(a_xz,b_xz,c_xz) 
 #define ASSERTNQUERY(a_xz,b_xz,c_xz) 
 #define ASSERTNFUNC(a_xz,b_xz,c_xz) 

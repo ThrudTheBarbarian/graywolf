@@ -17,8 +17,8 @@ REVISIONS:  Sat Jan 26 12:36:04 PST 1991 - added genrows GENR to
 static char YreadParId[] = "@(#) yreadpar.h version 1.4 4/18/91" ;
 #endif
 
-#include <yalecad/base.h>
-#include <yalecad/rbtree.h>
+#include "yalecad/base.h"
+#include "yalecad/rbtree.h"
 
 /* The following are valid programs */
 #define ALLP	-1

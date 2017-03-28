@@ -25,8 +25,8 @@ occur simultaneously.  The complexity of the routines are as follows.
 static char YdeckId[] = "@(#) deck.h (Yale) version 1.16 1/22/92" ;
 #endif
 
-#include <yalecad/base.h>
-#include <yalecad/message.h>
+#include "yalecad/base.h"
+#include "yalecad/message.h"
 
 /* *********** data structures *************** */
 typedef struct Ydeck_info {

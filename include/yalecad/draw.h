@@ -21,7 +21,9 @@ REVISIONS:  Jan 27, 1989 - added frame num
 static char YdrawId[] = "@(#) draw.h (Yale) version 1.20 3/6/92" ;
 #endif
 
-#include <yalecad/base.h>  /* need for BOOL definitions used below */
+#include <X11/Xlib.h>
+
+#include "yalecad/base.h"  /* need for BOOL definitions used below */
 
 /****  THE MODES *******/
 #define TWDRAWONLY   0
@@ -77,7 +79,7 @@ extern VOID (*_TWdrawArb)(P3( INT ref_num, INT color, char *label )) ;
     TWdrawLine(ref_num,(INT)X1,(INT)Y1,(INT)X2,(INT)Y2,color, label) ; \
 }
 
-extern  _TW3DdrawAxis( P1(BOOL drawNotErase) ) ;
+extern  VOID _TW3DdrawAxis( P1(BOOL drawNotErase) ) ;
 
 
 /******** FUNCTIONS NORMALLY USED BY GRAPHIC PROGRAM USERS *********/
@@ -115,14 +117,14 @@ Function:
     It is found by calling TWsaveState in the calling processs.
 */
 
-extern TWcloseGraphics() ;
+extern VOID TWcloseGraphics(P1(VOID)) ;
 /* 
 Function:
     Closes graphics display and performs cleanup operations.
     Should be performed before end of program.
 */
 
-extern TWsetMode( P1(INT mode) ) ;
+extern VOID TWsetMode( P1(INT mode) ) ;
 /* 
 Function:
     Allows user to change mode during run.  Helpful to dump the current
@@ -131,7 +133,7 @@ Function:
     mode TWWRITENDRAW; otherwise, error results.
 */
 
-extern BOOL TWcheckServer() ;
+extern BOOL TWcheckServer(P1(VOID)) ;
 /* 
 Function:
     Returns TRUE if a connection can be made to server. False otherwise.
@@ -212,7 +214,7 @@ Function:
     Label is optional - a label is attached to figure if non-null.
 */
 
-extern TWarb_init() ;
+extern VOID TWarb_init(P1(VOID)) ;
 /*
 Arguments:
     none
@@ -220,7 +222,7 @@ Function:
     Start a new arbitrary figure.
 */
 
-extern TWarb_addpt( P2( INT xpos, INT ypos ) ) ;
+extern VOID TWarb_addpt( P2( INT xpos, INT ypos ) ) ;
 /*
 Function:
     Add a new point to the current arbitrary figure 
@@ -240,7 +242,7 @@ Function:
 */
 
 /* copy pixmap to screen and flush screen output buffer */
-extern TWflushFrame() ;
+extern VOID TWflushFrame(P1(VOID)) ;
 /*
 Arguments: None.
 Function:
@@ -249,7 +251,7 @@ Function:
     after all TWdraws have performed.
 */
 
-extern TWstartFrame() ;
+extern VOID TWstartFrame(P1(VOID)) ;
 /*
 Arguments: None.
 Function:
@@ -259,21 +261,21 @@ Function:
 */
 
 /********** ROUTINES USED BY SCREEN GRAPHICS ONLY ******************/
-extern TWzoom() ;
+extern VOID TWzoom(P1(VOID)) ;
 /* 
 Arguments: None
 Function:
     Performs a zoom in main graphics window.
 */
 
-extern TWtranslate() ;
+extern VOID TWtranslate(P1(VOID)) ;
 /* 
 Arguments: None
 Function:
     Translate center to picked or entered point in main graphics window.
 */
 
-extern TWfullView() ;
+extern VOID TWfullView(P1(VOID)) ;
 /* 
 Arguments: None
 Function:
@@ -281,14 +283,14 @@ Function:
     determined by TWsetWindow.
 */
 
-extern TWsetwindow( P4( INT left, INT bottom, INT right, INT top ) ) ; 
+extern VOID TWsetwindow( P4( INT left, INT bottom, INT right, INT top ) ) ; 
 /* 
 Function:
     set the boundary of the visible window according to user coordinates
     Must call this function before draws.
 */
 
-extern TWcolorXOR( P2( INT color, BOOL exorFlag ) ) ;
+extern VOID TWcolorXOR( P2( INT color, BOOL exorFlag ) ) ;
 /* 
 Function:
     set a particular colors draw function.  If exorFlag is set to TRUE,
@@ -297,13 +299,13 @@ Function:
     over any current contents blocking the view.  The default is copy mode.
 */
 
-extern TWhighLightRect( P4( INT x1,INT y1,INT x2,INT y2 )) ;
+extern VOID TWhighLightRect( P4( INT x1,INT y1,INT x2,INT y2 )) ;
 /* 
 Function:
     Highlight the given area in black.
 */
 
-extern TWsync( ) ;
+extern VOID TWsync(P1(VOID)) ;
 /* 
 Arguments: None
 Function:
@@ -312,7 +314,7 @@ Function:
     internally in the graphics module.
 */
 
-extern TWmoveRect( P6( INT *x1, INT *y1, INT *x2, INT *y2, INT ptx, INT pty )) ;
+extern VOID TWmoveRect( P6( INT *x1, INT *y1, INT *x2, INT *y2, INT ptx, INT pty )) ;
 /*
 Function:
     Draw ghost figure of rectangle as the user moves it on the screen.
@@ -326,7 +328,7 @@ Function:
 
 
 /********** MENU ROUTINES-USED BY SCREEN GRAPHICS ONLY ******************/
-extern INT TWcheckMouse() ;
+extern INT TWcheckMouse(P1(VOID)) ;
 /* 
 Arguments: None
 Function:
@@ -335,14 +337,14 @@ Function:
     value corresponding to the function value given in the menu file.
 */
 
-extern TWgetPt( P2( INT *x, INT *y )) ;
+extern VOID TWgetPt( P2( INT *x, INT *y )) ;
 /* 
 Function:
     Wait for user to enter point with a mouse pointer.  Returns x,y
     position of pointer when clicked in user coordinate system.
 */
 
-extern TWmessage( P1( char *message ) ) ;
+extern VOID TWmessage( P1( char *message ) ) ;
 /* 
 Function:
     Write messsage to the message window.
@@ -366,7 +368,7 @@ Function:
 */
 
 /* check to see if main window has been covered by another window */
-extern BOOL TWcheckExposure() ;
+extern BOOL TWcheckExposure(P1(VOID)) ;
 /* 
 Arguments:None 
 Function:
@@ -375,7 +377,7 @@ Function:
     User uses this knowledge for redraw of window data.
 */
 
-extern INT TWsaveState() ;
+extern INT TWsaveState(P1(VOID)) ;
 /* 
 Arguments:None 
 Function:
@@ -383,7 +385,7 @@ Function:
     the window ID which is needed in the TWinitParasite argument list.
 */
 
-extern TWrestoreState() ;
+extern VOID TWrestoreState(P1(VOID)) ;
 /* 
 Arguments:None 
 Function:
@@ -392,7 +394,7 @@ Function:
 */
 
 /* check to see if main window has been requested to change size */
-extern TWcheckReconfig() ;
+extern VOID TWcheckReconfig(P1(VOID)) ;
 /* 
 Arguments:None 
 Function:
@@ -403,7 +405,7 @@ Function:
 */
 
 
-extern TWsetFrame( P1(INT number) ) ;
+extern VOID TWsetFrame( P1(INT number) ) ;
 /* 
 Function:
     Set the dump file to the given frame number.  Valid frame numbers start
@@ -421,7 +423,7 @@ Function:
     menus.
 */
 
-extern TWforceRedraw() ;
+extern VOID TWforceRedraw(P1(VOID)) ;
 /* 
 Function:
     This function forces a redraw by sending an exposure event
@@ -429,7 +431,7 @@ Function:
     exposure events.
 */
 
-extern TWdrawString( P4(INT x, INT y, INT color, char *label ) ) ;
+extern VOID TWdrawString( P4(INT x, INT y, INT color, char *label ) ) ;
 /* 
 Function:
     Draw a string left justified from the given location.
@@ -442,13 +444,13 @@ Function:
     TW3DdrawAxis draws the x y z axis.
 */
 
-extern VOID TW3Dnormal_view() ;
+extern VOID TW3Dnormal_view(P1(VOID)) ;
 /* 
 Function:
     Turn off the 3D viewing.
 */
 
-extern VOID TW3DsetCamera() ;
+extern VOID TW3DsetCamera(P1(VOID)) ;
 /* 
 Function:
     Turn on the 3D viewing.  The view is set with the mouse.
@@ -462,13 +464,13 @@ extern VOID TW3Dperspective(P5(DOUBLE x, DOUBLE y, DOUBLE z, DOUBLE *pX, DOUBLE 
   Perform a 3D transformation.  
 */
 
-extern VOID TW3DperspectiveOn() ;
+extern VOID TW3DperspectiveOn(P1(VOID)) ;
 /* 
 Function:
     Turn on the 3D perspective.  Make things farther away smaller.
 */
 
-extern VOID TW3DperspectiveOff() ;
+extern VOID TW3DperspectiveOff(P1(VOID)) ;
 /* 
 Function:
     Turns off the 3D perspective.
@@ -481,7 +483,7 @@ Function:
     Draws a line in 3 dimensions.
 */
 
-extern INT TW3DdrawCube( P9(INT ref_num, INT x1, INT y1, INT z1,
+extern VOID TW3DdrawCube( P9(INT ref_num, INT x1, INT y1, INT z1,
     INT x2, INT y2, INT z2, INT color, char *label ) ) ;
 /* 
 Function:
@@ -506,11 +508,35 @@ Function:
     Finished arbitrary point and draws it to the screen.
 */
 
-extern TWarb_fill( P1(BOOL flag ) ) ;
+extern VOID TWarb_fill( P1(BOOL flag ) ) ;
 /*
 Function:
     If flag is true, arbitrary figures (both 2D and 3D) will be filled.
     Otherwise, no fill will be added.
 */
+
+
+/* More called functions */
+extern VOID TWsetDrawInfo( P3(INT winheight, INT winwidth, Pixmap pixmap) );
+extern Window TWgetWindowId( P2(Display *dpy, Window backwindow) ) ;
+extern BOOL TWinitMenuWindow( P1(TWMENUPTR menu_fields) ) ;
+extern XFontStruct *TWgetfont( P2(char *fname, Font *font) ) ;
+extern VOID TWdrawMenus(P1(VOID));
+extern VOID TWfreeMenuWindows(P1(VOID));
+extern VOID TWinforMenus(P1(VOID));
+extern VOID TWrect_fill( P1(BOOL flag) );
+extern BOOL TWget_arb_fill(P1(VOID));
+extern VOID TWdisableMenu( P1(INT menu_item));
+extern VOID TWenableMenu( P1(INT menu_item ));
+
+
+extern VOID TWmouse_tracking_start(P1(VOID));
+extern BOOL TWmouse_tracking_pt( P2(INT *x, INT *y) );
+extern BOOL TWmouse_tracking_end(P1(VOID));
+
+extern BOOL TWinterupt(P1(VOID));
+extern BOOL TWcheckExposure(P1(VOID));
+
+extern VOID TWtoggleColors(P1(VOID));
 
 #endif /* DRAW_H */

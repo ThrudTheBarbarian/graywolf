@@ -12,7 +12,7 @@ REVISIONS:  Nov  6, 1988 - added user delete function to delTable.
 #ifndef HASH_H
 #define HASH_H
 
-#include <yalecad/base.h>
+#include "yalecad/base.h"
 
 typedef struct ytable_rec {
     char *key ;
@@ -76,7 +76,7 @@ Function:
 */
 
 
-extern Yhash_table_delete( P2(YHASHPTR  hashtable,INT (*userdelete)() ) ) ;
+extern VOID Yhash_table_delete( P2(YHASHPTR  hashtable,INT (*userdelete)() ) ) ;
 /*
 Function:
     Frees the memory associated with a hash table. The user

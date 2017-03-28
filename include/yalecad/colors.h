@@ -39,5 +39,7 @@ extern char **TWstdcolors() ;
 /* returns the number of colors in standard color array */
 extern INT TWnumcolors() ;
 
+extern char *TWstdStipple();
+
 #endif /* COLOR_H */
 

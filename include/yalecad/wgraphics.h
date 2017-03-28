@@ -17,6 +17,8 @@ static char YwgraphicsId[] = "@(#) wgraphics.h (Yale) version 1.7 8/12/91" ;
 #endif
 
 /******** FUNCTIONS NORMALLY USED BY GRAPHIC PROGRAM USERS *********/
+extern BOOL TWinitWGraphics( P2(INT numC, char **desiredColors) );
+
 #define TWinitGraphics( argc, argv, numC, colors,menuPath,refresh_func) \
     TWinitWGraphics( numC, colors ) 
 /* 
@@ -38,6 +40,8 @@ Function:
     NOTE: In this use argc, argv, menuPath and refresh_func are ignored
 */
 
+extern VOID TWcloseWGraphics(P1(VOID));
+
 #define TWcloseGraphics()  (TWcloseWGraphics())
 /* 
 Arguments: None
@@ -46,6 +50,7 @@ Function:
     Should be performed before end of program.
 */
 
+extern VOID TWdrawWLine(P7(INT ref_num,INT x1,INT y1,INT x2,INT y2,INT color,char *label));
 
 #define TWdrawNet(ref_num, x1, y1, x2, y2, color, label ) \
 TWdrawWLine(ref_num, x1, y1, x2, y2, color, label )
@@ -66,6 +71,7 @@ Function:
     and black is 2.
     Label is optional - a label is attached to figure if non-null.
 */
+extern VOID TWdrawWRect( P7(INT ref_num,INT x1,INT y1,INT x2,INT y2,INT color,char *label));
 
 #define TWdrawCell(ref_num, x1, y1, x2, y2, color, label )\
 TWdrawWRect(ref_num, x1, y1, x2, y2, color, label )
@@ -86,6 +92,9 @@ Function:
     Label is optional - a label is attached to figure if non-null.
 */
 
+
+extern VOID TWdrawWPin(P7(INT ref_num, INT x1,INT y1,INT x2,INT y2,INT color,char*label));
+
 #define TWdrawPin(ref_num, x1, y1, x2, y2, color, label ) \
 TWdrawWPin(ref_num, x1, y1, x2, y2, color, label )
 /*
@@ -103,6 +112,8 @@ Function:
 */
 /* copy pixmap to screen and flush screen output buffer */
 
+extern VOID TWflushWFrame(P1(VOID));
+
 #define TWflushFrame()  TWflushWFrame()
 /*
 Arguments: None.
@@ -112,6 +123,8 @@ Function:
     after all TWdraws have performed.
 */
 
+extern VOID TWstartWFrame(P1(VOID));
+
 #define TWstartFrame()  TWstartWFrame()
 /*
 Arguments: None.
@@ -120,6 +133,8 @@ Function:
     This call must be made before data is written, that is
     before any TWdraws are performed for a given frame.
 */
+
+extern VOID TWsetWFrame(P1(INT number));
 
 #define TWsetFrame( frame_xz )  TWsetWFrame( frame_xz )
 /*

@@ -13,7 +13,7 @@ REVISIONS:  Thu Apr 18 00:51:06 EDT 1991 - added lock routines.
 #ifndef FILE_H
 #define FILE_H
 
-#include <yalecad/base.h>
+#include "yalecad/base.h"
 
 extern FILE *YopenFile( P3(char *filename,char *readwrite, BOOL abort ) ) ;
 /*
@@ -56,6 +56,19 @@ extern char *Yfile_slink( P1( char *pathname ) ) ;
 Function:
     Return symbolic link of a file.
 */
+
+
+/* ----------------------------------------------------------------- 
+Function:Calculate the path of a file relative to a given known 
+    file.  You can access any file in that directory and below.
+----------------------------------------------------------------- */
+extern char *Yrelpath( P2(char *known_path, char *rel_path) );
+
+/* ----------------------------------------------------------------- 
+Function :routine for correctly resolving pathnames on system
+		especially ~ and ../ in names.
+----------------------------------------------------------------- */
+extern char *Yfixpath( P2(char *given_path, BOOL fileNotDir) );
 
 #define TWOPEN( a_z, b_z, c_z )  YopenFile( a_z, b_z, c_z )
 #define TWCLOSE( a_z )           fclose( a_z )

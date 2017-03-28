@@ -15,8 +15,8 @@ REVISIONS:  Sun Dec  8 23:30:16 EST 1991 - removed indirection
 static char Ydset_h_SccsId[] = "@(#) dset.h version 1.6 3/28/92";
 #endif
 
-#include <yalecad/base.h>
-#include <yalecad/rbtree.h>
+#include "yalecad/base.h"
+#include "yalecad/rbtree.h"
 
 typedef struct ydsetrec {
     YTREEPTR dtree ;            /* rbtree holding sets */
@@ -151,7 +151,9 @@ extern INT Ydset_verify( P1(YDSETPTR set));
 /*------------------------
   Ydset_dump
   ------------------------*/
-extern Ydset_dump(P2( YDSETPTR set, VOID (*printFunc)() ) );
+extern VOID Ydset_dump(P2( YDSETPTR set, VOID (*printFunc)() ) );
+extern VOID Ydset_dump_tree(P2(YDSETPTR dset,VOID (*print_key)()));
+;
 
 #endif /* YDSET_H */
 

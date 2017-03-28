@@ -25,15 +25,18 @@ typedef struct {
 } YMBOX, *YMPTR ;
 
 extern YMPTR Ymatrix_create( P2(INT rows, INT columns ) ) ;
-extern YMPTR Ymatrix_free( P1( YMPTR mptr ) ) ;
+extern VOID Ymatrix_free( P1( YMPTR mptr ) ) ;
 extern YMPTR Ymatrix_transpose( P1( YMPTR mptr ) ) ;
 extern YMPTR Ymatrix_mult( P2(YMPTR aptr, YMPTR bptr ) ) ;
 extern YMPTR Ymatrix_sub( P2(YMPTR aptr, YMPTR bptr ) ) ;
-extern Ymatrix_disp( P1(YMPTR mptr ) ) ;
+extern VOID Ymatrix_disp( P1(YMPTR mptr ) ) ;
 extern YMPTR Ymatrix_eye( P1(INT size ) ) ;
-extern Ymatrix_zero( P1(YMPTR matrix ) ) ;
+extern VOID Ymatrix_zero( P1(YMPTR matrix ) ) ;
 extern YMPTR Ymatrix_copy( P1(YMPTR input ) ) ;
 extern YMPTR Ymatrix_linv( P1(YMPTR aptr ) ) ;
 extern YMPTR Ymatrix_cofactors( P1(YMPTR aptr ) ) ;
+
+extern BOOL Ysvd_decompose( P4(YMPTR A, YMPTR *Uret, YMPTR *Wret, YMPTR *Vret) ); 
+extern BOOL Ysvd_solve(P3(YMPTR A, YMPTR B, YMPTR *Xret ));
 
 #endif /* LINALG_H */

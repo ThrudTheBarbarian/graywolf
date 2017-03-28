@@ -8,7 +8,7 @@ REVISIONS:
 #ifndef PROGRAM_H
 #define PROGRAM_H
 
-#include <yalecad/base.h>
+#include "yalecad/base.h"
 
 extern char *YinitProgram( P3(char *name, char *version, 
     VOID  (*introTextFunction)() ) ) ;
@@ -22,7 +22,7 @@ Function:
     starts the elapsed timer.
 */
 
-extern YexitPgm( P1(INT status) ) ;
+extern VOID YexitPgm( P1(INT status) ) ;
 /* 
 Function:
     Exit a program gracefully.  It always outputs a message with

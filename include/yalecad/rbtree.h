@@ -21,7 +21,7 @@ REVISIONS:  Oct  8, 1990 - added prototypes and tree size.
 static char YrbtreeId[] = "@(#) rbtree.h version 1.20 5/22/92" ;
 #endif
 
-#include <yalecad/base.h>
+#include "yalecad/base.h"
 
 #ifndef YTREE_H_DEFS
 typedef struct tree YTREEBOX ;

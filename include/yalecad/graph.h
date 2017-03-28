@@ -12,10 +12,10 @@ REVISIONS:
 static char YgraphId[] = "@(#) Graph.h version 1.8 8/19/91";
 #endif
 
-#include <yalecad/base.h>
-#include <yalecad/deck.h>
-#include <yalecad/dset.h>
-#include <yalecad/rbtree.h>
+#include "yalecad/base.h"
+#include "yalecad/deck.h"
+#include "yalecad/dset.h"
+#include "yalecad/rbtree.h"
 
 #ifndef GRAPH_DEFINED
 typedef struct graph *YGRAPHPTR;

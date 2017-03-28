@@ -11,6 +11,10 @@ REVISIONS:
 static char Yokmalloc_HId[] = "@(#) okmalloc.h version 1.1 3/5/92" ;
 #endif
 
+#if defined(__APPLE__)
+#  define cfree(p) free((p))
+#endif
+
 /* memory definitions - for portability and ease of use */
 #ifndef MEM_DEBUG
 
@@ -79,5 +83,6 @@ extern INT YcheckDebug( P1(VOIDPTR where ) ) ;
 extern VOID Yinit_memsize( P1(INT memsize) ) ;
 extern VOID Ydump_mem( P1(void) ) ;
 extern VOID Ypmemerror( P1(char *message ) ) ;
+extern INT YgetListSize(P2(char *ptr, char *offsetPtr));
 
 #endif /* YOKMALLOC_H */

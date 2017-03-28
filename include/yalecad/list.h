@@ -12,7 +12,7 @@ REVISIONS:  Sun Nov  3 12:56:37 EST 1991 - modified from Ted.
 static char Ylist_h_SID[] = "@(#) list.h Yale Version 1.7 12/9/91" ;
 #endif
 
-#include <yalecad/base.h>
+#include "yalecad/base.h"
 
 /****************************************************************************
 

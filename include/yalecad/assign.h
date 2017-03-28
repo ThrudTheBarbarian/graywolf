@@ -13,9 +13,9 @@ REVISIONS:
 static char YassignId[] = "@(#) assign.h (Yale) version 1.3 10/9/90" ;
 #endif
 
-#include <yalecad/base.h>
-#include <yalecad/debug.h>
-#include <yalecad/message.h>
+#include "yalecad/base.h"
+#include "yalecad/debug.h"
+#include "yalecad/message.h"
 
 /* LOW MED HIGH and INFINITY are used for the cost matrix */
 #define ASSIGN_INF         1000000

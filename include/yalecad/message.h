@@ -17,7 +17,7 @@ REVISIONS:  Jan 27, 1989 - changed msg to YmsgG to denote that it is
 #ifndef MESSAGE_H
 #define MESSAGE_H
   
-#include <yalecad/base.h>
+#include "yalecad/base.h"
 
 #define MSG        0
 #define ERRMSG     1
@@ -75,7 +75,7 @@ extern char *YmsgG ;
 				 }
 
 /* message routines */
-extern Ymessage_print( P3(INT messageType, char *routine, char *message) ) ;
+extern VOID Ymessage_print( P3(INT messageType, char *routine, char *message) ) ;
 /* 
 Function:
     Print a message to screen and/or to a file.  There are the following
@@ -105,13 +105,13 @@ WARNMSG   Normal                    Written to stderr.  Warning count inc.
     YmsgG is a global pointer to a character buffer workspace.
 */
 
-extern Ymessage_warn_count() ;
+extern VOID Ymessage_warn_count() ;
 /*
 Function:
     Increment the warning count.
 */
 
-extern Ymessage_error_count() ;
+extern VOID Ymessage_error_count() ;
 /*
 Function:
     Increment the error count.
@@ -129,13 +129,13 @@ Function:
     Returns the error count.
 */
 
-extern Ymessage_init( P1(FILE *fileptr) ) ;
+extern VOID Ymessage_init( P1(FILE *fileptr) ) ;
 /*
 Function:
     Redirects the messages to the given file.
 */
 
-extern Ymessage_output( P1(char *messageString ) ) ;
+extern VOID Ymessage_output( P1(char *messageString ) ) ;
 /* 
 Function:
     Output message to screen if verbose mode has been set or
@@ -143,7 +143,7 @@ Function:
     it does nothing.  Used in the OUT macros.
 */
 
-extern Ymessage_mode( P1(INT mode) ) ;
+extern VOID Ymessage_mode( P1(INT mode) ) ;
 /* 
 Function:
     Set the message mode.  It may be one of M_VERBOSE, M_NORMAL, or
@@ -156,13 +156,13 @@ Function:
     Returns the state of the message mode switch.
 */
 
-extern Ymessage_flush() ;
+extern VOID Ymessage_flush() ;
 /* 
 Function:
     Flush the buffered output.
 */
 
-extern Ymessage_close() ;
+extern VOID Ymessage_close() ;
 /* 
 Function:
     Close the output streams.
