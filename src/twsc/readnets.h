@@ -11,11 +11,6 @@ REVISIONS:  Mar 27, 1989 - added to TimberWolfSC also added PSETBOX def.
 /* *****************************************************************
 "@(#) readnets.h (Yale) version 4.4 3/7/91"
 ***************************************************************** */
-typedef struct psetrec {
-    INT  member; /* integer for determining membership */
-    INT  path ;  /* data */
-    struct psetrec *next ;
-} PSETBOX, *PSETPTR ; /* path set record */
 
 #define yyact		NET_yyact
 #define yyback		NET_yyback
@@ -63,6 +58,7 @@ typedef struct psetrec {
 #define yyval		NET_yyval
 #define yyvstop		NET_yyvstop
 #define yywrap		NET_yywrap
+
 /* for byacc */
 #define yyrule          NET_yyrule
 #define yyname          NET_yyname
@@ -75,3 +71,18 @@ typedef struct psetrec {
 #define yysindex        NET_yysindex
 #define yylen           NET_yylen
 #define yylhs           NET_yylhs
+
+
+/* Declare prototypes if required */
+extern int yyback(P2(int *, int));
+extern int yyinput(P1(void));
+extern int yylook(P1(void));
+extern void yyoutput(P1(int));
+extern int yyracc(P1(int));
+extern int yyreject(P1(void));
+extern void yyunput(P1(int));
+extern int yylex(P1(void));
+extern int yyless(P1(int));
+extern int yywrap(P1(void));
+extern int yyparse(P1(void));
+extern int yyerror(P1(char * s));

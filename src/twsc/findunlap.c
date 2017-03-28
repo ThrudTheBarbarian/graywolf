@@ -65,12 +65,17 @@ static char SccsId[] = "@(#) findunlap.c (Yale) version 4.14 4/2/92" ;
 #endif
 #endif
 
+#include <yalecad/base.h>
+#include <yalecad/debug.h>
+#include <yalecad/random.h>
+#include <yalecad/unlap.h>
 
 #include "standard.h"
 #include "main.h"
+
 #include "groute.h"
 #include "feeds.h"
-#include <yalecad/debug.h>
+#include "findunlap.h"
 
 #define PICK_INT(l,u) (((l)<(u)) ? ((RAND % ((u)-(l)+1))+(l)) : (l))
 
@@ -88,7 +93,7 @@ extern INT *feeds_in_rowG ;
 static INT *row_lengthS ;
 static BOOL first_passS = TRUE ;
 
-findunlap(flag)
+VOID findunlap(flag)
 INT flag ;
 {
 
@@ -96,7 +101,7 @@ CBOXPTR cellptr , ptr ;
 TIBOXPTR tileptr ;
 DBOXPTR dimptr ;
 PINBOXPTR termptr , netptr ;
-INT cost , corient , last_cell , total_penalty ;
+INT cost , corient , last_cell , total_penalty = 0 ;
 INT block , cell , bin ;
 INT i , n , xwire, ywire ;
 INT bigblkx ;
@@ -146,18 +151,18 @@ for( cell = 1 ; cell <= numcellsG ; cell++ ) {
         x = termptr->txpos[ corient/2 ] + ptr->cxcenter;
 	if( flag == 2 && x != termptr->xpos ) {
 	    if( cell <= numcellsG - extra_cellsG ) {
-		printf("actual cell %d x error\n", cell );
+		printf("actual cell %d x error\n", (int)cell );
 	    } else {
-		printf("extra cell %d y error\n", cell );
+		printf("extra cell %d y error\n", (int)cell );
 	    }
 	}
         termptr->xpos = termptr->txpos[ corient/2 ] + ptr->cxcenter;
         y = termptr->typos[ corient%2 ] + ptr->cycenter;
 	if( flag == 2 && y != termptr->ypos ) {
 	    if( cell <= numcellsG - extra_cellsG ) {
-		printf("actual cell %d y error\n", cell );
+		printf("actual cell %d y error\n", (int)cell );
 	    } else {
-		printf("extra cell %d y error\n", cell );
+		printf("extra cell %d y error\n", (int)cell );
 	    }
 	}
         termptr->ypos = termptr->typos[ corient%2 ] + ptr->cycenter;
@@ -191,12 +196,12 @@ for( cell = lastpadG + 1 ; cell <= k ; cell++ ) {
     for( termptr = ptr->pins ; termptr; termptr = termptr->nextpin ){
         x = termptr->txpos[ corient/2 ] + ptr->cxcenter;
 	if( flag == 2 && x != termptr->xpos ) {
-	    printf("feed %d x error\n", cell );
+	    printf("feed %d x error\n", (int)cell );
 	}
         termptr->xpos = termptr->txpos[ corient/2 ] + ptr->cxcenter;
         y = termptr->typos[ corient%2 ] + ptr->cycenter;
 	if( flag == 2 && y != termptr->ypos ) {
-	    printf("feed %d y error\n", cell );
+	    printf("feed %d y error\n", (int)cell );
 	}
         termptr->ypos = termptr->typos[ corient%2 ] + ptr->cycenter;
         termptr->newx = 0 ;
@@ -303,9 +308,9 @@ for( pathcount = 1 ; pathcount <= numpathsG ; pathcount++ ) {
     }
 }
 
-fprintf(fpoG,"Total Wire Length - X-Component:%d\n", xwire ) ;
-fprintf(fpoG,"Total Wire Length - Y-Component:%d\n", ywire ) ;
-fprintf(fpoG,"Time Penalty:%d\n", timingcostG ) ;
+fprintf(fpoG,"Total Wire Length - X-Component:%d\n", (int)xwire ) ;
+fprintf(fpoG,"Total Wire Length - Y-Component:%d\n", (int)ywire ) ;
+fprintf(fpoG,"Time Penalty:%d\n", (int)timingcostG ) ;
 fflush(fpoG);
 
 
@@ -352,14 +357,16 @@ if( !no_row_lengthsG ) {
 	if( first_passS ) {
 	    total_penalty += ABS( delta_row_len ) ;
 	}
-	fprintf( fpoG, "%5d    %18d    %17d   %9d\n", i,
-			blklen[i] ,  delta_row_len , barrayG[i]->desire );
+	fprintf( fpoG, "%5d    %18d    %17d   %9d\n", (int)i,
+			(int)(blklen[i]),  
+			(int)delta_row_len, 
+			(int)(barrayG[i]->desire));
     }
 
     fprintf( fpoG, "\nLONGEST Block is:%d   Its length is:%d\n",
-				bigblkx , blklen[ bigblkx ] ) ;
+				(int)bigblkx , (int)(blklen[ bigblkx ]) ) ;
     if( first_passS ) {
-	fprintf( fpoG,"total penalty is %d\n", total_penalty ) ;
+	fprintf( fpoG,"total penalty is %d\n", (int)total_penalty ) ;
     }
     first_passS = FALSE ;
 }
@@ -372,7 +379,7 @@ return ;
 
 
 
-even_the_rows(flag,even_the_rows_max)
+VOID even_the_rows(flag,even_the_rows_max)
 INT flag ;
 BOOL even_the_rows_max ;
 {
@@ -580,11 +587,11 @@ return ;
 
 
 
-gate_arrayG_even_the_rows(flag)
+VOID gate_arrayG_even_the_rows(flag)
 INT flag ;
 {
 
-CBOXPTR cellptr , cellptr1 , cellptr2 , cellptr3 , cellptr4 ; 
+CBOXPTR cellptr , cellptr1 = NULL , cellptr2 = NULL , cellptr3 = NULL , cellptr4 = NULL ; 
 INT shortest , *set , i , row , tmp , w1 , w2 , w3 , w4 , error ;
 INT width1, width2, width3, width4, desire, mark, bound, new_bound ;
 INT gap , j , k , l , m, shift, index ;
@@ -809,7 +816,7 @@ return ;
 
 
 
-row_cost( long_row , short_row , width )
+INT row_cost( long_row , short_row , width )
 INT long_row , short_row , width ;
 {
 
@@ -822,13 +829,13 @@ return( cost ) ;
 
 
 
-find_last_6_moveable_cells( row, cell1, cell2, cell3, cell4, cell5, cell6) 
+VOID find_last_6_moveable_cells( row, cell1, cell2, cell3, cell4, cell5, cell6) 
 INT row ;
 INT *cell1 , *cell2 , *cell3 , *cell4 , *cell5 , *cell6 ;
 {
 
 INT i ;
-CBOXPTR cellptr ;
+CBOXPTR cellptr = NULL ;
 
 i = pairArrayG[row][0] + 1 ;
 do {
@@ -924,7 +931,7 @@ return ;
 
 
 
-find_longest_row()
+INT find_longest_row(VOID)
 {
 INT row ;
 INT num_trys ;
@@ -962,12 +969,12 @@ return(row) ;
 */
 
 
-find_shortest_row( long_row )
+INT find_shortest_row( long_row )
 INT long_row ;
 {
 INT row ;
 INT short_row_length ;
-INT slack , short_row , min_row , max_row ;
+INT slack , short_row = 0 , min_row , max_row ;
 
 if( long_row > 3 ) {
     min_row = long_row - 3 ;
@@ -991,7 +998,7 @@ return(short_row) ;
 }
 
 
-determine_unequal_rows( short_row, long_row )
+VOID determine_unequal_rows( short_row, long_row )
 INT *short_row, *long_row ;
 {
     INT row ;
@@ -1016,11 +1023,11 @@ INT *short_row, *long_row ;
 
 
 
-even_the_rows_2( iteration )
+VOID even_the_rows_2( iteration )
 INT iteration ;
 {
 
-CBOXPTR cellptr , cellptr1 , cellptr2 , cellptr3 , cellptr4 ; 
+CBOXPTR cellptr , cellptr1 = NULL , cellptr2 = NULL , cellptr3 = NULL , cellptr4 = NULL ; 
 INT shortest , *set , i , row , tmp , w1 , w2 , w3 , w4 , error ;
 INT width1, width2, width3, width4, desire, mark, bound, new_bound ;
 INT gap , j , k , l , m, shift, index ;
@@ -1255,7 +1262,7 @@ return ;
 
 
 
-check_row_length()
+INT check_row_length(VOID)
 {
 
 INT longest , row , shortest ;
@@ -1302,7 +1309,7 @@ if( gate_arrayG ) {
 
 
 
-findunlap2()
+VOID findunlap2(VOID)
 {
 
 CBOXPTR cellptr ;
@@ -1336,12 +1343,12 @@ for( i = 1 ; i <= numRowsG ; i++ ) {
     if( delta_row_len > largest_delta_row_lenG ) {
 	largest_delta_row_lenG = delta_row_len ;
     }
-    fprintf( fpoG, "%5d    %18d    %17d\n", i,
-		    blklen[i] ,  delta_row_len );
+    fprintf( fpoG, "%5d    %18d    %17d\n", (int)i,
+		    (int)(blklen[i]) ,  (int)delta_row_len );
 }
 
 fprintf( fpoG, "\nLONGEST Block is:%d   Its length is:%d\n",
-			    bigblkx , blklen[ bigblkx ] ) ;
+			    (int)bigblkx , (int)(blklen[bigblkx]) ) ;
 
 Ysafe_free( blklen ) ;
 

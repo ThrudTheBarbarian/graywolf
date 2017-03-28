@@ -53,11 +53,18 @@ static char SccsId[] = "@(#) uc0.c (Yale) version 4.6 2/23/92" ;
 #endif
 #endif
 
-#include "standard.h"
+#include <yalecad/base.h>
 #include <yalecad/debug.h>
 
+#include "standard.h"
 
-uc0( a , newaor )
+#include "dimbox.h"
+#include "graphics.h"
+#include "overlap.h"
+#include "paths.h"
+
+
+VOID uc0( a , newaor )
 INT a , newaor ;
 {
 

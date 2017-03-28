@@ -88,18 +88,40 @@ static char SccsId[] = "@(#) main.c (Yale) version 4.38 5/15/92" ;
 #endif
 
 #define MAIN_VARS  
+#include "string.h"
+#include "signal.h"
+
+#include <yalecad/base.h>
+#include <yalecad/cleanup.h>
+#include <yalecad/debug.h>
+#include <yalecad/message.h>
+#include <yalecad/program.h>
+#include <yalecad/random.h> 
+#include <yalecad/stat.h> 
+#include <yalecad/system.h> 
+
 #include "standard.h"
 #include "main.h"
-#include "groute.h"
-#include "readpar.h"
-#include "parser.h"
-#include "feeds.h"
-#include "pads.h"
 
-#include <string.h>
-#include <signal.h>
-#include <yalecad/cleanup.h>
-#include <yalecad/message.h>
+#include "cells.h"
+#include "coarseglb.h"
+#include "countf.h"
+#include "feeds.h"
+#include "findcost.h"
+#include "findunlap.h"
+#include "globe.h"
+#include "graphics.h"
+#include "groute.h"
+#include "nets.h"
+#include "out.h"
+#include "pads.h"
+#include "paths.h"
+#include "parser.h"
+#include "readblck.h"
+#include "readpar.h"
+#include "ucxxglb.h"
+#include "utemp.h"
+
 
 #include "config-build.h"
 
@@ -146,8 +168,15 @@ static INT num_feeds_addedS ;/* number of feeds added on best iteration */
 static DOUBLE ave_row_sepS ; /* the row separation for a run */
 
 
-main( argc , argv )
-INT argc ;
+static VOID syntax(P1(VOID));
+static VOID incorporate_ECOs(P1(VOID));
+static VOID init_utemp(P1(VOID));
+static VOID install_swap_pass_thrus(P1(PINBOXPTR netptr));
+static VOID initialize_global_router1(P1(VOID));
+static VOID initialize_global_router(P1(VOID));
+
+int main( argc , argv )
+int argc ;
 char *argv[] ;
 {
 
@@ -158,7 +187,6 @@ char filename[LRECL] ;
 INT ll, rr, bb, tt ;
 INT bdxlen , bdylen ;
 INT block ;
-INT yaleIntro() ;
 INT cx, cy, cl, cr, cb, ct, cell ;
 char *ptr ;
 char *Ystrclone() ;
@@ -271,7 +299,7 @@ G( initGraphics( argc, argv, windowId ) ) ;
 
 Yset_random_seed( (INT) randomSeedG ) ; 
 fprintf( fpoG, "\nThe random number generator seed is: %u\n\n\n", 
-						randomSeedG ) ;
+						(unsigned int)randomSeedG ) ;
 
 /* 
     get a pointer to blockfile
@@ -360,7 +388,7 @@ blkyspanG = tt - bb ;
 left_row_boundaryG = ll ;
 row_extentG = rr - ll ;
 
-fprintf(fpoG,"block x-span:%d  block y-span:%d\n",blkxspanG,blkyspanG);
+fprintf(fpoG,"block x-span:%d  block y-span:%d\n",(int)blkxspanG, (int)blkyspanG);
 
 for( cell = 1 ; cell <= lastpadG ; cell++ ) {
     if( cell > numcellsG - extra_cellsG && cell <= numcellsG ) {
@@ -407,13 +435,13 @@ pairArrayG = NULL ;
 
 funccostG = findcost() ;
 
-fprintf( fpoG , "bdxlen:%d  bdylen:%d\n", bdxlen , bdylen ) ;
-fprintf( fpoG , "l:%d  t:%d  r:%d  b:%d\n", ll , tt , rr , bb ) ;
+fprintf( fpoG , "bdxlen:%d  bdylen:%d\n", (int)bdxlen , (int)bdylen ) ;
+fprintf( fpoG , "l:%d  t:%d  r:%d  b:%d\n", (int)ll , (int)tt , (int)rr , (int)bb ) ;
 			    
 fprintf( fpoG, "\n\n\nTHIS IS THE ROUTE COST OF THE ");
-fprintf( fpoG, "CURRENT PLACEMENT: %d\n" , funccostG ) ;
+fprintf( fpoG, "CURRENT PLACEMENT: %d\n" , (int)funccostG ) ;
 fprintf( fpoG, "\n\n\nTHIS IS THE PENALTY OF THE ") ;
-fprintf( fpoG , "CURRENT PLACEMENT: %d\n" , penaltyG ) ;
+fprintf( fpoG , "CURRENT PLACEMENT: %d\n" , (int)penaltyG ) ;
 fflush( fpoG ) ;
 
 if( intelG && !ignore_crossbusesG ) {
@@ -447,14 +475,14 @@ if( costonlyG ) {
 
 
 fprintf( fpoG , "\nStatistics:\n");
-fprintf( fpoG , "Number of Cells: %d\n", numcellsG );
-fprintf( fpoG , "Number of Pads: %d \n", numtermsG - numpadgrpsG );
-fprintf( fpoG , "Number of Nets: %d \n", numnetsG ) ;
-fprintf( fpoG , "Number of Pins: %d \n", maxtermG ) ;
-fprintf( fpoG , "Number of PadGroups: %d \n", numpadgrpsG );
+fprintf( fpoG , "Number of Cells: %d\n", (int)numcellsG );
+fprintf( fpoG , "Number of Pads: %d \n", (int)(numtermsG - numpadgrpsG) );
+fprintf( fpoG , "Number of Nets: %d \n", (int)numnetsG ) ;
+fprintf( fpoG , "Number of Pins: %d \n", (int)maxtermG ) ;
+fprintf( fpoG , "Number of PadGroups: %d \n", (int)numpadgrpsG );
 fprintf( fpoG , "Number of Implicit Feed Thrus: %d\n",
-				implicit_feed_countG++ ) ;
-fprintf( fpoG , "Number of Feed Thrus Added: %d\n", num_feeds_addedS ) ;
+				(int)(implicit_feed_countG++) ) ;
+fprintf( fpoG , "Number of Feed Thrus Added: %d\n", (int)num_feeds_addedS ) ;
 fprintf( fpoG , "Feed Percentage: %4.2f%%\n",
     100.0 * (DOUBLE) (num_feeds_addedS * fdWidthG) /
     (DOUBLE) total_row_lengthG ) ;
@@ -476,7 +504,7 @@ YexitPgm(PGMOK);
 } /* end main */
 
 
-initialize_global_router1()
+static VOID initialize_global_router1(VOID)
 {
 
 INT cell , row ;
@@ -511,12 +539,12 @@ return ;
 }
 
 
-initialize_global_router()
+static VOID initialize_global_router(VOID)
 {
 
 CBOXPTR ptr ;
-PINBOXPTR pinptr, pin, cnetptr , netptr ;
-INT cell , row , net ;
+PINBOXPTR pinptr, pin ;
+INT cell , row ;
 BOOL coreConnection ;
 
 
@@ -591,17 +619,16 @@ return ;
 }
 
 
-execute_global_router()
+VOID execute_global_router(VOID)
 {
 
 PINBOXPTR netptr ;
 INT i , j, row ;
 INT loop_boundary ;
-INT temp ;
 INT core_height ;
 INT core_width ;
 INT total_row_height ;
-INT best_tracks ;
+INT best_tracks = 0 ;
 DOUBLE area ;
 DOUBLE best_area ;
 BOOL decision ;
@@ -611,7 +638,7 @@ char command[LRECL] ;
 if( gate_arrayG && vertical_track_on_cell_edgeG ) {
     findunlap(0) ;
     fprintf(fpoG,"Removed %d redundant implicit feeds\n",
-				rm_overlapping_feeds() ) ;
+				(int)(rm_overlapping_feeds()) ) ;
 }
 
 loop_boundary = 4 ;
@@ -721,7 +748,7 @@ for( j = 1 ; j <= routing_loopS ; j++ ) {
     if( j == routing_loopS || j == loop_boundary ) {
 	absolute_minimum_feedsG = TRUE ;
     } else {
-	absolute_minimum_feedsG = save_abs_min_flagG ;
+	absolute_minimum_feedsG = (BOOL)save_abs_min_flagG ;
     }
     if( j <= loop_boundary ) {
 	if( call_row_evenerG ){
@@ -778,10 +805,9 @@ for( j = 1 ; j <= routing_loopS ; j++ ) {
     if( decision ) {
 	fprintf(fpoG,"THIS G. ROUTING IS BEING SAVED AS BEST SO FAR\n");
 	fprintf(fpoG,"\nFINAL NUMBER OF ROUTING TRACKS: %d\n\n", 
-						    tracksG);
+						    (int)tracksG);
 	for( i = 1 ; i <= numChansG ; i++ ) {
-	    fprintf(fpoG,"MAX OF CHANNEL:%3d  is: %3d\n", i 
-					    , maxTrackG[i]);
+	    fprintf(fpoG,"MAX OF CHANNEL:%3d  is: %3d\n", (int)i, (int)maxTrackG[i]);
 	}
 	outpins() ;
 	output() ;
@@ -798,13 +824,11 @@ for( j = 1 ; j <= routing_loopS ; j++ ) {
     USER_INCR_METER() ;
 }
 fprintf(fpoG,"\n\n***********************************************\n");
-fprintf(fpoG,"*ACTUAL* FINAL NUMBER OF ROUTING TRACKS: %d\n", 
-						    best_tracks);
+fprintf(fpoG,"*ACTUAL* FINAL NUMBER OF ROUTING TRACKS: %d\n", (int)best_tracks);
 fprintf(fpoG,"***********************************************\n\n");
 fflush(fpoG);
 fprintf(stdout,"\n\n***********************************************\n");
-fprintf(stdout,"*ACTUAL* FINAL NUMBER OF ROUTING TRACKS: %d\n", 
-						    best_tracks);
+fprintf(stdout,"*ACTUAL* FINAL NUMBER OF ROUTING TRACKS: %d\n", (int)best_tracks);
 fprintf(stdout,"***********************************************\n\n");
 fflush(stdout);
 
@@ -816,7 +840,7 @@ return ;
 
 
 
-init_utemp()
+static VOID init_utemp(VOID)
 {
 
 INT row , bin ;
@@ -836,7 +860,7 @@ return ;
 
 
 
-install_swap_pass_thrus( netptr )
+static VOID install_swap_pass_thrus( netptr )
 PINBOXPTR netptr ;
 {
 
@@ -886,7 +910,7 @@ if( impypos > 0 ) { /* swap the pinnames */
 return ;
 }
 
-incorporate_ECOs()
+static VOID incorporate_ECOs(VOID)
 {
 
 PINBOXPTR termptr , netptr ;
@@ -989,8 +1013,8 @@ for( cell = 1 ; cell <= numcellsG ; cell++ ) {
 	carrayG[cell]->cblock   = row   ;
 	carrayG[cell]->ECO_flag = 0     ;
 
-	printf(" ... placed in row:%d x:%d\n", row , xspot ) ;
-	fprintf(fpoG," ... placed in row:%d x:%d\n", row , xspot ) ;
+	printf(" ... placed in row:%d x:%d\n", (int)row , (int)xspot ) ;
+	fprintf(fpoG," ... placed in row:%d x:%d\n", (int)row , (int)xspot ) ;
 
 	orient = carrayG[cell]->corient ;
 	for( termptr = carrayG[cell]->pins ; termptr ; 
@@ -1006,7 +1030,7 @@ return ;
 
 
 /* give user correct syntax */
-syntax()
+static VOID syntax(VOID)
 {
    M(ERRMSG,NULL,"\n" ) ; 
    M(MSG,NULL,"Incorrect syntax.  Correct syntax:\n");

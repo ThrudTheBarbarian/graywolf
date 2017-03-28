@@ -66,16 +66,29 @@ static char SccsId[] = "@(#) utemp.c (Yale) version 4.19 4/5/92" ;
 #endif
 #endif
 
+#include <yalecad/base.h>
+#include <yalecad/debug.h>
+#include <yalecad/message.h>
+#include <yalecad/program.h>
+#include <yalecad/quicksort.h>
 
 #include "standard.h"
 #include "main.h"
-#include "groute.h"
-#include "ucxxglb.h"
-#include "readpar.h"
-#include "parser.h"
 
-#include <yalecad/message.h>
-#include <yalecad/debug.h>
+#include "findunlap.h"
+#include "graphics.h"
+#include "groute.h"
+#include "out.h"
+#include "parser.h"
+#include "paths.h"
+#include "readpar.h"
+#include "savewolf.h"
+#include "sort.h"
+#include "ucxxglb.h"
+#include "uloop.h"
+#include "upair.h"
+#include "utemp.h"
+
 
 /* global variables */
 INT moveable_cellsG ;
@@ -96,15 +109,15 @@ extern DOUBLE finalRowControlG ;
 extern DOUBLE initialRowControlG ;
 extern DOUBLE ratioG;
 
-INT comparex() ;
-INT compute_attprcel() ;
+static VOID from_middle(P1(VOID));
+static VOID from_beginning(P1(VOID));
+static INT compute_attprcel(P1(INT flag));
 
-utemp()
+VOID utemp(VOID)
 {
 
 INT check ;
-unsigned i2 ;
-INT i , freeze ;
+INT freeze ;
 
 
 if( orientation_optimizationG ) {
@@ -185,7 +198,7 @@ for( ; ; ) {
 	     */
 	    M( MSG, NULL,"Removed the cell overlaps --- ");
 	    M( MSG, NULL,"Will do neighbor interchanges only now\n");
-	    sprintf( YmsgG, "\nTOTAL INTERCONNECT LENGTH: %d\n",funccostG);
+	    sprintf( YmsgG, "\nTOTAL INTERCONNECT LENGTH: %d\n",(int)funccostG);
 	    M( MSG, NULL, YmsgG ) ;
 	    sprintf(YmsgG,"initialRowControl:%8.3f\n", initialRowControlG);
 	    M( MSG, NULL, YmsgG ) ;
@@ -214,7 +227,7 @@ for( ; ; ) {
 	/* if we aren't dumping everything to the screen */
 	/* show iteration number */
 	USER_INCR_METER() ;
-	printf("%3d ", iterationG );
+	printf("%3d ", (int)iterationG );
 	if( iterationG % 15 == 0 ) {
 	    printf("\n");
 	}
@@ -232,14 +245,14 @@ for( ; ; ) {
 	    findunlap(0) ;
 	    output() ; 
 	}
-	sprintf(YmsgG,"FINAL TOTAL INTERCONNECT LENGTH: %d\n",funccostG);
+	sprintf(YmsgG,"FINAL TOTAL INTERCONNECT LENGTH: %d\n",(int)funccostG);
 	M( MSG, NULL, YmsgG ) ;
-	sprintf(YmsgG,"FINAL OVERLAP PENALTY: %d    ", penaltyG );
+	sprintf(YmsgG,"FINAL OVERLAP PENALTY: %d    ", (int)penaltyG );
 	M( MSG, NULL, YmsgG ) ;
 	sprintf(YmsgG, "FINAL VALUE OF TOTAL COST IS: %d\n", 
-					    funccostG + penaltyG ) ;
+					    (int)(funccostG + penaltyG) ) ;
 	M( MSG, NULL, YmsgG ) ;
-	sprintf(YmsgG,"MAX NUMBER OF ATTEMPTED FLIPS PER T:%8d\n",attmaxG);
+	sprintf(YmsgG,"MAX NUMBER OF ATTEMPTED FLIPS PER T:%8d\n",(int)attmaxG);
 	M( MSG, NULL, YmsgG ) ;
 	break ;
     } 
@@ -247,7 +260,7 @@ for( ; ; ) {
 return ;
 }
 
-from_middle()
+static VOID from_middle(VOID)
 {
 
     init_control(-1);		/* set move generation controller. */
@@ -256,16 +269,20 @@ from_middle()
     M( MSG, NULL, "\nIter T        fds    Wire     Penal  Time  P_lim ");
     M( MSG, NULL, " err binC rowC  timeC  s/p  rej. Acc.\n");
     sprintf(YmsgG,"%3d: %6.2le %6ld %-8ld %-6ld %-6ld",
-	iterationG++,0.0,0,funccostG,rowpenalG,timingcostG);
+		(int)(iterationG++),0.0,
+		(long)0,
+		(long)(funccostG),
+		(long)(rowpenalG),
+		(long)(timingcostG));
     M( MSG, NULL, YmsgG ) ;
     sprintf(YmsgG,"%6ld %4.2lf %4.2lf %5.2lf %4.2lf %4.2lf %4.2lf %5.3lf\n",
-	P_limitG,0.0,binpenConG,roLenConG,timeFactorG,0.0,0.0,ratioG);
+		(long)P_limitG,0.0,binpenConG,roLenConG,timeFactorG,0.0,0.0,ratioG);
     M( MSG, NULL, YmsgG ) ;
     fflush(fpoG);
 }
 
 
-from_beginning()
+static VOID from_beginning(VOID)
 {
 
     init_uloop();
@@ -292,18 +309,22 @@ from_beginning()
 	M( MSG, NULL, " err binC  rowC timeC  s/p  rej. Acc. Vwt\n");
     }
     sprintf(YmsgG,"%3d: %6.2le %6ld %-8ld %-6ld %-8ld",
-	iterationG++,0.0,0,funccostG,rowpenalG,timingcostG );
+		(int)(iterationG++),0.0,
+		(long)0,
+		(long)funccostG,
+		(long)rowpenalG,
+		(long)timingcostG );
     M( MSG, NULL, YmsgG ) ;
     sprintf(YmsgG,"%6ld %4.2lf %4.2lf %5.2lf %5.2lf %4.2lf %4.2lf %5.3lf\n",
-	P_limitG,0.0,binpenConG,roLenConG,timeFactorG,0.0,0.0,ratioG);
+		(long)P_limitG,0.0,binpenConG,roLenConG,timeFactorG,0.0,0.0,ratioG);
     M( MSG, NULL, YmsgG ) ;
     fflush(fpoG);
 }
 
-INT compute_attprcel(flag)
+static INT compute_attprcel(flag)
 INT flag;
 {
-    INT cell, n;
+    INT n;
 
     /* 1 March 1990 by Carl
     if( gate_array ) {
@@ -349,7 +370,7 @@ INT flag;
     return(n);
 }
 
-rm_overlapping_feeds()
+INT rm_overlapping_feeds(VOID)
 {
 
 INT row , cell , *rowptr , target ;
@@ -398,7 +419,7 @@ return( num_deleted ) ;
 
 
 
-route_only_critical_nets() 
+VOID route_only_critical_nets(VOID) 
 {
 
 GLISTPTR pptr ;       /* pointer to paths of a cell */
@@ -429,7 +450,7 @@ return ;
 
 
 
-elim_nets(print_flag)
+VOID elim_nets(print_flag)
 INT print_flag ;
 {
 
@@ -457,7 +478,7 @@ for( net = 1 ; net <= numnetsG ; net++ ) {
 	    pinptr = carrayG[cell]->pins ;
 	    if( pinptr == NULL ) {
 		/* this should never occur WPS */
-		sprintf( YmsgG, "cell:%d pinlist is null\n", cell ) ;
+		sprintf( YmsgG, "cell:%d pinlist is null\n", (int)cell ) ;
 		M( ERRMSG, "elim_nets", YmsgG ) ;
 		continue ;
 	    }
@@ -490,19 +511,19 @@ return ;
 
 
 
-refine_fixed_placement()
+INT refine_fixed_placement(VOID)
 {
 
 CBOXPTR cellptr , cellptr1 ;
 PINBOXPTR termptr ;
-INT *rowptr , *rowptr1 , *rowptr2 , **p_array , *p_rowptr ;
+INT *rowptr , **p_array , *p_rowptr ;
 INT *spacer_list, *moveable_list, *next_limit, *next_index, *filled_to ;
 INT slack, row, last_index, i, index, count , limit ;
-INT cells_in_row, target, last_cell, ok, min, save_row ;
-INT save_m, min_slack, m, all_l_fit, cell, first_index, prev_cell ;
-INT success , filled_to_edge , target_edge , width , gap , shift ;
+INT cells_in_row, target, last_cell ;
+INT save_m, m, cell, first_index, prev_cell ;
+INT filled_to_edge , target_edge , width , gap , shift ;
 INT block, start, end, max_row_length , right_boundary ;
-DOUBLE scale ;
+DOUBLE scale = 0.0;
 
 
 next_limit = (INT *) Ysafe_malloc( (1 + numRowsG) * sizeof(INT) ) ;
@@ -800,7 +821,7 @@ for( row = 1 ; row <= numRowsG ; row++ ) {
     }
 }
 sprintf(YmsgG,"\nActually added %d gate array spacers\n",
-			extra_cellsG - spacer_list[0] ) ;
+			(int)(extra_cellsG - spacer_list[0]) ) ;
 M( MSG, NULL, YmsgG ) ;
 /* nullify the other nonused spacer cells */
 last_index = spacer_list[0] ; 

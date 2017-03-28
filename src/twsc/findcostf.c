@@ -58,13 +58,19 @@ static char SccsId[] = "@(#) findcostf.c (Yale) version 4.18 4/2/92" ;
 #endif
 #endif
 
-#include "standard.h"
-#include "groute.h"
-#include "config.h"
-#include "parser.h"
-#include "feeds.h"
-#include "main.h"
+#include <yalecad/base.h>
 #include <yalecad/debug.h>
+#include <yalecad/random.h>
+
+#include "standard.h"
+#include "main.h"
+
+#include "config.h"
+#include "feeds.h"
+#include "findcostf.h"
+#include "groute.h"
+#include "parser.h"
+
 
 #define PICK_INT(l,u) (((l)<(u)) ? ((RAND % ((u)-(l)+1))+(l)) : (l))
 
@@ -78,11 +84,9 @@ static INT cluster_norm_offsetS = 0 ;
 static INT **cluster_configS ;
 
 /* forward declarations */
-static void installf();
-INT recompute_wirecost() ;
-INT recompute_timecost() ;
+static VOID installf(VOID);
 
-findcostf()
+INT findcostf(VOID)
 {
 TIBOXPTR tileptr1 ;
 CBOXPTR cellptr1 ;
@@ -237,7 +241,7 @@ return( cost ) ;
 
 
 
-static void installf()
+static VOID installf(VOID)
 {
 
 int row , n , i , bin , diff , extra , stop , tmp ;
@@ -245,7 +249,7 @@ int c_limit , num_trys , cell_num ;
 INT *c_ptr ;
 
 for( row = 1 ; row <= numRowsG ; row++ ) {
-    tmp = feeds_in_rowG[row] * fdWidthG ;
+    tmp = (int)(feeds_in_rowG[row] * fdWidthG) ;
     if( tmp > barrayG[row]->orig_desire ) {
 	barrayG[row]->oldsize = barrayG[row]->orig_desire ;
     } else {
@@ -255,7 +259,7 @@ for( row = 1 ; row <= numRowsG ; row++ ) {
 
 
 for( row = 1 ; row <= numRowsG ; row++ ) {
-    n = feeds_in_rowG[row] ;
+    n = (int)feeds_in_rowG[row] ;
     if( n < 1 ) {
 	for( bin = 0 ; bin <= numBinsG ; bin++ ) {
 	    bin_configG[row][bin] = 0 ;
@@ -267,7 +271,7 @@ for( row = 1 ; row <= numRowsG ; row++ ) {
     }
     extra = 0 ;
     if( old_numBinS > numBinsG ) {
-	for( bin = numBinsG + 1 ; bin <= old_numBinS ; bin++ ) {
+	for( bin = (int)(numBinsG + 1) ; bin <= old_numBinS ; bin++ ) {
 	    if( bin_configG[row][bin] == 1 ) {
 		extra++ ;
 		bin_configG[row][bin] = 0 ;
@@ -275,9 +279,9 @@ for( row = 1 ; row <= numRowsG ; row++ ) {
 	}
     }
     if( n < bin_configG[row][0] - extra ) {
-	diff = bin_configG[row][0] - extra - n ;
+	diff = (int)(bin_configG[row][0] - extra - n) ;
         for( i = 0 ; i < diff ; ) {
-	    bin = PICK_INT( 1 , numBinsG ) ;
+	    bin = (int)PICK_INT( 1 , numBinsG ) ;
 	    if( bin_configG[row][bin] == 0 ) {
 	        continue ;
 	    }
@@ -286,17 +290,17 @@ for( row = 1 ; row <= numRowsG ; row++ ) {
 	}
 	bin_configG[row][0] = n ;
     } else if( n > bin_configG[row][0] - extra ) {
-	diff = n - (bin_configG[row][0] - extra) ;
+	diff = (int)(n - (bin_configG[row][0] - extra)) ;
         for( i = 0, num_trys = 0 ; i < diff ; ) {
 	    if( ++num_trys > 30 * diff ) {
 		break ;
 	    }
-	    bin = PICK_INT( 1 , numBinsG ) ;
+	    bin = (int)PICK_INT( 1 , numBinsG ) ;
 	    if( bin_configG[row][bin] == 1 ) {
 	        continue ;
 	    }
 	    c_ptr = binptrG[row][bin]->cell ;
-	    c_limit = c_ptr[0] ;
+	    c_limit = (int)c_ptr[0] ;
 	    stop = 0 ;
 	    for( cell_num = 1 ; cell_num <= c_limit ; cell_num++ ) {
 		if( carrayG[ c_ptr[cell_num] ]->cclass < 0 ) {
@@ -330,7 +334,7 @@ return;
 
 
 
-install_clusters()
+VOID install_clusters(VOID)
 {
 
 INT row , n , i , bin , i_error , delta_bin , length_in_row , cell ;
@@ -339,7 +343,7 @@ INT total_actual_clusters ;
 DOUBLE error , n_DOUBLE , cluster_norm ;
 
 fprintf(fpoG,"total number of clusters which should be added in: %d\n",
-			num_clustersG ) ;
+			(int)num_clustersG ) ;
 total_actual_clusters = 0 ;
 
 cluster_configS = (INT **) Ysafe_malloc((1 + numRowsG) * sizeof(INT *)) ;
@@ -414,7 +418,7 @@ for( row = 1 ; total < num_clustersG && row <= numRowsG ; row++ ) {
 	cluster_configS[row][bin]++ ;
     }
 
-    fprintf(fpoG,"Number of clusters added to row:%d was:%d\n", row,i);
+    fprintf(fpoG,"Number of clusters added to row:%d was:%d\n", (int)row,(int)i);
     total_actual_clusters += i ;
     for( bin = 1 ; bin <= numBinsG ; bin++ ) {
 	if( cluster_configS[row][bin] >= 1 ) {
@@ -424,7 +428,7 @@ for( row = 1 ; total < num_clustersG && row <= numRowsG ; row++ ) {
     }
 }
 fprintf(fpoG,"actual total number of clusters which were added in: %d\n",
-			total_actual_clusters ) ;
+			(int)total_actual_clusters ) ;
 return;
 } /* end install_clusters */
 
@@ -432,7 +436,7 @@ return;
 
 
 
-place_clusters()
+VOID place_clusters(VOID)
 {
 
 INT bin , cell , row , c , count ;
@@ -458,7 +462,7 @@ return ;
 }
 
 /* **************************************************************** */
-INT recompute_wirecost()
+INT recompute_wirecost(VOID)
 {
     INT n ;
     INT x, y ;
@@ -495,7 +499,8 @@ INT recompute_wirecost()
 	if( dimptr->ignore == 1 ){
 	    continue ;
 	}
-	if( netptr = dimptr->pins ) {
+	/* Use ((...)) to avoid assignment as a condition warning */
+	if(( netptr = dimptr->pins )) {
 	    dimptr->xmin = dimptr->xmax = netptr->xpos ;
 	    dimptr->ymin = dimptr->ymax = netptr->ypos ;
 	    dimptr->Lnum = dimptr->Rnum = 1 ;
@@ -547,7 +552,7 @@ INT recompute_wirecost()
 } /* end recompute_wirecost */
 
 
-INT recompute_timecost()
+INT recompute_timecost(VOID)
 {
 
 INT pathcount ;

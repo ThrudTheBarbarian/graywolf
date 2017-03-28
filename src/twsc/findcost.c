@@ -68,14 +68,25 @@ static char SccsId[] = "@(#) findcost.c (Yale) version 4.18 4/2/92" ;
 #define MAXNUMPINS    100		/* WPS */
 /* #define MITLL */
 
-#include "standard.h"
-#include "groute.h"
-#include "main.h"
-#include "config.h"
-#include "readpar.h"
-#include "parser.h"
+#include <yalecad/base.h>
 #include <yalecad/debug.h>
 #include <yalecad/message.h>
+
+#include "standard.h"
+#include "main.h"
+
+#include "config.h"
+#include "countf.h"
+#include "dimbox.h"
+#include "findcost.h"
+#include "findcostf.h"
+#include "groute.h"
+#include "out.h"
+#include "pads.h"
+#include "parser.h"
+#include "readpar.h"
+#include "savewolf.h"
+#include "sort.h"
 
 /* global variables */
 INT minxspanG ;
@@ -92,15 +103,16 @@ static INT iwireS ;
 static INT iwirexS ;
 static INT iwireyS ;
 static INT print_pinS = 0 ;
-static spread_equal_cells();
-static spread_cells();
 
-findcost()
+static VOID spread_equal_cells(VOID);
+static VOID spread_cells(VOID);
+
+INT findcost(VOID)
 {
 INT block , bin ;
 FILE *fp ;
-TIBOXPTR tile , tileptr1 ;
-CBOXPTR cellptr1 , ptr ;
+TIBOXPTR tile ;
+CBOXPTR ptr ;
 DBOXPTR dimptr ;
 PINBOXPTR netptr , termptr ;
 BINPTR bptr ;
@@ -108,9 +120,8 @@ char filename[256] ;
 INT left , right , corient , val ;
 INT LoBin , HiBin ;
 INT cell , net , blk ;
-INT startx , endx ;
 INT x , y , t , cost=0 ;
-INT temp , n , k , cbin ;
+INT temp , n ;
 INT sum, npins ;
 INT net_pin_num[ MAXNUMPINS + 1 ] , *adjust_left ;
 DOUBLE deviation ;
@@ -238,8 +249,8 @@ if(!(Equal_Width_CellsG)){
     }
 }
 
-fprintf( fpoG , "numBinsG automatically set to:%d\n", numBinsG);
-fprintf( fpoG , "binWidthG = %d\n",binWidthG ) ;
+fprintf( fpoG , "numBinsG automatically set to:%d\n", (int)numBinsG);
+fprintf( fpoG , "binWidthG = %d\n",(int)binWidthG ) ;
 fprintf( fpoG , "average_cell_width is:%g\n",mean_widthG ) ;
 fprintf( fpoG , "standard deviation of cell length is:%g\n",
 		deviation ) ;
@@ -247,8 +258,8 @@ if( gate_arrayG ) {
     cells_per_clusterG = 1 ;
     num_clustersG = extra_cellsG / cells_per_clusterG ;
     cluster_widthG = cells_per_clusterG * spacer_widthG ;
-    fprintf(fpoG,"\nAdded %d spacer clusters to the gate array\n", num_clustersG);
-    fprintf(fpoG,"cluster width: %d\n", cluster_widthG ) ;
+    fprintf(fpoG,"\nAdded %d spacer clusters to the gate array\n", (int)num_clustersG);
+    fprintf(fpoG,"cluster width: %d\n", (int)cluster_widthG ) ;
 } else {
     num_clustersG = 0 ;
 }
@@ -374,7 +385,7 @@ for( net = 1 ; net <= numnetsG ; net++ ) {
 }
 
 fprintf( fpoG, "\n\n\nTHIS IS THE ROUTE COST OF THE ");
-fprintf( fpoG, "ORIGINAL PLACEMENT: %d\n" , cost ) ;
+fprintf( fpoG, "ORIGINAL PLACEMENT: %d\n" , (int)cost ) ;
 
 /* @@@@@@@@@@@@@@@@@@@@@@ calculation end @@@@@@@@@@@@@@@@@@@@ */ 
 
@@ -413,8 +424,10 @@ iwireyS = 0 ;
 
 for( net = 1 ; net <= numnetsG ; net++ ) {
     dimptr =  netarrayG[ net ] ;
-    if( netptr = dimptr->pins ) {
-	while( carrayG[netptr->cell]->ECO_flag ) {
+ 	/* use ((...)) to avoid assignment as condition warning */
+    if(( netptr = dimptr->pins )) {
+	/* use ((...)) to avoid assignment as condition warning */
+	while(( carrayG[netptr->cell]->ECO_flag )) {
 	    fprintf(fpoG,"ECO pin skipped for net <%s>\n",
 			netarrayG[netptr->net]->name ) ;
 	    netptr = netptr->next ;
@@ -487,7 +500,7 @@ for( net = 1 ; net <= numnetsG ; net++ ) {
     dimptr->halfPy = dimptr->newhalfPy = dimptr->ymax - dimptr->ymin ;
     cost = cost + (INT)( vertical_wire_weightG * (DOUBLE) dimptr->halfPy ) ;
     D( "twsc/findcost",
-	fprintf( fpoG, "net:%5d cum cost:%10d\n", net, cost ) ;
+	fprintf( fpoG, "net:%5d cum cost:%10d\n", (int)net, (int)cost ) ;
 	fflush( fpoG ) ;
     ) ;
 
@@ -508,11 +521,11 @@ for( net = 1 ; net <= numnetsG ; net++ ) {
 	if( dimptr->ignore == 1 ) {
 	    sprintf(YmsgG,
 		"IGNORED Net <%s> has %d pins\n", dimptr->name, 
-		dimptr->numpins ) ;
+		(int)(dimptr->numpins) ) ;
 	} else {
 	    sprintf(YmsgG,
 		"Net <%s> has %d pins\n", dimptr->name, 
-		dimptr->numpins ) ;
+		(int)(dimptr->numpins) ) ;
 	}
 	M( WARNMSG, "findcost", YmsgG ) ;
 	fprintf( fpoG, "WARNING[findcost]:%s", YmsgG ) ;
@@ -522,12 +535,12 @@ for( net = 1 ; net <= numnetsG ; net++ ) {
     if( print_pinS ){
 	if( dimptr->numpins == print_pinS ){
 	    fprintf( fpoG, "A net with %d pin[s]:net%d - %s\n" , 
-		print_pinS, net, netarrayG[net]->name ) ;
+		(int)print_pinS, (int)net, netarrayG[net]->name ) ;
 	    for( termptr=dimptr->pins;termptr;termptr=termptr->next){
 		cell = termptr->cell ;
 		pinname = find_layer( termptr->pinname, &layer ) ;
 		fprintf( fpoG, "\tpinname:%s cellname:%s cellnum:%d\n",
-		    pinname, carrayG[cell]->cname, cell ) ;
+		    pinname, carrayG[cell]->cname, (int)cell ) ;
 	    }
 	}
     }
@@ -548,18 +561,18 @@ sum = npins = 0 ;
 for( n = 1 ; n < MAXNUMPINS ; n++ ) {
     if( net_pin_num[ n ] ){
 	fprintf( fpoG, "The number of nets with %d pins is %d\n",
-		 n , net_pin_num[ n ] ) ;
+		 (int)n , (int)(net_pin_num[ n ]) ) ;
     }
     sum += n * net_pin_num[ n ] ;
     npins += net_pin_num[ n ] ;
 }
 
 fprintf( fpoG, "The number of nets with %d pins or more is %d\n",
-	    MAXNUMPINS, net_pin_num[ MAXNUMPINS ] ) ;
+	    (int)MAXNUMPINS, (int)(net_pin_num[ MAXNUMPINS ]) ) ;
 fprintf( fpoG, "Average number of pins per net = %f\n",
 	    (DOUBLE) sum / (DOUBLE) npins ) ;
 fprintf( fpoG, "The maximum number of pins on a single net is:%d\n",
-	    maxpinS ) ;
+	    (int)maxpinS ) ;
 
 binpenalG = 0 ;
 rowpenalG = 0 ;
@@ -713,10 +726,10 @@ feeds_in_rowG = (INT *) Ysafe_calloc( 1+numRowsG,sizeof(INT) );
 return( cost ) ;
 } /* end findcost */
 
-static spread_equal_cells()
+static VOID spread_equal_cells(VOID)
 {
 
-FILE *tp ;
+FILE *tp = NULL ;
 CBOXPTR cellptr1 ;
 TIBOXPTR tileptr1 ;
 INT bin, cell ;
@@ -763,7 +776,7 @@ for( cell = 1 ; cell <= numcellsG - extra_cellsG ; cell++ ) {
       D( "equal_width_cells",
 	fprintf(tp,
 	    "\nCell#=%3d -- Block#=%d adjusted into Bin#=%2d x_cxenter=%4d  cxcenter=%4d",
-	    cell, block, cbin, x_cxcenter, cellptr1->cxcenter);
+	    (int)cell, (int)block, (int)cbin, (int)x_cxcenter, (int)(cellptr1->cxcenter));
       ) ;
 
     } else { /*-- throw the cell into an empty bin --*/
@@ -779,7 +792,7 @@ for( cell = 1 ; cell <= numcellsG - extra_cellsG ; cell++ ) {
 		 D( "equal_width_cells",
 		    fprintf(tp,
 		    "\nCell#=%3d -- Block#=%d placed into Bin#=%2d x_cxenter=%4d  cxcenter=%4d",
-		    cell, block, bin, x_cxcenter, cellptr1->cxcenter);
+		    (int)cell, (int)block, (int)bin, (int)x_cxcenter, (int)(cellptr1->cxcenter));
 		) ;
 		BIN_FOUND = TRUE ;
 		break ;
@@ -806,7 +819,7 @@ D( "equal_width_cells",
 
 
 
-static spread_cells()
+static VOID spread_cells(VOID)
 {
 
 INT bin, cell ;
@@ -862,7 +875,7 @@ for( cell = 1 ; cell <= numcellsG - extra_cellsG ; cell++ ) {
 
   
 
-create_cell( )
+VOID create_cell(VOID)
 { 
 
 FILE *fpr ;
@@ -887,12 +900,15 @@ if( cellwidth != cellwidth / 2 * 2 ) {
 for( cell = 1 ; cell <= numcellsG - extra_cellsG ; cell++ ) {
     ptr = carrayG[ cell ] ;
     tile = ptr->tileptr ;
-    fprintf( fpr, "\ncell %d %s\n", cell , ptr->cname ) ;
+    fprintf( fpr, "\ncell %d %s\n", (int)cell , ptr->cname ) ;
     distance = j++ * cellwidth ;
     fprintf( fpr , "initially nonfixed %d from left of block %d\n",
-	     distance , block ) ;
+	     (int)distance , (int)block ) ;
     fprintf( fpr , "left %d right %d bottom %d top %d\n" ,
-	 -cellwidth / 2, cellwidth / 2 , tile->bottom , tile->top ) ;
+	 (int)(-cellwidth / 2), 
+	 (int)(cellwidth / 2) , 
+	 (int)(tile->bottom) , 
+	 (int)(tile->top) ) ;
     n = 0 ;
     for( pin = ptr->pins ; pin ; pin = pin->nextpin ){
 	n++ ;
@@ -903,21 +919,25 @@ for( cell = 1 ; cell <= numcellsG - extra_cellsG ; cell++ ) {
 	pin_pos = ( ++n ) * pinsep - cellwidth / 2  ;
 
 	fprintf( fpr, "pin name %d signal %s %d %d\n", 
-		 2*pin->terminal, 
+		 (int)(2*pin->terminal), 
 		 netarrayG[pin->net]->name,
-		 pin_pos , tile->top ) ;
+		 (int)pin_pos , 
+		 (int)(tile->top) ) ;
 	fprintf( fpr , "equiv name %d %d %d\n", 
-		 2*pin->terminal + 1 ,pin_pos ,
-		 -tile->top ) ;
+		 (int)(2*pin->terminal + 1) ,
+		 (int)pin_pos ,
+		 (int)(-tile->top) ) ;
 
 	pin_pos = ( ++n ) * pinsep - cellwidth / 2  ;
 
 	fprintf( fpr, "pin name %d signal TW_PASS_THRU %d %d\n",
-		 2 * ( maxtermG + ++count ) , pin_pos ,
-						 tile->top );
+		 (int)(2 * ( maxtermG + ++count )), 
+		 (int)pin_pos ,
+		 (int)(tile->top) );
 	fprintf( fpr, "equiv name %d %d %d\n",
-		     2 * ( maxtermG + count ) + 1 , pin_pos ,
-						     -tile->top);
+		     (int)(2 * ( maxtermG + count ) + 1), 
+		     (int)pin_pos ,
+			 (int)(-tile->top));
     }
 
     if( distance >= barrayG[block]->blength && block != numRowsG ) {
@@ -934,7 +954,7 @@ exit( 0 ) ;
 
 
 
-find_net_sizes()
+VOID find_net_sizes(VOID)
 {
 
 PINBOXPTR netptr ;
@@ -988,7 +1008,7 @@ for( i = 2 ; i <= limit ; i++ ) {
     }
     fprintf(fpoG,
 	"Percentage of Nets Connecting to at least %d cells:%4.2f\n",
-			    i , (DOUBLE) total / (DOUBLE) num_nets ) ;
+			    (int)i , (DOUBLE) total / (DOUBLE) num_nets ) ;
 }
 fprintf(fpoG,"\n");
 fflush(fpoG) ;
@@ -999,12 +1019,12 @@ Ysafe_free(  num_nets_of_size ) ;
 return ;
 }
 
-get_max_pin()
+INT get_max_pin(VOID)
 {
     return( maxpinS ) ;
 } /* end get_max_pin */
 
-set_print_pin( pins )
+VOID set_print_pin( pins )
 INT pins ;
 {
     print_pinS = pins ;

@@ -52,8 +52,12 @@ static char SccsId[] = "@(#) newtemp.c (Yale) version 4.3 9/7/90" ;
 #endif
 #endif
 
-#include "standard.h"
+#include <yalecad/base.h>
 #include <yalecad/debug.h>
+
+#include "standard.h"
+
+#include "newtemp.h"
 
 /* ----------------------------------------------------------------- 
     The temperature regions are defined as follows:
@@ -75,7 +79,7 @@ static DOUBLE alphaS ;    /* exponential decay constant for high temp */
 static DOUBLE betaS ;     /* exponential decay constant for low temp */
 
 /* calculate static exponential time constants */
-init_acceptance_rate()
+VOID init_acceptance_rate(VOID)
 {
     /* determine alpha */
     alphaS =  - log( CRITRATIO ) / HIGHTEMP ;

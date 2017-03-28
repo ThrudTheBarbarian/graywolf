@@ -38,4 +38,6 @@ EXTERN EXCEPTBOX *exceptionsG ;
 
 #undef EXTERN  
 
+extern VOID readblck(P1(FILE *fp));
+
 #endif /* READBLCK_H */

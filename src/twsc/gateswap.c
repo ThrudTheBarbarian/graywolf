@@ -54,13 +54,20 @@ static char SccsId[] = "@(#) gateswap.c (Yale) version 4.6 2/23/92" ;
 #endif
 #endif
 
-#include <string.h>
-#include "ucxxglb.h"
-#include "parser.h"
-#include <yalecad/debug.h>
-#include "readnets.h"
+#include "string.h"
 
-gate_swap( between_two_cells, sgidxa, sgidxb )
+#include <yalecad/base.h>
+#include <yalecad/debug.h>
+
+#include "dimbox.h"
+#include "gates.h"
+#include "parser.h"
+#include "paths.h"
+#include "readnets.h"
+#include "sort.h"
+#include "ucxxglb.h"
+
+INT gate_swap( between_two_cells, sgidxa, sgidxb )
 INT between_two_cells ;
 INT sgidxa, sgidxb ; 
 {
@@ -72,7 +79,7 @@ char *tmp_char_ptr ;
 struct equiv_box *tmp_eqptr ;
 INT cost , cell1 , cell2 , length ;
 INT tmp , i, swap_group ;
-INT truth , count ;
+INT truth ;
 INT pg1 , pg2 ;  /* pg stands for 'pin group' */
 INT newtimepenal ;
 SGLISTPTR cell1sgl, cell2sgl;
@@ -283,7 +290,7 @@ if( truth ) {
 
 
 
-adjust_paths_on_cell( cell )
+VOID adjust_paths_on_cell( cell )
 INT cell ;
 {
 
@@ -319,7 +326,8 @@ for(pinptr=ptr->pins;pinptr;pinptr=pinptr->nextpin){
 }
 /* now add UNIQUE list of paths to this cell */
 for( pathlist=enum_path_set(); pathlist; pathlist=pathlist->next){
-    if( tempPath = ptr->paths ){
+    /* use ((...)) to avoid assignment as condition warning */
+    if(( tempPath = ptr->paths )){
 	path_ptr = ptr->paths = 
 	    (GLISTPTR) Ysafe_malloc( sizeof(GLISTBOX) ) ;
 	path_ptr->next = tempPath ;

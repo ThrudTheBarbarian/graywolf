@@ -75,17 +75,27 @@ static char SccsId[] = "@(#) readpar.c (Yale) version 4.26 5/12/92" ;
 #define NOTSPECIFIED -1
 #define COMMENT '#'
 
+#include "string.h"
+
+#include <yalecad/base.h>
+#include <yalecad/message.h>
+#include <yalecad/program.h>
+#include <yalecad/random.h>
+#include <yalecad/ystring.h>
+#include <yalecad/yreadpar.h>
+
 #include "standard.h"
 #include "main.h"
+
+#include "config.h"
+#include "feeds.h"
+#include "findcost.h"
+#include "graphics.h"
+#include "groute.h"
+#include "out.h"
+#include "pads.h"
 #include "parser.h"
 #include "readpar.h"
-#include "groute.h"
-#include "feeds.h"
-#include "config.h"
-#include "pads.h"
-#include <yalecad/message.h>
-#include <yalecad/string.h>
-#include <yalecad/yreadpar.h>
 
 /* globals variable definitions */
 INT attprcelG ;
@@ -139,12 +149,12 @@ extern BOOL doubleback_rows_start_at_oneG ;
 static BOOL abortS = FALSE ;
 static BOOL readparamS = FALSE ;
 
-static init_read_par();
-static readparam();
-static process_readpar();
-static err_msg();
+static VOID init_read_par(P1(VOID));
+static VOID readparam(P1(INT parfile));
+static VOID process_readpar(P1(VOID));
+static VOID err_msg(P1(char *msg));
 
-readParFile()
+VOID readParFile(VOID)
 {
     init_read_par() ;
     readparam( TWSC ) ;
@@ -152,7 +162,7 @@ readParFile()
     process_readpar() ;
 }
 
-static init_read_par()
+static VOID init_read_par(VOID)
 {
     /* initialization of variables */
     SGGRG = FALSE ;
@@ -178,14 +188,12 @@ static init_read_par()
     file_conversionG = FALSE ;
 } /* end init_read_par */
 
-static readparam( parfile )
+static VOID readparam( parfile )
 INT parfile ;
 {
 
-    INT test ;
-    INT speed ;
     INT pins ;
-    INT spacer_tmp ;
+    INT spacer_tmp = 0 ;
     INT line ;
     INT numtokens ;
     BOOL onNotOff ;
@@ -197,8 +205,9 @@ INT parfile ;
 
     OUT1( "\n\n" ) ;
 
-    while( tokens = Yreadpar_next( &lineptr, &line, &numtokens, 
-	&onNotOff, &wildcard )){
+    /* use ((...)) to avoid assignment as condition warning */
+    while(( tokens = Yreadpar_next( &lineptr, &line, &numtokens, 
+	&onNotOff, &wildcard ))){
 	readparamS = TRUE ;
 	if( numtokens == 0 ){
 	    /* skip over empty lines */
@@ -674,10 +683,10 @@ INT parfile ;
 	} else if(!(wildcard)){
 	    if( parfile == USER ){
 		OUT4("ERROR[readpar]:unexpected keyword in the %s.par file at line:%d\n\t%s\n", 
-		cktNameG, line, lineptr );
+		cktNameG, (int)line, lineptr );
 	    } else {
 		OUT4("ERROR[readpar]:Unexpected keyword in the %s.spar file at line:%d\n\t%s\n", 
-		cktNameG, line, lineptr );
+		cktNameG, (int)line, lineptr );
 	    }
 	    Ymessage_error_count() ;
 	    abortS = TRUE ;
@@ -686,7 +695,7 @@ INT parfile ;
 } /* end  readparam */
 
 
-static process_readpar()
+static VOID process_readpar(VOID)
 {
 
 char *layer ;             /* name of layer */
@@ -743,14 +752,14 @@ for( i = 1; i <= num_layers; i++ ){
 if( numv_layers > 0 ){
     vertical_track_pitchG /= numv_layers ;
     if( vertical_track_pitchG == 0 ){
-	vertical_track_pitchG == 1 ;
+	vertical_track_pitchG = 1 ;
     }
 }
 if( numh_layers > 0 ){
     horizontal_track_pitchG++ ; /* to account for the -1 initialization */
     horizontal_track_pitchG /= numh_layers ;
     if( horizontal_track_pitchG == 0 ){
-	horizontal_track_pitchG == 1 ;
+	horizontal_track_pitchG = 1 ;
     }
     track_pitchG = horizontal_track_pitchG ; /* these are the same var. */
 }
@@ -788,7 +797,7 @@ if( doglobalG == TRUE  &&  fdWidthG == -1 ) {
     fprintf(fpoG,"feedThruWidth was not entered in the .par file\n");
     YexitPgm(PGMFAIL);
 } else {
-    fprintf( fpoG, "feedThruWidth: %d\n" , fdWidthG ) ;
+    fprintf( fpoG, "feedThruWidth: %d\n" , (int)fdWidthG ) ;
 }
 
 /* make sure track pitch has been specified for uneven cell heights */
@@ -801,13 +810,13 @@ if( uneven_cell_heightG ){
 }
     
 if( track_pitchG != NOTSPECIFIED ) {
-    fprintf( fpoG, "track.pitch: %d\n" , track_pitchG ) ;
+    fprintf( fpoG, "track.pitch: %d\n" , (int)track_pitchG ) ;
     if( route2actG == NOTSPECIFIED ){
 	fprintf( fpoG, "route2act was not entered in the .par file\n");
 	fprintf( fpoG, "route2act defaulted to track.pitch\n");
 	route2actG = track_pitchG ;
     }
-    fprintf( fpoG, "route2act: %d\n" , route2actG ) ;
+    fprintf( fpoG, "route2act: %d\n" , (int)route2actG ) ;
 
 } else {
     fprintf( fpoG, "track.pitch was not specified in par file\n" ) ;
@@ -819,7 +828,7 @@ if( track_pitchG != NOTSPECIFIED ) {
 return ;
 } /* end process_readpar */
 
-yaleIntro() 
+VOID yaleIntro(VOID) 
 {
     INT i ;
 
@@ -867,7 +876,7 @@ yaleIntro()
 
 } /* end yaleIntro */
 
-static err_msg( keyword ) 
+static VOID err_msg( keyword ) 
 char *keyword ;
 {
     OUT2("The value for %s was", keyword );

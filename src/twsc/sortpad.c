@@ -54,23 +54,27 @@ REVISIONS:  Sun Jan 20 21:47:52 PST 1991 - ported to AIX.
 static char SccsId[] = "@(#) sortpad.c version 4.6 3/12/91" ;
 #endif
 
-#include <standard.h>
-#include <pads.h>
-#include <parser.h>
+#include <yalecad/base.h>
 #include <yalecad/debug.h>
+#include <yalecad/quicksort.h>
+
+#include "standard.h"
+
+#include "pads.h"
+#include "parser.h"
 
 /* Forward declarations */
 
-static INT compare_pads();
-static INT sort_by_pos();
-static void install_pad_groups();
-static void permute_pads();
+static INT compare_pads(P2(void *padptr1, void *padptr2));
+static INT sort_by_pos(P2(void *padptr1, void *padptr2));
+static VOID install_pad_groups(P2(PADBOXPTR pad, INT *position));
+static VOID permute_pads(P1(PADBOXPTR pad));
 
 /******************************************************************************
 			   PAD SORTING ROUTINES
 *******************************************************************************/
 
-sort_pads()
+VOID sort_pads(VOID)
 {
     INT i ;                /* pad counter */
     INT pos ;              /* position in place array */
@@ -118,12 +122,12 @@ sort_pads()
 
 /*** compare_pads() RETURNS TRUE IF ARG1 > ARG2 BY ITS OWN RULES **/
 static INT compare_pads( padptr1, padptr2 )
-PADBOXPTR *padptr1, *padptr2 ;
+void *padptr1, *padptr2 ;
 {
     PADBOXPTR pad1, pad2;
 
-    pad1 = *padptr1 ;
-    pad2 = *padptr2 ;
+    pad1 = *((PADBOXPTR *)padptr1) ;
+    pad2 = *((PADBOXPTR *)padptr2) ;
 
     if( pad1->padside != pad2->padside) {
 	return( pad1->padside - pad2->padside ) ;
@@ -152,7 +156,7 @@ PADBOXPTR *padptr1, *padptr2 ;
 /* ***************************************************************** */
 
 static INT sort_by_pos( padptr1, padptr2 )
-PADBOXPTR *padptr1, *padptr2 ;
+void *padptr1, *padptr2 ;
 {
     PADBOXPTR pad1, pad2;
     BOOL pad1fixed, pad2fixed ;
@@ -162,8 +166,8 @@ PADBOXPTR *padptr1, *padptr2 ;
     /* ---Tim, 10/14/08							*/
     if (padptr1 <= padptr2) return 0 ;
 
-    pad1 = *padptr1 ;
-    pad2 = *padptr2 ;
+    pad1 = *((PADBOXPTR *)padptr1) ;
+    pad2 = *((PADBOXPTR *)padptr2) ;
 
     if( pad1->padside != pad2->padside) {
 	return( pad1->padside - pad2->padside ) ;

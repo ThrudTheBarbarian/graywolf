@@ -74,14 +74,21 @@ static char SccsId[] = "@(#) outpins.c (Yale) version 4.9 12/5/91" ;
 #endif
 #endif
 
-#include <string.h>
-#include "standard.h"
-#include "groute.h"
-#include "main.h"
-#include "readpar.h"
-#include "pads.h"
+#include "string.h"
 
+#include <yalecad/base.h>
 #include <yalecad/debug.h>
+
+#include "standard.h"
+#include "main.h"
+
+#include "groute.h"
+#include "nets.h"
+#include "out.h"
+#include "pads.h"
+#include "paths.h"
+#include "readpar.h"
+
 
 /* #define NSC */
 
@@ -106,14 +113,14 @@ static BOOL old_formatS = FALSE ;
 
 char *find_layer( /* pinname, layer */ ) ;
 
-static do_outpins();
-static do_macropins();
-static do_left_vertical_channel();
-static do_right_vertical_channel();
-static do_bottom_channel();
-static do_top_channel();
+static VOID do_outpins(P2(PINBOXPTR ptr, INT flag));
+static VOID do_macropins(P1(PINBOXPTR ptr));
+static VOID do_left_vertical_channel(P1(PINBOXPTR ptr));
+static VOID do_right_vertical_channel(P1(PINBOXPTR ptr));
+static VOID do_bottom_channel(P1(PINBOXPTR ptr));
+static VOID do_top_channel(P1(PINBOXPTR ptr));
 
-outpins()
+VOID outpins(VOID)
 {
 
 PINBOXPTR ptr1 , ptr2 , ptr ;
@@ -291,19 +298,14 @@ TWCLOSE( fpS ) ;
  * 9. layer                                                          *
  *-------------------------------------------------------------------*/
 
-static do_outpins( ptr , flag )
+static VOID do_outpins( ptr , flag )
 PINBOXPTR ptr ;
 INT flag ;
 {
-
-
-INT x , y , channel , pinloc , groupS_number , layer , i ;
+INT x , y , channel , pinloc , groupS_number , layer;
 CBOXPTR cellptr ;
 PADBOXPTR pptr ;
 char *pinname , tmp_char[2] , *tmp_pinname ;
-INT length ;
-char master_name[128] , pin_id[128] , tmp_name[128] ;
-char instance_name[128] , p_name[128] , *tmp_string ;
 
 tmp_char[1] = EOS ; /* terminate string */
 
@@ -439,31 +441,25 @@ if( length < strlen( tmp_name ) ) {
 }
 
 fprintf(fpS,"%s %d %s %s %d %d %d %d %d %s %s\n" ,
-    netarrayG[ptr->net]->name , groupS_number ,
+    netarrayG[ptr->net]->name , (int)groupS_number ,
 	instance_name , p_name ,
-	    x , y , channel , pinloc , layer ,
+	    (int)x , (int)y , (int)channel , (int)pinloc , (int)layer ,
 	    master_name , pin_id );
 #else
 fprintf(fpS,"%s %d %s %s %d %d %d %d %d\n" ,
-    netarrayG[ptr->net]->name , groupS_number ,
+    netarrayG[ptr->net]->name , (int)groupS_number ,
 	carrayG[ptr->cell]->cname , tmp_pinname ,
-	    x , y , channel , pinloc , layer );
+	    (int)x , (int)y , (int)channel , (int)pinloc , (int)layer );
 #endif
 return ;
 }
 
-static do_macropins( ptr )
+static VOID do_macropins( ptr )
 PINBOXPTR ptr ;
 {
-
-
-INT x , y , channel , pinloc , groupS_number , layer , i ;
+INT x , y , channel , pinloc , groupS_number , layer ;
 CBOXPTR cellptr ;
-PADBOXPTR pptr ;
 char *pinname , tmp_char[2] , *tmp_pinname ;
-INT length ;
-char master_name[128] , pin_id[128] , tmp_name[128] ;
-char instance_name[128] , p_name[128] , *tmp_string ;
 
 tmp_char[1] = EOS ; /* terminate string */
 
@@ -501,25 +497,23 @@ if( length < strlen( tmp_name ) ) {
 }
 
 fprintf(fpS,"%s %d %s %s %d %d %d %d %d %s %s\n" ,
-    netarrayG[ptr->net]->name , groupS_number ,
+    netarrayG[ptr->net]->name , (int)groupS_number ,
 	instance_name , p_name ,
-	    x , y , channel , pinloc , layer ,
+	    (int)x , (int)y , (int)channel , (int)pinloc , (int)layer ,
 	    master_name , pin_id );
 #else
 fprintf(fpS,"%s %d %s %s %d %d %d %d %d\n" ,
-    netarrayG[ptr->net]->name , groupS_number ,
+    netarrayG[ptr->net]->name , (int)groupS_number ,
 	carrayG[ptr->cell]->cname , tmp_pinname ,
-	    x , y , channel , pinloc , layer );
+	    (int)x , (int)y , (int)channel , (int)pinloc , (int)layer );
 #endif
 return ;
 }
 
-static do_left_pseudo_pins( ptr , channel , groupS_number )
+static VOID do_left_pseudo_pins( ptr , channel , groupS_number )
 PINBOXPTR ptr ;
 INT channel , groupS_number ;
 {
-
-
 INT x , y ;
 
 if( channel <= numRowsG ) {
@@ -540,26 +534,24 @@ if( channel == 1 ) {
 }
 #ifdef NSC
 fprintf(fpS,"%s %d PSEUDO_CELL PSEUDO_PIN %d %d %d -2 0 0 0\n" ,
-netarrayG[ptr->net]->name , groupS_number , x , y , channel ) ;
+netarrayG[ptr->net]->name , (int)groupS_number , (int)x , (int)y , (int)channel ) ;
 
 fprintf(fpS,"%s %d PSEUDO_CELL PSEUDO_PIN %d %d -1 -1 0 0 0\n" ,
-netarrayG[ptr->net]->name , groupS_number , x , y ) ;
+netarrayG[ptr->net]->name , (int)groupS_number , (int)x , (int)y ) ;
 #else
 fprintf(fpS,"%s %d PSEUDO_CELL PSEUDO_PIN %d %d %d -2 0\n" ,
-netarrayG[ptr->net]->name , groupS_number , x , y , channel ) ;
+netarrayG[ptr->net]->name , (int)groupS_number , (int)x , (int)y , (int)channel ) ;
 
 fprintf(fpS,"%s %d PSEUDO_CELL PSEUDO_PIN %d %d -1 -1 0\n" ,
-netarrayG[ptr->net]->name , groupS_number , x , y ) ;
+netarrayG[ptr->net]->name , (int)groupS_number , (int)x , (int)y ) ;
 #endif
 }
 
 
-static do_right_pseudo_pins( ptr , channel , groupS_number )
+static VOID do_right_pseudo_pins( ptr , channel , groupS_number )
 PINBOXPTR ptr ;
 INT channel , groupS_number ;
 {
-
-
 INT x , y ;
 
 if( channel == 1 ) {
@@ -578,20 +570,20 @@ if( channel == 1 ) {
 }
 #ifdef NSC
 fprintf(fpS,"%s %d PSEUDO_CELL PSEUDO_PIN %d %d %d 2 0 0 0\n" ,
-netarrayG[ptr->net]->name , groupS_number , x , y , channel ) ;
+netarrayG[ptr->net]->name , (int)groupS_number , (int)x , (int)y , (int)channel ) ;
 
 fprintf(fpS,"%s %d PSEUDO_CELL PSEUDO_PIN %d %d -2 -1 0 0 0\n" ,
-netarrayG[ptr->net]->name , groupS_number , x , y ) ;
+netarrayG[ptr->net]->name , (int)groupS_number , (int)x , (int) ) ;
 #else
 fprintf(fpS,"%s %d PSEUDO_CELL PSEUDO_PIN %d %d %d 2 0\n" ,
-netarrayG[ptr->net]->name , groupS_number , x , y , channel ) ;
+netarrayG[ptr->net]->name , (int)groupS_number , (int)x , (int)y , (int)channel ) ;
 
 fprintf(fpS,"%s %d PSEUDO_CELL PSEUDO_PIN %d %d -2 -1 0\n" ,
-netarrayG[ptr->net]->name , groupS_number , x , y ) ;
+netarrayG[ptr->net]->name , (int)groupS_number , (int)x , (int)y ) ;
 #endif
 }
 
-static do_left_vertical_channel( ptr )
+static VOID do_left_vertical_channel( ptr )
 PINBOXPTR ptr ;
 {
 
@@ -601,9 +593,6 @@ ADJASEG *adj ;
 PADBOXPTR pptr ;
 INT groupS_number , layer , i ;
 char tmp_char[2] , tmp_pinname[1024] ;
-INT length ;
-char master_name[128] , pin_id[128] , tmp_name[128] ;
-char instance_name[128] , p_name[128] , *tmp_string ;
 
 groupS_number = groupS[ ptr->newy ] ;
 strcpy( tmp_pinname , ptr->pinname ) ;
@@ -649,15 +638,15 @@ if( length < strlen( tmp_name ) ) {
 }
 
 fprintf(fpS,"%s %d %s %s %d %d -1 1 %d %s %s\n" ,
-    netarrayG[ptr->net]->name , groupS_number , 
+    netarrayG[ptr->net]->name , (int)groupS_number , 
     instance_name , p_name , 
-    ptr->xpos , ptr->ypos , layer ,
+    (int)(ptr->xpos) , (int)(ptr->ypos) , (int)layer ,
     master_name , pin_id );
 #else
 fprintf(fpS,"%s %d %s %s %d %d -1 1 %d\n" ,
-    netarrayG[ptr->net]->name , groupS_number , 
+    netarrayG[ptr->net]->name , (int)groupS_number , 
     carrayG[ptr->cell]->cname , tmp_pinname , 
-    ptr->xpos , ptr->ypos , layer ) ;
+    (int)(ptr->xpos) , (int)(ptr->ypos) , (int)layer ) ;
 #endif
 for( adj = ptr->adjptr->next ; adj ; adj = adj->next ) {
     segptr = adj->segptr ;
@@ -673,7 +662,7 @@ for( adj = ptr->adjptr->next ; adj ; adj = adj->next ) {
 }
 
 
-static do_right_vertical_channel( ptr )
+static VOID do_right_vertical_channel( ptr )
 PINBOXPTR ptr ;
 {
 
@@ -681,11 +670,8 @@ PINBOXPTR core_ptr ;
 SEGBOXPTR segptr ;
 ADJASEG *adj ;
 PADBOXPTR pptr ;
-INT groupS_number , layer , i ;
-char tmp_char[2] , *tmp_pinname ;
-INT length ;
-char master_name[128] , pin_id[128] , tmp_name[128] ;
-char instance_name[128] , p_name[128] , *tmp_string ;
+INT groupS_number , layer ;
+char *tmp_pinname ;
 
 groupS_number = groupS[ ptr->newy ] ;
 tmp_pinname = find_layer( ptr->pinname, &layer ) ;
@@ -714,15 +700,15 @@ if( length < strlen( tmp_name ) ) {
 }
 
 fprintf(fpS,"%s %d %s %s %d %d -2 1 %d %s %s\n" ,
-    netarrayG[ptr->net]->name , groupS_number , 
+    netarrayG[ptr->net]->name , (int)groupS_number , 
     instance_name , p_name , 
-    ptr->xpos , ptr->ypos , layer ,
+    (int)(ptr->xpos) , (int)(ptr->ypos) , (int)layer ,
     master_name , pin_id );
 #else
 fprintf(fpS,"%s %d %s %s %d %d -2 1 %d\n" ,
-    netarrayG[ptr->net]->name , groupS_number , 
+    netarrayG[ptr->net]->name , (int)groupS_number , 
     carrayG[ptr->cell]->cname, tmp_pinname , 
-    ptr->xpos , ptr->ypos , layer ) ;
+    (int)(ptr->xpos) , (int)(ptr->ypos) , (int)layer ) ;
 #endif
 for( adj = ptr->adjptr->next ; adj ; adj = adj->next ) {
     segptr = adj->segptr ;
@@ -738,19 +724,16 @@ for( adj = ptr->adjptr->next ; adj ; adj = adj->next ) {
 }
 
 
-static do_bottom_channel( ptr )
+static VOID do_bottom_channel( ptr )
 PINBOXPTR ptr ;
 {
-INT x , y , groupS_number , layer , i ;
-char tmp_char[2] , *tmp_pinname ;
+INT x , y , groupS_number , layer ;
+char *tmp_pinname ;
 ADJASEG *adj ;
 SEGBOXPTR segptr ;
 PINBOXPTR core_ptr ;
 PADBOXPTR pptr ;
-INT length ;
 INT padside ;
-char master_name[128] , pin_id[128] , *tmp_name ;
-char instance_name[128] , p_name[128] , *tmp_string ;
 
 groupS_number = groupS[ ptr->newy ] ;
 tmp_pinname = find_layer( ptr->pinname, &layer ) ;
@@ -779,15 +762,15 @@ if( length < strlen( tmp_name ) ) {
 }
 
 fprintf(fpS,"%s %d %s %s %d %d -3 -1 %d %s %s\n" ,
-    netarrayG[ptr->net]->name , groupS_number ,
+    netarrayG[ptr->net]->name , (int)groupS_number ,
     instance_name , p_name , 
-    ptr->xpos , ptr->ypos , layer ,
+    (int)(ptr->xpos) , (int)(ptr->ypos) , (int)layer ,
     master_name , pin_id );
 #else
 fprintf(fpS,"%s %d %s %s %d %d -3 -1 %d\n" ,
-    netarrayG[ptr->net]->name , groupS_number ,
+    netarrayG[ptr->net]->name , (int)groupS_number ,
     carrayG[ptr->cell]->cname , tmp_pinname , 
-    ptr->xpos , ptr->ypos , layer );
+    (int)(ptr->xpos) , (int)(ptr->ypos) , (int)layer );
 #endif
 y = barrayG[1]->bycenter + barrayG[1]->bbottom - 1 ;
 for( adj = ptr->adjptr->next ; adj ; adj = adj->next ) {
@@ -797,7 +780,8 @@ for( adj = ptr->adjptr->next ; adj ; adj = adj->next ) {
     } else {
 	core_ptr = segptr->pin1ptr ;
     }
-    if( pptr = carrayG[core_ptr->cell]->padptr ){
+    /* use ((...)) to avoid assignment as condition warning */
+    if(( pptr = carrayG[core_ptr->cell]->padptr )){
 	padside = pptr->padside ;
     } else {
 	padside = 0 ;
@@ -808,35 +792,32 @@ for( adj = ptr->adjptr->next ; adj ; adj = adj->next ) {
 	x = core_ptr->xpos ;
 #ifdef NSC
 	fprintf(fpS,"%s %d PSEUDO_CELL PSEUDO_PIN %d %d 1 -1 0 0 0\n" ,
-	netarrayG[ptr->net]->name , groupS_number , x , y ) ;
+	netarrayG[ptr->net]->name , (int)groupS_number , (int)x , (int)y ) ;
 
 	fprintf(fpS,"%s %d PSEUDO_CELL PSEUDO_PIN %d %d -3 1 0 0 0\n" ,
-	netarrayG[ptr->net]->name , groupS_number , x , y ) ;
+	netarrayG[ptr->net]->name , (int)groupS_number , (int)x , (int)y ) ;
 #else
 	fprintf(fpS,"%s %d PSEUDO_CELL PSEUDO_PIN %d %d 1 -1 0\n" ,
-	netarrayG[ptr->net]->name , groupS_number , x , y ) ;
+	netarrayG[ptr->net]->name , (int)groupS_number , (int)x , (int)y ) ;
 
 	fprintf(fpS,"%s %d PSEUDO_CELL PSEUDO_PIN %d %d -3 1 0\n" ,
-	netarrayG[ptr->net]->name , groupS_number , x , y ) ;
+	netarrayG[ptr->net]->name , (int)groupS_number , (int)x , (int)y ) ;
 #endif
     }
 }
 }
 
 
-static do_top_channel( ptr )
+static VOID do_top_channel( ptr )
 PINBOXPTR ptr ;
 {
-INT x , y , groupS_number , layer , i ;
-char tmp_char[2] , *tmp_pinname ;
+INT x , y , groupS_number , layer ;
+char *tmp_pinname ;
 ADJASEG *adj ;
 SEGBOXPTR segptr ;
 PINBOXPTR core_ptr ;
 PADBOXPTR pptr ;
-INT length ;
 INT padside ;
-char master_name[128] , pin_id[128] , *tmp_name[128] ;
-char instance_name[128] , p_name[128] , *tmp_string ;
 
 groupS_number = groupS[ ptr->newy ] ;
 tmp_pinname = find_layer( ptr->pinname, &layer ) ;
@@ -865,15 +846,15 @@ if( length < strlen( tmp_name ) ) {
 }
 
 fprintf(fpS,"%s %d %s %s %d %d -4 1 %d %s %s\n" ,
-    netarrayG[ptr->net]->name , groupS_number ,
+    netarrayG[ptr->net]->name , (int)groupS_number ,
     instance_name , p_name , 
-    ptr->xpos , ptr->ypos , layer ,
+    (int)(ptr->xpos) , (int)(ptr->ypos) , (int)layer ,
     master_name , pin_id );
 #else
 fprintf(fpS,"%s %d %s %s %d %d -4 1 %d\n" ,
-    netarrayG[ptr->net]->name , groupS_number ,
+    netarrayG[ptr->net]->name , (int)groupS_number ,
     carrayG[ptr->cell]->cname , tmp_pinname , 
-    ptr->xpos , ptr->ypos , layer );
+    (int)(ptr->xpos) , (int)(ptr->ypos) , (int)layer );
 #endif
 y = barrayG[numRowsG]->bycenter + barrayG[numRowsG]->btop + 1 ;
 for( adj = ptr->adjptr->next ; adj ; adj = adj->next ) {
@@ -884,7 +865,8 @@ for( adj = ptr->adjptr->next ; adj ; adj = adj->next ) {
 	core_ptr = segptr->pin1ptr ;
     }
 
-    if( pptr = carrayG[core_ptr->cell]->padptr ){
+    /* use ((...)) to avoid assignment as condition warning */
+    if(( pptr = carrayG[core_ptr->cell]->padptr )){
 	padside = pptr->padside ;
     } else {
 	padside = 0 ;
@@ -895,16 +877,16 @@ for( adj = ptr->adjptr->next ; adj ; adj = adj->next ) {
 	x = core_ptr->xpos ;
 #ifdef NSC
 	fprintf(fpS,"%s %d PSEUDO_CELL PSEUDO_PIN %d %d %d 1 0 0 0\n" ,
-	netarrayG[ptr->net]->name , groupS_number , x , y , numChansG ) ;
+	netarrayG[ptr->net]->name , (int)groupS_number , (int)x , (int)y , (int)numChansG ) ;
 
 	fprintf(fpS,"%s %d PSEUDO_CELL PSEUDO_PIN %d %d -4 -1 0 0 0\n" ,
-	netarrayG[ptr->net]->name , groupS_number , x , y ) ;
+	netarrayG[ptr->net]->name , (int)groupS_number , (int)x , (int)y ) ;
 #else
 	fprintf(fpS,"%s %d PSEUDO_CELL PSEUDO_PIN %d %d %d 1 0\n" ,
-	netarrayG[ptr->net]->name , groupS_number , x , y , numChansG ) ;
+	netarrayG[ptr->net]->name , (int)groupS_number , (int)x , (int)y , (int)numChansG ) ;
 
 	fprintf(fpS,"%s %d PSEUDO_CELL PSEUDO_PIN %d %d -4 -1 0\n" ,
-	netarrayG[ptr->net]->name , groupS_number , x , y ) ;
+	netarrayG[ptr->net]->name , (int)groupS_number , (int)x , (int)y ) ;
 #endif
     }
 }
@@ -917,7 +899,7 @@ INT *layer ;
     static char pinbufL[LRECL] ;
     char layer_buffer[2] ;
 
-    ASSERTNRETURN( pinname,"find_layer", "pinname is NULL" ) ;
+    ASSERTNRETURNX( pinname,"find_layer", "pinname is NULL", 0) ;
     if( pin_layers_givenG ) {
 	/* transform "]2name" --> "name" and layer = 2 */
 	if( pinname && *pinname == ']' ){
@@ -937,7 +919,7 @@ INT *layer ;
 } /* end find_layer */
 
 
-set_pin_format( flag )
+VOID set_pin_format( flag )
 BOOL flag ;
 {
     old_formatS = flag ;

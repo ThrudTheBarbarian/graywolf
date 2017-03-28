@@ -52,9 +52,13 @@ static char SccsId[] = "@(#) outcm.c (Yale) version 4.3 9/7/90" ;
 #endif
 #endif
 
+#include <yalecad/base.h>
+
 #include "standard.h"
-#include "groute.h"
 #include "main.h"
+#include "out.h"
+
+#include "groute.h"
 
 #if SIZEOF_VOID_P == 64
 #define INTSCANSTR "%ld"
@@ -62,7 +66,7 @@ static char SccsId[] = "@(#) outcm.c (Yale) version 4.3 9/7/90" ;
 #define INTSCANSTR "%d"
 #endif
 
-outcm()
+VOID outcm(VOID)
 {
 
 char filename[64] ;
@@ -87,7 +91,7 @@ for( net = 1 ; net <= numnetsG ; net++ ) {
 	pin_count += local_pin_count ;
     }
 }
-fprintf(fp,"%d\n", pin_count ) ;
+fprintf(fp,"%d\n", (int)pin_count ) ;
 
 for( net = 1 ; net <= numnetsG ; net++ ) {
     local_pin_count = 0 ;
@@ -110,8 +114,8 @@ for( net = 1 ; net <= numnetsG ; net++ ) {
 					carrayG[cell]->tileptr->left ;
 	xstart = carrayG[cell]->cxcenter + carrayG[cell]->tileptr->left ;
 
-	fprintf(fp,"%8d %8d %8d %8d %8d %8d\n", row, cell, net,
-						 x, length, xstart );
+	fprintf(fp,"%8d %8d %8d %8d %8d %8d\n", (int)row, (int)cell, (int)net,
+						 (int)x, (int)length, (int)xstart );
     }
 }
 TWCLOSE(fp);
@@ -123,21 +127,28 @@ return ;
 
 
 
-incm(fp)
+VOID incm(fp)
 FILE *fp ;
 {
 
 CBOXPTR ptr ;
 INT net , x , pin_count , pin ;
 INT cell , row , length , xstart ;
+int w1, w2, w3, w4, w5, w6;
 
-
-fscanf(fp, INTSCANSTR, &pin_count ) ;
+fscanf(fp, "%d", &w1 ) ;
+pin_count = w1;
 
 for( pin = 1 ; pin <= pin_count ; pin++ ) {
-    fscanf(fp, INTSCANSTR " " INTSCANSTR " " INTSCANSTR " "
-		INTSCANSTR " " INTSCANSTR " " INTSCANSTR,
-		&row, &cell, &net, &x, &length, &xstart );
+    fscanf(fp, "%d %d %d %d %d %d",
+		&w1, &w2, &w3, &w4, &w5, &w6 );
+	row		= w1;
+	cell	= w2;
+	net		= w3;
+	x		= w4;
+	length	= w5;
+	xstart	= w6;
+	
     ptr = carrayG[cell] ;
     ptr->cblock = row ;
     ptr->cxcenter = xstart + length / 2 ;

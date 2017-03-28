@@ -19,7 +19,7 @@ REVISIONS:
 #define yydebug		READCEL_yydebug
 #define yydef		READCEL_yydef
 #define yyerrflag	READCEL_yyerrflag
-#define yyerror	        READCEL_yyerror
+#define yyerror	    READCEL_yyerror
 #define yyestate	READCEL_yyestate
 #define yyexca		READCEL_yyexca
 #define yyextra		READCEL_yyextra
@@ -54,7 +54,25 @@ REVISIONS:
 #define yytoks		READCEL_yytoks
 #define yytop		READCEL_yytop
 #define yyunput		READCEL_yyunput
-#define yyv		READCEL_yyv
+#define yyv			READCEL_yyv
+#define yyvs		READCEL_yyvs
+#define yyvsp		READCEL_yyvsp
+#define yyss		READCEL_yyss
+#define yyssp		READCEL_yyssp
 #define yyval		READCEL_yyval
 #define yyvstop		READCEL_yyvstop
 #define yywrap		READCEL_yywrap
+
+/* Declare prototypes if required */
+extern int yyback(P2(int *, int));
+extern int yyinput(P1(void));
+extern int yylook(P1(void));
+extern void yyoutput(P1(int));
+extern int yyracc(P1(int));
+extern int yyreject(P1(void));
+extern void yyunput(P1(int));
+extern int yylex(P1(void));
+extern int yyless(P1(int));
+extern int yywrap(P1(void));
+extern int yyparse(P1(void));
+extern int yyerror(P1(char * s));

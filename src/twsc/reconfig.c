@@ -57,12 +57,19 @@ static char SccsId[] = "@(#) reconfig.c (Yale) version 4.11 4/2/92" ;
 #endif
 #endif
 
-#include "standard.h"
-#include "readpar.h"
-#include "main.h"
-#include <yalecad/message.h>
-#include <yalecad/string.h>
+#include "string.h"
+
+#include <yalecad/base.h>
 #include <yalecad/debug.h>
+#include <yalecad/message.h>
+#include <yalecad/ystring.h>
+
+#include "standard.h"
+#include "main.h"
+
+#include "findcostf.h"
+#include "pads.h"
+#include "readpar.h"
 
 #if SIZEOF_VOID_P == 64
 #define INTSCANSTR "%ld"
@@ -85,7 +92,10 @@ static INT feed_lengthS ;             /* the current feed length */
 static INT old_feed_lengthS = 0 ; /* the feed length from the last iteration */
 static BOOL print_desiredS = TRUE ;
 
-INT reconfig()
+static VOID configuref(P1(VOID));
+
+
+INT reconfig(VOID)
 {
 
     INT block ;
@@ -97,9 +107,11 @@ INT reconfig()
 	total_desire = 0 ;
 	for( block = 1 ; block <= numRowsG ; block++ ) {
 	    total_desire += barrayG[block]->desire ;
-	    fprintf(fpoG,"block:%d desire:%d\n",block,barrayG[block]->desire);
+	    fprintf(fpoG,"block:%d desire:%d\n",
+	    	(int)block,
+	    	(int)(barrayG[block]->desire));
 	}
-	fprintf(fpoG,"Total Desired Length: %d\n", total_desire ) ;
+	fprintf(fpoG,"Total Desired Length: %d\n", (int)total_desire ) ;
     }
 
     /* place the pads */
@@ -114,7 +126,7 @@ INT reconfig()
 } /* end reconfig */
 
 
-static configuref()
+static VOID configuref(VOID)
 {
     INT row ;
     INT cell ;
@@ -172,17 +184,20 @@ static configuref()
 
 } /* end configuref */
 
-read_feeds( fp )
+VOID read_feeds( fp )
 FILE *fp ;
 {
-    fscanf( fp , INTSCANSTR , &feed_lengthS ) ;
-    feed_length_setS = TRUE ;
+	int w1;
+	
+    fscanf( fp , "%d" , &w1 ) ;
+    feed_lengthS 		= w1;
+    feed_length_setS 	= TRUE ;
 } /* end read_feeds */
 
-save_feeds( fp )
+VOID save_feeds( fp )
 FILE *fp ;
 {
-    fprintf( fp, "%d\n", feed_lengthS ) ;
+    fprintf( fp, "%d\n", (int)feed_lengthS ) ;
 } /* end save_feeds */
 
 /* *********************************************************** 
@@ -193,7 +208,7 @@ FILE *fp ;
     we don't, then we will bin the rows to smooth the
     function and approximate.
    *********************************************************** */
-BOOL read_feed_data() 
+BOOL read_feed_data(VOID) 
 {
 
 #define EQUAL_CASE        0   /* equal number of rows */
@@ -208,7 +223,7 @@ BOOL read_feed_data()
     INT start_row ;           /* the first row in case 3 */
     INT end_row ;             /* the last row in case 3 */
     FILE *fp ;                /* current file pointer */
-    DOUBLE *smooth ;          /* used to calculate MORE_ROWS case */
+    DOUBLE *smooth = NULL ;          /* used to calculate MORE_ROWS case */
     DOUBLE value ;            /* distribute feed over mult. rows */
     char filename[LRECL] ;    /* name of the file */
     char buffer[LRECL] ;      /* read string into buffer */
@@ -239,7 +254,8 @@ BOOL read_feed_data()
     * Read from circuitName.pl2 file.
     ***********************************************************/
     pl1_rows = 0 ;
-    while( bufferptr = fgets( buffer, LRECL, fp ) ){
+    /* use ((...)) to avoid assignment as condition warning */
+    while(( bufferptr = fgets( buffer, LRECL, fp ) )){
 	tokens = Ystrparser( bufferptr, " \t\n", &numtokens ) ;
 	if( numtokens != 7 ){
 	    continue ;
@@ -301,7 +317,8 @@ BOOL read_feed_data()
 
     /* now allocate space for feeds in row */
     feed_lengthS = 0 ;
-    while( bufferptr = fgets( buffer, LRECL, fp ) ){
+    /* use ((...)) to avoid assignment as condition warning */
+    while(( bufferptr = fgets( buffer, LRECL, fp ) )){
 	tokens = Ystrparser( bufferptr, " \t\n", &numtokens ) ;
 	if( numtokens != 7 ){
 	    continue ;
@@ -349,7 +366,8 @@ BOOL read_feed_data()
     M( MSG, NULL, "\nFeed Taper:\n" ) ;
     for( row = 1; row <= numRowsG; row++ ){
 	sprintf( YmsgG, "\trow:%4d num explicit feeds:%d\n",
-	    row, feeds_in_rowG[row] ) ;
+	    (int)row, 
+	    (int)(feeds_in_rowG[row]) ) ;
 	M( MSG, NULL, YmsgG ) ;
     }
     M( MSG, NULL, "\n\n" ) ;

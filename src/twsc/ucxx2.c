@@ -59,23 +59,29 @@ static char SccsId[] = "@(#) ucxx2.c (Yale) version 4.10 4/2/92" ;
 #endif
 #endif
 
-#include "ucxxglb.h"
-#include "readpar.h"
+#include <yalecad/base.h>
 #include <yalecad/debug.h>
+
+#include "dimbox.h"
+#include "graphics.h"
+#include "overlap.h"
+#include "paths.h"
+#include "readpar.h"
+#include "ucxxglb.h"
 
 static INT anxcenterS , bnxcenterS ;
 
-ucxx2( )
+INT ucxx2(VOID)
 {
 
 CBOXPTR acellptr , bcellptr ;
 TIBOXPTR atileptr , btileptr ;
 PINBOXPTR atermptr , btermptr ;
-INT error_light_is_on ;
+INT error_light_is_on = 0 ;
 INT cost ;
 INT aorient , borient ;
-INT a1LoBin, a1HiBin, b1LoBin, b1HiBin ;
-INT a2LoBin, a2HiBin, b2LoBin, b2HiBin ;
+INT a1LoBin = 0, a1HiBin = 0, b1LoBin = 0, b1HiBin = 0 ;
+INT a2LoBin = 0, a2HiBin = 0, b2LoBin = 0, b2HiBin = 0 ;
 INT startxa1 , endxa1 , startxa2 , endxa2 ;
 INT startxb1 , endxb1 , startxb2 , endxb2 ;
 INT newtimepenal ;
@@ -84,8 +90,6 @@ INT anbin , bnbin , i ;
 INT truth ;
 INT wire_chg ;
 DOUBLE temp ;
-
-INT abin, bbin ; /* temporary */
 
 acellptr = carrayG[ aG ]    ; 
 axcenterG = acellptr->cxcenter ; 
@@ -241,7 +245,7 @@ if( truth ) {
 }
 
 
-find_new_pos()
+VOID find_new_pos(VOID)
 {
 
 INT newA_l , newA_r , newB_l , newB_r ;
@@ -314,7 +318,7 @@ return ;
 }
  
 
-add_cell( cellptr , c ) 
+VOID add_cell( cellptr , c ) 
 INT **cellptr , c ;
 {
 

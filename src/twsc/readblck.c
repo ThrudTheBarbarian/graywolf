@@ -57,8 +57,14 @@ static char SccsId[] = "@(#) readblck.c (Yale) version 4.10 11/8/91" ;
 
 #define READBLCK_VARS
 
+#include "string.h"
+
+#include <yalecad/base.h>
+#include <yalecad/program.h>
+
 #include "standard.h"
 #include "main.h"
+
 #include "parser.h"
 #include "readpar.h"
 #include "config.h"
@@ -78,13 +84,14 @@ extern INT total_row_lengthG ;
 /* global variables */
 
 
-readblck( fp )
+VOID readblck( fp )
 FILE *fp ;
 
 {
+int w1, w2, w3, w4;
 
 INT test , block , class , height , row , width , row_sep_abs ;
-INT lowerL_x , upperR_x , lowerL_y , upperR_y ;
+INT lowerL_x , upperR_x , lowerL_y = 0 , upperR_y = 0 ;
 INT shift_amount , deviation , left_edge , reference_point ;
 DOUBLE relLen , row_sep , avg_row_sep , avg_row_height ;
 BOOL comment ;
@@ -113,7 +120,8 @@ while( fscanf( fp , " %s " , input ) == 1 ) {
     if( strcmp( input , "block") == 0 ) {
 	block++ ;
     } else if( strcmp( input , "row_sep") == 0 ) {
-	test = fscanf( fp , " %lf " INTSCANSTR " " , &row_sep, &row_sep_abs ) ;
+	test = fscanf( fp , " %lf %d " , &row_sep, &w1 ) ;
+	row_sep_abs = w1;
 	if( test != 2 ) {
 	    test = fscanf( fp , " %lf " , &row_sep ) ;
 	    if( test != 1 ) {
@@ -129,37 +137,47 @@ while( fscanf( fp , " %s " , input ) == 1 ) {
 	    YexitPgm(PGMFAIL);
 	}
     } else if( strcmp( input , "height") == 0 ) {
-	test = fscanf( fp , " " INTSCANSTR " " , &height ) ;
+	test = fscanf( fp , " %d " , &w1 ) ;
+	height = w1;
 	if( test != 1 ) {
 	    fprintf( fpoG,"Failed to input height of a block\n");
 	    fprintf( fpoG,"at position height\n");
 	    YexitPgm(PGMFAIL);
 	}
     } else if( strcmp( input , "class") == 0 ) {
-	test = fscanf( fp , " " INTSCANSTR " " , &class ) ;
+	test = fscanf( fp , " %d " , &w1 ) ;
+	class = w1;
 	if( test != 1 ) {
 	    fprintf( fpoG, "Failed to input class of a block\n");
-	    fprintf( fpoG, "current block: %d\n", block );
+	    fprintf( fpoG, "current block: %d\n", (int)block );
 	    YexitPgm(PGMFAIL);
 	}
 	if( class <= 0 || class > 256 ) {
 	    fprintf( fpoG, "block class is less than one ");
 	    fprintf( fpoG, "or greater than the limit (256)\n");
-	    fprintf( fpoG, "current block: %d\n", block );
+	    fprintf( fpoG, "current block: %d\n", (int)block );
 	    YexitPgm(PGMFAIL);
 	}
     } else if( strcmp( input , "rows") == 0 ) {
-	(void) fscanf( fp , " " INTSCANSTR " " , &rowsG ) ;
+	(void) fscanf( fp , " %d " , &w1 ) ;
+	rowsG = w1;
+	
     } else if( strcmp( input , "except") == 0 ) {
 	num_exceptsG++ ;
-	test = fscanf(fp, INTSCANSTR " " INTSCANSTR, &lowerL_x, &upperR_x ) ;
+	test = fscanf(fp, "%d %d", &w1, &w2 ) ;
+	lowerL_x = w1;
+	upperR_x = w2;
 	if( test != 2 ) {
 	    fprintf( fpoG, "error in new .blk format: except\n");
 	    YexitPgm(PGMFAIL);
 	}
     } else if( strcmp( input , "row") == 0 ) {
-	test = fscanf(fp, INTSCANSTR " " INTSCANSTR " " INTSCANSTR " " INTSCANSTR,
-			&lowerL_x, &lowerL_y, &upperR_x, &upperR_y ) ;
+	test = fscanf(fp, "%d %d %d %d", &w1, &w2, &w3, &w4 ) ;
+	lowerL_x	= w1;
+	lowerL_y	= w2;
+	upperR_x	= w3;
+	upperR_y	= w4;
+	
 	if( test != 4 ) {
 	    fprintf( fpoG, "error in new .blk format\n");
 	    YexitPgm(PGMFAIL);
@@ -169,7 +187,7 @@ while( fscanf( fp , " %s " , input ) == 1 ) {
 	(void) fscanf( fp , " %lf " , &relLen ) ;
     } else {
 	fprintf( fpoG, "unexpected keyword in the .blk file\n");
-	fprintf( fpoG, "current block: %d\n", block );
+	fprintf( fpoG, "current block: %d\n", (int)block );
 	YexitPgm(PGMFAIL);
     }
 }
@@ -235,10 +253,15 @@ while( fscanf( fp , " %s " , input ) == 1 ) {
     if( strcmp( input , "block" ) == 0 ) {
 	block++ ;
     } else if( strcmp( input , "rows" ) == 0 ) {
-	fscanf( fp , " " INTSCANSTR " " , &rowsG ) ;
+	fscanf( fp , " %d " , &w1 ) ;
+	rowsG = w1;
+	
     } else if( strcmp( input , "except") == 0 ) {
 	num_exceptsG++ ;
-	fscanf(fp, INTSCANSTR " " INTSCANSTR, &lowerL_x, &upperR_x ) ;
+	fscanf(fp, "%d %d", &w1, &w2 ) ;
+	lowerL_x	= w1;
+	upperR_x	= w2;
+	
 	celllenG += upperR_x - lowerL_x ;
 	total_except_widthG += upperR_x - lowerL_x ;
 	exceptionsG[num_exceptsG].row  = block ;
@@ -248,8 +271,11 @@ while( fscanf( fp , " %s " , input ) == 1 ) {
 	exceptionsG[num_exceptsG].ur_y = upperR_y ;
     } else if( strcmp( input , "row" ) == 0 ) {
 	block++ ;
-	fscanf(fp, INTSCANSTR " " INTSCANSTR " " INTSCANSTR " " INTSCANSTR,
-		&lowerL_x, &lowerL_y, &upperR_x, &upperR_y ) ;
+	fscanf(fp, "%d %d %d %d", &w1, &w2, &w3, &w4 ) ;
+		lowerL_x	= w1;
+		lowerL_y	= w2;
+		upperR_x	= w3;
+		upperR_y	= w4;
 	height = upperR_y - lowerL_y ;
 	width  = upperR_x - lowerL_x ;
 	total_row_lengthG += width ;
@@ -267,7 +293,10 @@ while( fscanf( fp , " %s " , input ) == 1 ) {
 	barrayG[block]->bclass   = 1 ;
 	barrayG[block]->borient  = 1 ;
     } else if( strcmp( input , "row_sep" ) == 0 ) {
-	if (fscanf( fp , " %lf " INTSCANSTR " " , &row_sep, &row_sep_abs ) != 2) {
+    
+    INT numTerms = fscanf( fp , " %lf %d " , &row_sep, &w1 );
+    row_sep_abs = w1;
+	if (numTerms != 2) {
 	    fscanf( fp , " %lf " , &row_sep );
 	    rowSepsAbsG[block] = 0;
 	} else {
@@ -275,18 +304,21 @@ while( fscanf( fp , " %s " , input ) == 1 ) {
 	}
 	rowSepsG[block] = row_sep ;
     } else if( strcmp( input , "height" ) == 0 ) {
-	fscanf( fp , " " INTSCANSTR " " , &height ) ;
+	fscanf( fp , " %d " , &w1 ) ;
+	height = w1;
+	
 	barrayG[block]->btop    = height - height / 2 ;
 	barrayG[block]->bbottom = - height / 2 ;
 	barrayG[block]->bheight = height ;
     } else if( strcmp( input , "class" ) == 0 ) {
-	fscanf( fp , " " INTSCANSTR " " , &class ) ;
+	fscanf( fp , " %d " , &w1 ) ;
+	class = w1;
 	barrayG[block]->bclass = class ;
 	barrayG[block]->borient = 1 ;
     } else if( strcmp( input , "mirror" ) == 0 ) {
 	barrayG[block]->borient = 2 ;
     } else if( strcmp( input , "relative_length" ) == 0 ) {
-	fscanf( fp , " %f " , &relLen ) ;
+	fscanf( fp , " %lf " , &relLen ) ;
 	relativeLenG[block] = relLen ;
 	uniform_rowsG = 0 ;
     }

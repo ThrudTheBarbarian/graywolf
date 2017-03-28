@@ -58,18 +58,27 @@ REVISIONS:  Jun 21, 1990 - added graphics abort macro.
 static char SccsId[] = "@(#) graphics.c version 4.21 5/15/92" ;
 #endif
 
+#include "string.h"
+#include "unistd.h"
+
 #include "standard.h"
 #include "main.h"
-#include "readpar.h"
-#include "pads.h"
+
 
 #ifndef NOGRAPHICS
 
-#include <yalecad/debug.h>
-#include <yalecad/message.h>
+
 #include <yalecad/colors.h>
+#include <yalecad/debug.h>
 #include <yalecad/draw.h>
+#include <yalecad/message.h>
+#include <yalecad/mst.h>
 #include <yalecad/relpos.h>
+
+#include "findcost.h"
+#include "graphics.h"
+#include "pads.h"
+#include "readpar.h"
 
 
 #define INTRO            "Welcome to TimberWolfSC"
@@ -93,7 +102,7 @@ static char SccsId[] = "@(#) graphics.c version 4.21 5/15/92" ;
 #define MENUREAD()
 #endif
 
-#include <menus.h>
+#include "menus.h"
 
 
 extern INT actual_feed_thru_cells_addedG ;
@@ -115,11 +124,9 @@ static INT  drawNetS = 0 ; /* draw nets 0:none 1...n:net >numnets:all */
 static INT  pinsizeS ;     /* size of the pin */
 
 
-static draw_fs();
-extern VOID draw_a_cell( INT );
-extern INT draw_the_data() ;
+static VOID draw_fs(CBOXPTR cptr);
 
-initGraphics( argc, argv, windowId )
+VOID initGraphics( argc, argv, windowId )
 INT argc ;
 char *argv[] ;
 INT windowId ;
@@ -180,7 +187,7 @@ INT windowId ;
 
 } /* end initGraphics */
 
-init_heat_index()
+VOID init_heat_index(VOID)
 {
     GRAPHICSABORT ;
 
@@ -191,7 +198,7 @@ init_heat_index()
     initS = TRUE ;
 } /* end init_heat_index */
 
-expand_heat_index()
+VOID expand_heat_index(VOID)
 {
     INT oldnum, i;
 
@@ -209,7 +216,7 @@ expand_heat_index()
     }
 } /* end expand_heat_index */
 
-setGraphicWindow() 
+VOID setGraphicWindow(VOID) 
 {
     INT  expand ;
     INT  minx ;
@@ -247,7 +254,7 @@ setGraphicWindow()
 } /* end setGraphicWindow */
 
 /* heart of the graphic syskem processes user input */
-process_graphics()
+VOID process_graphics(VOID)
 {
 
     INT x, y ;           /* coordinates from pointer */
@@ -309,7 +316,7 @@ process_graphics()
 	case TELL_POINT:
 	    TWmessage( "Pick a point" ) ;
 	    TWgetPt( &x, &y ) ;
-	    sprintf( YmsgG,"The point is (%d,%d)",x,y ) ;
+	    sprintf( YmsgG,"The point is (%d,%d)",(int)x, (int)y ) ;
 	    TWmessage( YmsgG ) ;
 	    break ;
 	case TRANSLATE:
@@ -419,7 +426,7 @@ process_graphics()
 
 /* the graphics program can draw the results at each desired */
 /* timestep. */
-INT draw_the_data()
+INT draw_the_data(VOID)
 {
 
     INT  i ;
@@ -432,7 +439,7 @@ INT draw_the_data()
     char *pinname, *find_layer( /* pinname, layer */ ) ;
 
     if( avoidDump || !(doGraphicsG) || !(initS) ){
-	return ;
+	return -1;
     }
     TWstartFrame() ;
     TWmessage( "Drawing the data...Please wait" ) ;
@@ -504,7 +511,7 @@ INT draw_the_data()
     /* clear wait message and FLUSH OUTPUT BUFFER */
     TWmessage( NULL ) ;
     TWflushFrame() ;
-
+	return 0;
 } /* end draw_the_data */
 
 VOID draw_a_cell( cell )
@@ -512,7 +519,7 @@ INT cell ;
 {
     INT  x ;
     INT  y ;
-    INT  l, r, b, t ;
+    INT  l = 0, r, b = 0, t ;
     INT  pt ;
     INT  color ;
     INT  cell_temp ; /* cell temperature */
@@ -533,7 +540,7 @@ INT cell ;
     /* name the cell */
     /* draw cell labels if requested */
     if( drawLabelS ){
-	sprintf(label,"C%d:%s",cell, carrayG[cell]->cname ) ; 
+	sprintf(label,"C%d:%s",(int)cell, carrayG[cell]->cname ) ; 
 	labelptr = label ;
     } else {
 	labelptr = NIL(char *) ;
@@ -597,12 +604,12 @@ INT cell ;
 } /* end draw a cell */
 
 
-static draw_fs( cptr )
+static VOID draw_fs( cptr )
 CBOXPTR cptr ;
 {
     INT x[10], y[10] ;   /* only 10 points to an F */
     INT l, b, r, t ;     /* bounding box points */
-    INT xout, yout ;     /* rotated points */
+    INT xout = 0, yout = 0 ;     /* rotated points */
     INT wid ;            /* with of the F */
     INT pt ;             /* point counter */
     TIBOXPTR bounptr ;   /* cell's boundary */
@@ -638,7 +645,7 @@ CBOXPTR cptr ;
     TWdrawArb( 0, FCOLOR, NIL(char *) ) ;
 } /* end draw_fs */
 
-erase_a_cell( cell, x, y )
+VOID erase_a_cell( cell, x, y )
 INT cell ;
 INT x, y ;
 {
@@ -676,7 +683,7 @@ INT x, y ;
 
 
 /* dumps the data to a file for future study */
-graphics_dump() 
+VOID graphics_dump(VOID) 
 {
     /* now change mode to dump to file */
     TWsetMode(1) ;
@@ -687,7 +694,7 @@ graphics_dump()
 }
 
 /* see if uses wishes an interupt otherwise just draw the data */
-check_graphics( drawFlag )
+VOID check_graphics( drawFlag )
 BOOL drawFlag ;
 {
     if( doGraphicsG ){
@@ -700,7 +707,7 @@ BOOL drawFlag ;
     }
 } /* end check_graphics */
 
-graphics_cell_update( cell )
+VOID graphics_cell_update( cell )
 INT cell ;
 {
     GRAPHICSABORT ;
@@ -714,7 +721,7 @@ INT cell ;
     draw_a_cell( cell ) ;
 } /* end graphics_cell_update */
 
-graphics_cell_attempt( cell )
+VOID graphics_cell_attempt( cell )
 INT cell ;
 {
     GRAPHICSABORT ;
@@ -723,7 +730,7 @@ INT cell ;
     heat_attemptS[cell]++ ;
 } /* end graphics_cell_attempt */
 
-reset_heat_index()
+VOID reset_heat_index(VOID)
 {
     INT i ; /* counter */
 
@@ -734,7 +741,7 @@ reset_heat_index()
     }
 } /* end reset_heat_index */
 
-set_update( flag )
+VOID set_update( flag )
 BOOL flag ;
 {
     updateS = flag ;
@@ -743,7 +750,7 @@ BOOL flag ;
 #endif /* NOGRAPHICS */
 
 /* close graphics window on fault */
-closegraphics( )
+VOID closegraphics(VOID)
 {
     if( doGraphicsG ){
 	G( TWcloseGraphics() ) ;

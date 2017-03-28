@@ -57,10 +57,16 @@ static char SccsId[] = "@(#) rowevener.c (Yale) version 4.7 12/5/91" ;
 #endif
 #endif
 
+#include <yalecad/base.h>
+
 #include "standard.h"
-#include "groute.h"
+
+#include "coarseglb.h"
 #include "feeds.h"
+#include "findunlap.h"
+#include "groute.h"
 #include "readpar.h"
+#include "rowevener.h"
 
 /* global variables */
 INT exact_feedsG ;
@@ -70,19 +76,14 @@ extern BOOL do_not_even_rowsG ;
 extern BOOL no_row_lengthsG ;
 extern BOOL ignore_feedsG ;
 
-/* static definitions */
-static INT *expect_row_rightS , *expect_row_lengthS ;
-static INT *cell_kickedS ;
 
-
-rowevener()
+VOID rowevener(VOID)
 {
 
 INT i , n , row , *addnum , add_to_this_row , total_remaining ;
-INT row_left , row_right , length_diff , last_cell_rite ;
-INT expect_extra , total_extra ;
+INT row_left , row_right ;
 INT total_cells_length , total_desire_length , total_feed_length ;
-CBOXPTR cellptr , lastptr ;
+CBOXPTR cellptr ;
 
 
 total_feed_length = 0 ;
@@ -129,7 +130,7 @@ return ;
 }
 
 
-decide_right_most_in_class()
+VOID decide_right_most_in_class(VOID)
 {
 
 INT n , row , row_right ;
@@ -149,7 +150,7 @@ for( row = 1 ; row <= numRowsG ; row++ ) {
 
 
 #ifdef NEEDED
-dump_rowlength( flag )
+VOID dump_rowlength( flag )
 int flag ;
 {
 

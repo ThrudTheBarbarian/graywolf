@@ -57,14 +57,18 @@ static char SccsId[] = "@(#) countf.c (Yale) version 4.10 2/23/92" ;
 #endif
 #endif
 
+#include <yalecad/base.h>
+
 #include "standard.h"
-#include "groute.h"
-#include "feeds.h"
 #include "main.h"
-#include "ucxxglb.h"
-#include "readpar.h"
-#include "parser.h"
+
+#include "countf.h"
+#include "feeds.h"
+#include "groute.h"
 #include "pads.h"
+#include "parser.h"
+#include "readpar.h"
+#include "ucxxglb.h"
 
 
 /* global definitions */
@@ -77,7 +81,7 @@ static INT est_final_feedS ;
 static INT **row_mapS ;
 static BOOL num_callS = FALSE ;
 
-countf()
+INT countf(VOID)
 {
 
 PINBOXPTR netptr ;
@@ -264,7 +268,7 @@ return( value * fdWidthG ) ;
 
 
 
-prep_feed_count_1()
+VOID prep_feed_count_1(VOID)
 {
 
 INT row ;
@@ -288,7 +292,7 @@ return ;
 }
 
 
-prep_feed_count()
+VOID prep_feed_count(VOID)
 {
 
 INT row ;
@@ -310,13 +314,13 @@ return ;
 
 
 
-insert_row( flag )
+VOID insert_row( flag )
 INT flag ;
 {
 
 PINBOXPTR pinptr ;
-INT row , cell , pad ;
-INT yc , yb , blk , xc ;
+INT row = 0 , cell , pad ;
+INT yc , yb , blk , xc = 0 ;
 
 
 for( cell = 1 ; cell <= numcellsG - extra_cellsG ; cell++ ) {
@@ -384,7 +388,7 @@ return ;
 
 
 
-feed_situation( row , net )
+INT feed_situation( row , net )
 INT row , net ;
 {
 

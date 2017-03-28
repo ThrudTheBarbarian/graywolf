@@ -93,22 +93,31 @@ static char SccsId[] = "@(#) parser.c (Yale) version 4.40 5/15/92" ;
 
 #define PARSER_VARS
 
-#include <string.h>
+#include "string.h"
+
+#include <yalecad/base.h>
+#include <yalecad/debug.h>
+#include <yalecad/file.h>
+#include <yalecad/hash.h>
+#include <yalecad/message.h>
+#include <yalecad/program.h>
+#include <yalecad/relpos.h>
+#include <yalecad/ystring.h>
+
+
 #include "standard.h"
-#include "groute.h"
-#include "parser.h"
 #include "main.h"
-#include "readblck.h"
-#include "readpar.h"
+
 #include "config.h"
 #include "feeds.h"
+#include "graphics.h"
+#include "groute.h"
+#include "out.h"
+#include "newtemp.h"
 #include "pads.h"
-#include <yalecad/hash.h>
-#include <yalecad/file.h>
-#include <yalecad/message.h>
-#include <yalecad/relpos.h>
-#include <yalecad/string.h>
-#include <yalecad/debug.h>
+#include "parser.h"
+#include "readblck.h"
+#include "readpar.h"
 
 /* global variables */
 INT ECOs_existG = 0 ;
@@ -141,6 +150,13 @@ extern BOOL stand_cell_as_gate_arrayG ;
 { \
     if( abortS ){ \
 	return ; /* don't do any work for errors */ \
+    } \
+} \
+
+#define ERRORABORT_X(x) \
+{ \
+    if( abortS ){ \
+	return (x); /* don't do any work for errors */ \
     } \
 } \
 
@@ -179,11 +195,12 @@ static INT transTableS[5][8] = {  /* translate from old pad format */
 } ;
 
 
-static layer_test();
-static check_pin();
+static VOID layer_test(P1(INT layer));
+static VOID check_pin(P3(INT xpos, INT ypos, char *pinname));
+static char *add_swap_func(VOID);
 
 /* ###################### END STATIC definitions ############################ */
-static get_stat_hints()
+static VOID get_stat_hints(VOID)
 {
     FILE *fp ;           /* current file */
     char buffer[LRECL] ; /* temp storage */
@@ -193,10 +210,12 @@ static get_stat_hints()
 
 
     sprintf( buffer, "%s.stat", cktNameG ) ;
-    if( fp = TWOPEN( buffer, "r", NOABORT ) ){
+    /* Use ((...)) to avoid assignment as a condition warning */
+    if(( fp = TWOPEN( buffer, "r", NOABORT ) )){
 	/* parse the hints */
 	cellAllocS = 0 ;
-	while( bufferptr = fgets( buffer, LRECL, fp )){
+	/* Use ((...)) to avoid assignment as a condition warning */
+	while(( bufferptr = fgets( buffer, LRECL, fp ))){
 	    tokens = Ystrparser( bufferptr, ":\t\n", &numtokens ) ;
 	    if( numtokens != 2 ){
 		continue ;
@@ -231,7 +250,8 @@ static get_stat_hints()
 	sprintf( YmsgG, "Found hints in <%s.stat> file\n", cktNameG ) ;
 	M( MSG, "get_stat_hints", YmsgG ) ;
 	/* add +1 afterward to account for the 0 record */
-	sprintf( YmsgG, "Total cells:%d Number of nets:%d\n\n",cellAllocS++,netAllocS++) ;
+	sprintf( YmsgG, "Total cells:%d Number of nets:%d\n\n",
+		(int)(cellAllocS++), (int)(netAllocS++)) ;
 	M( MSG, "get_stat_hints", YmsgG ) ;
     } else {
 	cellAllocS = EXPECTEDNUMCELLS ;
@@ -244,12 +264,12 @@ static get_stat_hints()
 
 } /* end get_stat_hints */
 
-set_error_flag()
+VOID set_error_flag(VOID)
 {
     abortS = TRUE ;
 } /* set_error_flag */
 
-initialize_parser()
+VOID initialize_parser(VOID)
 {
     INT except ;          /* counter */
     INT width ;           /* width of exception */
@@ -309,7 +329,7 @@ initialize_parser()
 
 } /* initialize_parser */
 
-addCell( cellname, celltype )
+VOID addCell( cellname, celltype )
 char *cellname ;
 INT celltype ;
 {
@@ -409,7 +429,7 @@ INT celltype ;
 
 } /* end addCell */
 
-add_tile( left, bottom, right, top )
+VOID add_tile( left, bottom, right, top )
 INT left, bottom, right, top ;
 {
     INT width ;         /* width of tile */
@@ -421,7 +441,7 @@ INT left, bottom, right, top ;
 	M( ERRMSG, NULL, "is not (right + left) div 2\n");
 	M( ERRMSG, NULL, "Where the remainder is truncated - ");
 	sprintf( YmsgG, "Current cell number:%d  Name:<%s>\n\n", 
-	    totalCellS , curCellNameS ) ;
+	    (int)totalCellS , curCellNameS ) ;
 	M( ERRMSG, NULL, YmsgG ) ;
 	abortS = TRUE ;
     }
@@ -430,7 +450,7 @@ INT left, bottom, right, top ;
 	M( ERRMSG, NULL, "is not (top + bottom) div 2\n");
 	M( ERRMSG, NULL, "Where the remainder is truncated - ");
 	sprintf( YmsgG, "current cell number:%d  Name:<%s>\n\n", 
-	    totalCellS , curCellNameS ) ;
+	    (int)totalCellS , curCellNameS ) ;
 	M( ERRMSG, NULL, YmsgG ) ;
 	abortS = TRUE ;
     }
@@ -464,7 +484,7 @@ INT left, bottom, right, top ;
 
 } /* end add_tile */
 
-add_initial_orient( orient )
+VOID add_initial_orient( orient )
 INT orient ;
 {
 
@@ -480,11 +500,11 @@ INT orient ;
     }
 } /* end add_initial_orient */
 
-static char *add_swap_func()
+static char *add_swap_func(VOID)
 {
     INT *data ;   /* pointer to allocated space for swap_group record */
 
-    ERRORABORT() ;
+    ERRORABORT_X(NULL) ;
 
     /* how to add the data to the hash table */
     /* create space for data */
@@ -494,7 +514,7 @@ static char *add_swap_func()
     return( (char *) data ) ;
 } /* end add_swap_func */
 
-add_swap_group( swap_name )
+VOID add_swap_group( swap_name )
 char *swap_name ;
 {
     INT i ;            /* counter */
@@ -562,10 +582,9 @@ char *swap_name ;
 
 } /* end add_swap_group */
 
-add_pingroup()
+VOID add_pingroup(VOID)
 {
     INT i ;    /* counter */
-    INT j ;    /* counter */
     SGLIST *sglistptr = NULL;
 
     ERRORABORT() ;
@@ -590,7 +609,7 @@ add_pingroup()
 
 } /* end add_pingroup */
 
-end_pingroup()
+VOID end_pingroup(VOID)
 {
     pin_group_light_is_onS = 0 ;
 
@@ -600,7 +619,7 @@ end_pingroup()
     if (need_swap_groupS == TRUE) swap_groupS = 0;
 } /* end end_pingroup */
 
-static add_implicit_feed( pin_name, signal, layer, xpos, ypos )
+static VOID add_implicit_feed( pin_name, signal, layer, xpos, ypos )
 char *pin_name, *signal ;
 INT layer, xpos, ypos ;
 {
@@ -612,7 +631,7 @@ INT layer, xpos, ypos ;
 	layer_test( layer ) ;
 	imptrS->pinname = (char *) Ysafe_malloc(
 		(strlen( pin_name ) + 3 ) * sizeof( char ) ) ;
-	sprintf( imptrS->pinname , "]%1d%s" , layer, pin_name ) ;
+	sprintf( imptrS->pinname , "]%1d%s" , (int)layer, pin_name ) ;
 	Ysafe_free( pin_name ) ;
 
     } else {
@@ -627,18 +646,18 @@ INT layer, xpos, ypos ;
 	if( pin_layers_givenG ) {
 	    imptrS->eqpinname = (char *) Ysafe_malloc(
 		    (strlen(pin_name) + 3 ) * sizeof( char ) ) ;
-	    sprintf(imptrS->eqpinname,"]%1d%s", layer, pin_name ) ;
+	    sprintf(imptrS->eqpinname,"]%1d%s", (int)layer, pin_name ) ;
 	} else {
 	    imptrS->eqpinname = Ystrclone( pin_name ) ;
 	}
     }
 } /* end add_implicit_feed */
 
-static char *add_net_func()
+static char *add_net_func(VOID)
 {
     INT *data ;   /* pointer to allocated space for net record in hashtable */
 
-    ERRORABORT() ;
+    ERRORABORT_X(NULL) ;
     /* how to add the data to the hash table */
     /* create space for data */
     data = (INT *) Ysafe_malloc( sizeof(INT) ) ;
@@ -647,11 +666,11 @@ static char *add_net_func()
     return( (char *) data ) ;
 } /* end add_swap_func */
 
-static char *add_pin_func()
+static char *add_pin_func(VOID)
 {
-    INT *data ;   /* pointer to allocated space for pin_grp_hash record */
+    PINLIST *data ;   /* pointer to allocated space for pin_grp_hash record */
 
-    ERRORABORT() ;
+    ERRORABORT_X(NULL) ;
 
     /* how to add the data to the hash table */
     /* create space for data */
@@ -659,12 +678,12 @@ static char *add_pin_func()
     return( (char *) data ) ;
 } /* end add_swap_func */
 
-add_pin( pin_name, signal, layer, xpos, ypos )
+VOID add_pin( pin_name, signal, layer, xpos, ypos )
 char *pin_name, *signal ;
 INT layer, xpos, ypos ;
 {
     INT *netreturn ;          /* net number found in hash table */
-    INT newflag ;
+    BOOL newflag ;
     BOOL notInTable ;         /* net added to table if true */
     DBOXPTR nptr ;            /* the current net record */
     PINLISTPTR pin_ptr ;      /* pointer to current pinlistgroup */
@@ -783,7 +802,7 @@ INT layer, xpos, ypos ;
 	layer_test( layer ) ;
 	pinptrS->pinname = (char *) Ysafe_malloc(
 		(strlen( pin_name ) + 3 ) * sizeof( char ) ) ;
-	sprintf( pinptrS->pinname , "]%1d%s" , layer, pin_name ) ;
+	sprintf( pinptrS->pinname , "]%1d%s" , (int)layer, pin_name ) ;
 	Ysafe_free( pin_name ) ;
 
     } else {
@@ -796,7 +815,7 @@ INT layer, xpos, ypos ;
     if( pin_group_light_is_onS > 0 ) {
 
 	pin_ptr = (PINLISTPTR) Yhash_add( swap_group_listG[swap_groupS].pin_grp_hash,
-		ptrS->cname, add_pin_func, &newflag ) ;
+		ptrS->cname, add_pin_func, (&newflag) ) ;
 
 	if (newflag) {
 	   /* This is the first pin group for this swap group in this cell */
@@ -861,12 +880,11 @@ INT layer, xpos, ypos ;
 
 } /* end add_pin */
 
-static check_pin( xpos, ypos, pinname )
+static VOID check_pin( xpos, ypos, pinname )
 INT xpos, ypos ;
 char *pinname ;
 {
     INT layer ;
-    char *find_layer() ;
     TIBOXPTR tptr ;   /* current tileptr */
 
     ERRORABORT() ;
@@ -880,15 +898,16 @@ char *pinname ;
 	    M( ERRMSG, "check_pin", YmsgG ) ;
 	    M( ERRMSG, NULL, "outside the cell's bounding box:\n" ) ;
 	    sprintf( YmsgG, "\tcell l:%d r:%d b:%d t:%d  pin x:%d y:%d\n",
-		tptr->left, tptr->right, tptr->bottom, tptr->top,
-		xpos, ypos ) ;
+			(int)(tptr->left), (int)(tptr->right), 
+			(int)(tptr->bottom), (int)(tptr->top),
+			(int)xpos, (int)ypos ) ;
 	    M( ERRMSG, NULL, YmsgG ) ;
 	    abortS = TRUE ;
 	}
     }
 } /* end check_pin */
 
-add_equiv( equiv_name, layer, eq_xpos, eq_ypos, unequiv_flag )
+VOID add_equiv( equiv_name, layer, eq_xpos, eq_ypos, unequiv_flag )
 char *equiv_name ;
 INT layer, eq_xpos, eq_ypos ;
 BOOL unequiv_flag ;
@@ -925,7 +944,7 @@ BOOL unequiv_flag ;
 		if( pin_layers_givenG != 0 ) {
 		    eqptrL->pinname = (char *) Ysafe_malloc(
 			(strlen(equiv_name) + 3 ) * sizeof( char ) ) ;
-		    sprintf( eqptrL->pinname , "]%1d%s", layer, equiv_name ) ;
+		    sprintf( eqptrL->pinname , "]%1d%s", (int)layer, equiv_name ) ;
 		    Ysafe_free( equiv_name ) ;
 		} else {
 		    eqptrL->pinname = equiv_name ;
@@ -940,9 +959,9 @@ BOOL unequiv_flag ;
 		    if( pin_layers_givenG ) {
 			eqptrL->pinname = (char *) Ysafe_realloc( eqptrL->pinname,
 			    (strlen(equiv_name) + 3 ) * sizeof(char));
-			sprintf( eqptrL->pinname , "]%1d%s", layer, equiv_name ) ;
+			sprintf( eqptrL->pinname , "]%1d%s", (int)layer, equiv_name ) ;
 		    } else {
-			(char *) Ysafe_realloc( eqptrL->pinname ,
+				Ysafe_realloc( eqptrL->pinname ,
 			    (strlen(equiv_name) + 1 ) * sizeof(char));
 			sprintf(eqptrL->pinname,"%s", equiv_name ) ;
 		    }
@@ -954,7 +973,7 @@ BOOL unequiv_flag ;
 	if( pin_layers_givenG ) {
 	    imptrS->eqpinname = (char *) Ysafe_malloc(
 		    (strlen( equiv_name ) + 3 ) * sizeof( char ) ) ;
-	    sprintf( imptrS->eqpinname , "]%1d%s" , layer, equiv_name ) ;
+	    sprintf( imptrS->eqpinname , "]%1d%s" , (int)layer, equiv_name ) ;
 	    Ysafe_free( equiv_name ) ;
 	} else {
 	    imptrS->eqpinname = equiv_name ;
@@ -967,9 +986,9 @@ BOOL unequiv_flag ;
     }
 } /* end add_equiv */
 
-add_port( portname, signal, layer, xpos, ypos )
+VOID add_port( portname, signal, layer, xpos, ypos )
 char *portname, *signal ;
-INT xpos, ypos ;
+INT xpos, ypos, layer ;
 {
     ERRORABORT() ;
     addCell( portname, PORTTYPE ) ;
@@ -987,7 +1006,7 @@ INT xpos, ypos ;
 
 
 
-static layer_test( layer )
+static VOID layer_test( layer )
 INT layer ;
 {
     if( layer != 0 && layer != 1 && layer != 2 && layer != 3 ) {
@@ -995,20 +1014,20 @@ INT layer ;
 	M( ERRMSG, NULL,"in the .cel file must be either 0, 1, 2,\n");
 	M( ERRMSG, NULL, "or 3.   \n") ;
 	sprintf( YmsgG, "Current cell number:%d  Name:<%s>\n", 
-	    totalCellS - num_exceptsG, curCellNameS ) ;
+	    (int)(totalCellS - num_exceptsG), curCellNameS ) ;
 	M( ERRMSG, NULL, YmsgG ) ;
 	abortS = TRUE ;
     }
 } /* end layer_test */
 
-init_legal_blocks( numblocks )
+VOID init_legal_blocks( numblocks )
 INT numblocks ;
 {
     ERRORABORT() ;
     ptrS->cclass = 0 ;
 } /* end init_legal_blocks */
 
-add_legal_blocks( block_class )
+VOID add_legal_blocks( block_class )
 INT block_class ;
 {
     INT  row ;            /* row counter */
@@ -1043,14 +1062,14 @@ INT block_class ;
     ptrS->cbclass[index] += bit_class ;
 } /* end add_legal_blocks */
 
-set_mirror_flag()
+VOID set_mirror_flag(VOID)
 {
     ERRORABORT() ;
     /* this is for the current cell */
     ptrS->orflag = 0 ;
 } /* end set_mirror_flag */
 
-add_orient( orient )
+VOID add_orient( orient )
 INT orient ;
 {
     ERRORABORT() ;
@@ -1058,7 +1077,7 @@ INT orient ;
     ptrS->corient = orient ;
 } /* end add_orient */
 
-fix_placement( fixed_type, from, fixed_loc, block )
+VOID fix_placement( fixed_type, from, fixed_loc, block )
 char *fixed_type, *fixed_loc ;
 INT from, block;
 {
@@ -1146,16 +1165,13 @@ INT from, block;
     }
 } /* end fix_placement */
 
-add_extra_cells()
+VOID add_extra_cells(VOID)
 {
 
-    INT row ;                 /* row counter */
-    INT pin ;                 /* pin counter */
     INT slack ;               /* excess row length */
     INT target ;               /* target total row length */
     INT avg_width ;           /* average except width */
     char buffer[LRECL] ;      /* temp buffer */
-    IPBOXPTR imptr ;          /* current implicit feed ptr */
 
     /* at this time if we get an error exit */
     if( abortS ){
@@ -1185,7 +1201,7 @@ add_extra_cells()
 	}
 	slack = total_row_lengthG - celllenG ;
 	numcellsG += extra_cellsG = (slack) / spacer_widthG ;
-	sprintf(YmsgG,"Added %d spacer cells to the gate array\n", extra_cellsG);
+	sprintf(YmsgG,"Added %d spacer cells to the gate array\n", (int)extra_cellsG);
 	M( MSG, "add_extra_cells", YmsgG ) ;
     } else {
 	extra_cellsG = 0 ;
@@ -1201,7 +1217,7 @@ add_extra_cells()
 	extra_cellsG++ ;
     }
     numcellsG += extra_cellsG ;
-    sprintf(YmsgG,"Added %d spacer cells to the gate array\n", extra_cellsG);
+    sprintf(YmsgG,"Added %d spacer cells to the gate array\n", (int)extra_cellsG);
     M( MSG, "add_extra_cells", YmsgG ) ;
 #endif
 
@@ -1214,7 +1230,7 @@ add_extra_cells()
 	        addCell( Ystrclone( "GATE_ARRAY_SPACER"), EXTRATYPE ) ;
 	    } else {
 #ifdef FEED_INSTANCES
-		sprintf( buffer, "twfeed%d", 100000 + totalCellS ) ;
+		sprintf( buffer, "twfeed%d", (int)(100000 + totalCellS) ) ;
 #else
 		sprintf( buffer, "twfeed" ) ;
 #endif
@@ -1233,9 +1249,10 @@ add_extra_cells()
 	    for( pin = 1 ; pin <= spacer_feedsG[0] ; pin++ ) {
 		imptr = ( IPBOXPTR )Ysafe_malloc( sizeof( IPBOX ) ) ;
 		if( pin_layers_givenG ) {
-		    sprintf( buffer,"]%1d%s%d",feedLayerG,"SPACER_FEED_TOP_", pin ) ;
+		    sprintf( buffer,"]%1d%s%d",
+		    	(int)feedLayerG, "SPACER_FEED_TOP_", (int)pin ) ;
 		} else {
-		    sprintf( buffer, "%s%d" , "SPACER_FEED_TOP_" , pin ) ;
+		    sprintf( buffer, "%s%d" , "SPACER_FEED_TOP_" , (int)pin ) ;
 		}
 		imptr->pinname = Ystrclone( buffer ) ;
 		imptr->txpos = spacer_feedsG[pin] - spacer_widthG / 2 ;
@@ -1245,9 +1262,9 @@ add_extra_cells()
 		ptrS->imptr = imptr ;
 
 		if( pin_layers_givenG != 0 ) {
-		    sprintf( buffer, "]%1d%s%d",feedLayerG,"SPACER_FEED_BOTTOM_",pin );
+		    sprintf( buffer, "]%1d%s%d", (int)feedLayerG, "SPACER_FEED_BOTTOM_", (int)pin);
 		} else {
-		    sprintf( buffer, "%s%d" , "SPACER_FEED_BOTTOM_" , pin );
+		    sprintf( buffer, "%s%d" , "SPACER_FEED_BOTTOM_" , (int)pin );
 		}
 		imptr->eqpinname = Ystrclone( buffer ) ;
 	    }
@@ -1261,9 +1278,10 @@ static INT free_swap_data( data )
 INT *data ;
 {
     Ysafe_free( data ) ;
+    return 0;
 } /* free_swap_data */
 
-static trans_tile( ptr, orient )
+static VOID trans_tile( ptr, orient )
 CBOXPTR ptr ;
 INT orient ;
 {
@@ -1286,7 +1304,7 @@ INT orient ;
     ptr->cheight = t - b ;
 } /* end trans_tile */
 
-static build_pad_group( side, sidename, padgroupname )
+static VOID build_pad_group( side, sidename, padgroupname )
 INT side ;
 char *sidename, *padgroupname ;
 {
@@ -1319,9 +1337,8 @@ char *sidename, *padgroupname ;
     }
 } /* end build_pad_group() */
 
-cleanup_readcells()
+VOID cleanup_readcells(VOID)
 {
-    INT trl ;             /* total_row_length */
     INT row ;             /* row counter */
     INT cell ;            /* cell counter */
     INT cell1 ;           /* look for match */
@@ -1616,7 +1633,7 @@ cleanup_readcells()
 	    total_desire += barrayG[row]->desire ;
 	    if( barrayG[row]->desire > celllenG && numRowsG > 1 ){
 		sprintf( YmsgG, 
-		    "Unreasonable row length for row:%d. Please check\n", row ) ;
+		    "Unreasonable row length for row:%d. Please check\n", (int)row ) ;
 		M( ERRMSG, "cleanup_readcells", YmsgG ) ;
 		bogus_rows = TRUE ;
 	    }
@@ -1746,8 +1763,8 @@ cleanup_readcells()
 				    carrayG[cell]->cname );
 	    M( ERRMSG, "cleanup_readcells", YmsgG ) ;
 	    sprintf( YmsgG, "\toutside the length of its block (%d vs. %d)\n",
-		ABS(carrayG[cell]->border), 
-		barrayG[carrayG[cell]->cblock]->blength );
+		(int)(ABS(carrayG[cell]->border)), 
+		(int)(barrayG[carrayG[cell]->cblock]->blength) );
 	    M( ERRMSG, NULL, YmsgG ) ;
 	    abortS = TRUE ;
 	}
@@ -1775,8 +1792,8 @@ cleanup_readcells()
 	    orig_max_row_lengthG = barrayG[block]->blength ;
 	}
     }
-    fprintf( fpoG, "total cell length: %d\n",  celllenG ) ;
-    fprintf( fpoG, "total block length: %d\n", totallenG ) ;
+    fprintf( fpoG, "total cell length: %d\n",  (int)celllenG ) ;
+    fprintf( fpoG, "total block length: %d\n", (int)totallenG ) ;
 
     if( rowsG > 0 ) {
 	totalRG = celllenG ;
@@ -1791,7 +1808,7 @@ cleanup_readcells()
 } /* end cleanup_readcells */
 
 
-not_supported( object )
+VOID not_supported( object )
 char *object ;
 {
     sprintf( YmsgG, "%s is not supported -- sorry!\n", object ) ;
@@ -1799,12 +1816,12 @@ char *object ;
     abortS = TRUE ;
 }
 
-YHASHPTR get_net_table()
+YHASHPTR get_net_table(VOID)
 {
     return( net_hash_tableS ) ;
 } /* end get_net_table */
 
-add_eco()
+VOID add_eco(VOID)
 {
     ERRORABORT() ;
     ECOs_existG++ ;
@@ -1813,7 +1830,7 @@ add_eco()
 
 /* ***************************************************************** */
 /* added below for pad capability */
-init_corners()
+VOID init_corners(VOID)
 {
     minxS = INT_MAX ;
     maxxS = INT_MIN ;
@@ -1827,7 +1844,7 @@ init_corners()
     ptAllocS = 4 ;
 } /* end init_corners */
 
-add_corner( x, y )
+VOID add_corner( x, y )
 INT x, y ;
 {
     INT pt ;    /* point counter */
@@ -1851,7 +1868,7 @@ INT x, y ;
     pptrS->ypoints[pt] = y ;
 } /* end add_corner */
 
-process_corners()
+VOID process_corners(VOID)
 {
     INT xcenter ; /* center of cell */
     INT ycenter ; /* center of cell */
@@ -1892,7 +1909,7 @@ process_corners()
 } /* end process_corners */
 
 
-add_padside( padside )
+VOID add_padside( padside )
 char *padside ;
 {
     INT numsides ;         /* length of side restriction string */
@@ -1973,7 +1990,7 @@ char *padside ;
     } 
 } /* end add_padside */
 
-add_sidespace( lower, upper )
+VOID add_sidespace( lower, upper )
 DOUBLE lower, upper ;
 {
     ERRORABORT() ;
@@ -2014,14 +2031,15 @@ DOUBLE lower, upper ;
 /* ***************************************************************** */
 
 /* set whether a pad group can be permuted */
-setPermutation( permuteFlag ) 
+VOID setPermutation( permuteFlag ) 
+INT permuteFlag;
 {
     ERRORABORT() ;
-    pptrS->permute = permuteFlag ;
+    pptrS->permute = (int)permuteFlag ;
 } /* end setPermutation */
 /* ***************************************************************** */
 
-set_old_format( padside )
+VOID set_old_format( padside )
 char *padside ;
 {
     ERRORABORT() ;
@@ -2044,7 +2062,7 @@ char *padside ;
 } /* set_old_format */
 
 /* add this pad to the current pad group */
-add2padgroup( padName, ordered ) 
+VOID add2padgroup( padName, ordered ) 
 char *padName ;
 BOOL ordered ;  /* ordered flag is true if pad is fixed in padgroup */
 {
@@ -2113,7 +2131,7 @@ BOOL ordered ;  /* ordered flag is true if pad is fixed in padgroup */
 
 } /* end add2PadGroup */
 
-end_padgroup()
+VOID end_padgroup(VOID)
 {
     ERRORABORT() ;
 
@@ -2127,7 +2145,7 @@ end_padgroup()
 //	    "Must have at least 2 pads in a padgroup.\n");
 	    "Must have at least 1 pad in a padgroup.\n");
 	sprintf( YmsgG, "\t%s only has %d pad\n", curCellNameS, 
-	    numchildrenS ) ;
+	    (int)numchildrenS ) ;
 	abortS = TRUE ;
 	M(ERRMSG, NULL, YmsgG ) ;
     }

@@ -68,13 +68,18 @@ static char SccsId[] = "@(#) outpins1.c (Yale) version 1.3 4/18/91" ;
 #endif
 #endif
 
-#include <string.h>
-#include "standard.h"
-#include "groute.h"
-#include "main.h"
-#include "readpar.h"
-#include "pads.h"
+#include "string.h"
+
+#include <yalecad/base.h>
 #include <yalecad/debug.h>
+
+#include "standard.h"
+#include "main.h"
+
+#include "groute.h"
+#include "nets.h"
+#include "pads.h"
+#include "readpar.h"
 
 /* #define NSC */
 
@@ -99,14 +104,14 @@ static INT *rite_edgeS ;
 static INT *left_edgeS ;
 static FILE *fpS ;
 
-static do_outpins();
-static do_vertical_channel();
-static do_left_vertical_channel();
-static do_right_vertical_channel();
-static do_bottom_channel();
-static do_top_channel();
+static VOID do_outpins(P2(PINBOXPTR ptr, int flag));
+static VOID do_vertical_channel(P1(PINBOXPTR ptr));
+static VOID do_left_vertical_channel(P1(PINBOXPTR ptr));
+static VOID do_right_vertical_channel(P1(PINBOXPTR ptr));
+static VOID do_bottom_channel(P1(PINBOXPTR ptr));
+static VOID do_top_channel(P1(PINBOXPTR ptr));
 
-old_outpins()
+VOID old_outpins(VOID)
 {
 
 PINBOXPTR ptr1 , ptr2 , ptr ;
@@ -158,47 +163,47 @@ for( net = 1 ; net <= numnetsG ; net++ ) {
 	ptr1 = seg->pin1ptr ;
 	ptr2 = seg->pin2ptr ;
 	if( seg->switchvalue == swUP ) {
-	    a = find_set_name( ptr1->newy + numpinS ) ;
-	    b = find_set_name( ptr2->newy + numpinS ) ;
+	    a = (int)find_set_name( ptr1->newy + numpinS ) ;
+	    b = (int)find_set_name( ptr2->newy + numpinS ) ;
 	} else if( seg->switchvalue == swDOWN ) {
-	    a = find_set_name( ptr1->newy ) ;
-	    b = find_set_name( ptr2->newy ) ;
+	    a = (int)find_set_name( ptr1->newy ) ;
+	    b = (int)find_set_name( ptr2->newy ) ;
 	} else if( ptr1->row > ptr2->row ) {
-	    a = find_set_name( ptr1->newy ) ;
-	    b = find_set_name( ptr2->newy + numpinS ) ;
+	    a = (int)find_set_name( ptr1->newy ) ;
+	    b = (int)find_set_name( ptr2->newy + numpinS ) ;
 	} else if( ptr1->row < ptr2->row ) {
-	    a = find_set_name( ptr1->newy + numpinS ) ;
-	    b = find_set_name( ptr2->newy ) ;
+	    a = (int)find_set_name( ptr1->newy + numpinS ) ;
+	    b = (int)find_set_name( ptr2->newy ) ;
 	} else if( ptr1->row == 0 ) {
-	    a = find_set_name( ptr1->newy + numpinS ) ;
-	    b = find_set_name( ptr2->newy + numpinS ) ;
+	    a = (int)find_set_name( ptr1->newy + numpinS ) ;
+	    b = (int)find_set_name( ptr2->newy + numpinS ) ;
 	} else if( ptr1->row == numChansG ) {
-	    a = find_set_name( ptr1->newy ) ;
-	    b = find_set_name( ptr2->newy ) ;
+	    a = (int)find_set_name( ptr1->newy ) ;
+	    b = (int)find_set_name( ptr2->newy ) ;
 	} else if( (pp1 = carrayG[ptr1->cell]->padptr) &&
 		    pp1->padside &&
 		   (pp2 = carrayG[ptr2->cell]->padptr) &&
 		   pp2->padside ) {
-	    a = find_set_name( ptr1->newy ) ;
-	    b = find_set_name( ptr2->newy ) ;
+	    a = (int)find_set_name( ptr1->newy ) ;
+	    b = (int)find_set_name( ptr2->newy ) ;
 	} else if( seg->flag > ptr1->row ) {
-	    a = find_set_name( ptr1->newy + numpinS ) ;
-	    b = find_set_name( ptr2->newy + numpinS ) ;
+	    a = (int)find_set_name( ptr1->newy + numpinS ) ;
+	    b = (int)find_set_name( ptr2->newy + numpinS ) ;
 	} else {
-	    a = find_set_name( ptr1->newy ) ;
-	    b = find_set_name( ptr2->newy ) ;
+	    a = (int)find_set_name( ptr1->newy ) ;
+	    b = (int)find_set_name( ptr2->newy ) ;
 	}
 	do_set_union( a , b ) ;
     }
     for( ptr = netarrayG[net]->pins ; ptr ; ptr = ptr->next ) {
 	if( (pp1 = carrayG[ptr->cell]->padptr) && pp1->padside ) {
-	    a = find_set_name( ptr->newy + numpinS ) ;
-	    b = find_set_name( ptr->newy ) ;
+	    a = (int)find_set_name( ptr->newy + numpinS ) ;
+	    b = (int)find_set_name( ptr->newy ) ;
 	    do_set_union( a , b ) ;
 	}
     }
     for( i = 1 ; i <= vtxS ; i++ ) {
-	a = find_set_name( i ) ;
+	a = (int)find_set_name( i ) ;
 	if( count_G[a] > 1 ) {
 	    if( hashS[a] == 0 ) {
 		groupS[i] = ++group_index ;
@@ -209,13 +214,13 @@ for( net = 1 ; net <= numnetsG ; net++ ) {
 	}
     }
     for( ptr = netarrayG[net]->pins ; ptr ; ptr = ptr->next ) {
-	a = find_set_name( ptr->newy + numpinS ) ;
+	a = (int)find_set_name( ptr->newy + numpinS ) ;
 	if( count_G[a] > 1 ) {
 	    upFlag = 1 ;
 	} else {
 	    upFlag = 0 ;
 	}
-	b = find_set_name( ptr->newy ) ;
+	b = (int)find_set_name( ptr->newy ) ;
 	if( count_G[b] > 1 ) {
 	    downFlag = 1 ;
 	} else {
@@ -223,7 +228,7 @@ for( net = 1 ; net <= numnetsG ; net++ ) {
 	}
 	pp1 = carrayG[ ptr->cell ]->padptr ;
 	if( pp1 ){
-	    padside = pp1->padside ;
+	    padside = (int)(pp1->padside) ;
 	} else {
 	    padside = 0 ;
 	}
@@ -281,35 +286,32 @@ TWCLOSE( fpS ) ;
  * 9. 0                                                              *
  *-------------------------------------------------------------------*/
 
-static do_outpins( ptr , flag )
+static VOID do_outpins( ptr , flag )
 PINBOXPTR ptr ;
 int flag ;
 {
 
 
-int x , y , channel , pinloc , group_number , layer , i ;
+int x , y , channel , pinloc , group_number , layer ;
 CBOXPTR cellptr ;
 PADBOXPTR pptr ;
 char *pinname , *tmp_pinname ;
-int length ;
-char master_name[128] , pin_id[128] , tmp_name[128] ;
-char instance_name[128] , p_name[128] , *tmp_string ;
 
 cellptr = carrayG[ ptr->cell ] ;
 if( flag ) {
     channel = ptr->row + 1 ;
-    group_number = groupS[ ptr->newy + numpinS ] ;
+    group_number = (int)(groupS[ ptr->newy + numpinS ]) ;
     pinloc = -1 ;
-    y = cellptr->cycenter + cellptr->tileptr->top ;
+    y = (int)(cellptr->cycenter + cellptr->tileptr->top) ;
 } else {
     channel = ptr->row ;
-    group_number = groupS[ ptr->newy ] ;
+    group_number = (int)(groupS[ ptr->newy ]);
     pinloc = 1 ;
-    y = cellptr->cycenter + cellptr->tileptr->bottom ;
+    y = (int)(cellptr->cycenter + cellptr->tileptr->bottom) ;
 }
 if( (pptr = cellptr->padptr) && pptr->padside ) {
     pinname = ptr->pinname ;
-    x = ptr->xpos ;
+    x = (int)(ptr->xpos) ;
 } else {
     if( ptr->eqptr ) { /* there is at least one equivalent pin */
 	if( cellptr->corient == 0 ) {
@@ -318,80 +320,80 @@ if( (pptr = cellptr->padptr) && pptr->padside ) {
 		    /* equivalent pin is on top side of the row
 			    when the cell orientation is "0" */
 		    pinname = ptr->eqptr->pinname ;
-		    x = ptr->xpos + ptr->eqptr->txoff ;
+		    x = (int)(ptr->xpos + ptr->eqptr->txoff) ;
 		} else {
 		    /* equivalent pin is on the bottom side of
 			the row when the cell orientation is "0" */
 		    pinname = ptr->pinname ;
-		    x = ptr->xpos ;
+		    x = (int)(ptr->xpos) ;
 		}
 	    } else { /* pin is on bottom side of the row */
 		if( ptr->eqptr->typos < 0 ) {
 		    pinname = ptr->eqptr->pinname ;
-		    x = ptr->xpos + ptr->eqptr->txoff ;
+		    x = (int)(ptr->xpos + ptr->eqptr->txoff) ;
 		} else {
 		    pinname = ptr->pinname ;
-		    x = ptr->xpos ;
+		    x = (int)(ptr->xpos) ;
 		}
 	    }
 	} else if( cellptr->corient == 1 ) { /* mirror about x-axis */
 	    if( flag ) {
 		if( ptr->eqptr->typos < 0 ) {
 		    pinname = ptr->eqptr->pinname ;
-		    x = ptr->xpos + ptr->eqptr->txoff ;
+		    x = (int)(ptr->xpos + ptr->eqptr->txoff) ;
 		} else {
 		    pinname = ptr->pinname ;
-		    x = ptr->xpos ;
+		    x = (int)(ptr->xpos) ;
 		}
 	    } else {
 		if( ptr->eqptr->typos > 0 ) {
 		    pinname = ptr->eqptr->pinname ;
-		    x = ptr->xpos + ptr->eqptr->txoff ;
+		    x = (int)(ptr->xpos + ptr->eqptr->txoff) ;
 		} else {
 		    pinname = ptr->pinname ;
-		    x = ptr->xpos ;
+		    x = (int)(ptr->xpos) ;
 		}
 	    }
 	} else if( cellptr->corient == 2 ) { /* mirror about y-axis */
 	    if( flag ) {
 		if( ptr->eqptr->typos > 0 ) {
 		    pinname = ptr->eqptr->pinname ;
-		    x = ptr->xpos - ptr->eqptr->txoff ;
+		    x = (int)(ptr->xpos - ptr->eqptr->txoff) ;
 		} else {
 		    pinname = ptr->pinname ;
-		    x = ptr->xpos ;
+		    x = (int)(ptr->xpos) ;
 		}
 	    } else {
 		if( ptr->eqptr->typos < 0 ) {
 		    pinname = ptr->eqptr->pinname ;
-		    x = ptr->xpos - ptr->eqptr->txoff ;
+		    x = (int)(ptr->xpos - ptr->eqptr->txoff) ;
 		} else {
 		    pinname = ptr->pinname ;
-		    x = ptr->xpos ;
+		    x = (int)(ptr->xpos) ;
 		}
 	    }
 	} else { /* 180 degree rotation w.r.t orientation 0 */
 	    if( flag ) {
 		if( ptr->eqptr->typos < 0 ) {
 		    pinname = ptr->eqptr->pinname ;
-		    x = ptr->xpos - ptr->eqptr->txoff ;
+		    x = (int)(ptr->xpos - ptr->eqptr->txoff) ;
 		} else {
 		    pinname = ptr->pinname ;
-		    x = ptr->xpos ;
+		    x = (int)(ptr->xpos) ;
 		}
 	    } else {
 		if( ptr->eqptr->typos > 0 ) {
 		    pinname = ptr->eqptr->pinname ;
-		    x = ptr->xpos - ptr->eqptr->txoff ;
+		    x = (int)(ptr->xpos - ptr->eqptr->txoff) ;
 		} else {
 		    pinname = ptr->pinname ;
-		    x = ptr->xpos ;
+		    x = (int)(ptr->xpos) ;
 		}
 	    }
 	}
     } else {
 	pinname = ptr->pinname ;
-	x = ptr->xpos ;
+	x = (int)(ptr->xpos) ;
     }
 }
 tmp_pinname = find_layer( pinname, &layer ) ;
@@ -421,21 +423,21 @@ if( length < strlen( tmp_name ) ) {
 }
 
 fprintf(fpS,"%s %d %s %s %d %d %d %d %d %s %s\n" ,
-    netarrayG[ptr->net]->name , group_number ,
+    netarrayG[ptr->net]->name , (int)group_number ,
 	instance_name , p_name ,
-	    x , y , channel , pinloc , layer ,
+	    (int)x , (int)y , (int)channel , (int)pinloc , (int)layer ,
 	    master_name , pin_id );
 #else
 fprintf(fpS,"%s %d %s %s %d %d %d %d %d\n" ,
-    netarrayG[ptr->net]->name , group_number ,
+    netarrayG[ptr->net]->name , (int)group_number ,
 	carrayG[ptr->cell]->cname , tmp_pinname ,
-	    x , y , channel , pinloc , layer );
+	    (int)x , (int)y , (int)channel , (int)pinloc , (int)layer );
 #endif
 return ;
 }
 
 
-static do_pseudo_pins( ptr , channel , group_number )
+static VOID do_pseudo_pins( ptr , channel , group_number )
 PINBOXPTR ptr ;
 int channel , group_number ;
 {
@@ -449,52 +451,52 @@ int outer_ch_bb_urx ;
 int outer_ch_bb_ury ;
 
 if( channel == numRowsG + 1 ) {
-    outer_ch_bb_llx = barrayG[numRowsG]->bxcenter + barrayG[numRowsG]->bleft ;
-    outer_ch_bb_urx = barrayG[numRowsG]->bxcenter + barrayG[numRowsG]->bright ;
-    outer_ch_bb_lly = barrayG[numRowsG]->bycenter + barrayG[numRowsG]->btop ;
+    outer_ch_bb_llx = (int)(barrayG[numRowsG]->bxcenter + barrayG[numRowsG]->bleft) ;
+    outer_ch_bb_urx = (int)(barrayG[numRowsG]->bxcenter + barrayG[numRowsG]->bright) ;
+    outer_ch_bb_lly = (int)(barrayG[numRowsG]->bycenter + barrayG[numRowsG]->btop) ;
     outer_ch_bb_ury = outer_ch_bb_lly + 1 ;
     y_middle = outer_ch_bb_lly ;
 } else if( channel == 1 ) {
-    outer_ch_bb_llx = barrayG[1]->bxcenter + barrayG[1]->bleft ;
-    outer_ch_bb_urx = barrayG[1]->bxcenter + barrayG[1]->bright ;
-    outer_ch_bb_ury = barrayG[1]->bycenter + barrayG[1]->bbottom ;
+    outer_ch_bb_llx = (int)(barrayG[1]->bxcenter + barrayG[1]->bleft) ;
+    outer_ch_bb_urx = (int)(barrayG[1]->bxcenter + barrayG[1]->bright) ;
+    outer_ch_bb_ury = (int)(barrayG[1]->bycenter + barrayG[1]->bbottom) ;
     outer_ch_bb_lly = outer_ch_bb_ury - 1 ;
     y_middle = outer_ch_bb_ury + 1 ;
 } else {
     top_row = channel ;
     bot_row = channel - 1 ;
-    x_1 = barrayG[bot_row]->bxcenter + barrayG[bot_row]->bleft ;
-    x_2 = barrayG[top_row]->bxcenter + barrayG[top_row]->bleft ;
+    x_1 = (int)(barrayG[bot_row]->bxcenter + barrayG[bot_row]->bleft) ;
+    x_2 = (int)(barrayG[top_row]->bxcenter + barrayG[top_row]->bleft) ;
     if( x_1 < x_2 ) {
 	outer_ch_bb_llx = x_1 ;
     } else {
 	outer_ch_bb_llx = x_2 ;
     }
-    x_1 = barrayG[bot_row]->bxcenter + barrayG[bot_row]->bright ;
-    x_2 = barrayG[top_row]->bxcenter + barrayG[top_row]->bright ;
+    x_1 = (int)(barrayG[bot_row]->bxcenter + barrayG[bot_row]->bright) ;
+    x_2 = (int)(barrayG[top_row]->bxcenter + barrayG[top_row]->bright) ;
     if( x_1 > x_2 ) {
 	outer_ch_bb_urx = x_1 ;
     } else {
 	outer_ch_bb_urx = x_2 ;
     }
-    outer_ch_bb_ury = barrayG[top_row]->bycenter + barrayG[top_row]->bbottom ;
-    outer_ch_bb_lly = barrayG[bot_row]->bycenter + barrayG[bot_row]->btop ;
+    outer_ch_bb_ury = (int)(barrayG[top_row]->bycenter + barrayG[top_row]->bbottom) ;
+    outer_ch_bb_lly = (int)(barrayG[bot_row]->bycenter + barrayG[bot_row]->btop) ;
     y_middle = (outer_ch_bb_lly + outer_ch_bb_ury) / 2 ;
 }
 
 /* we have to set exit_end to -2 for exit left (or 2 for exit right) */
-/* OR:
+/* OR: */
 /* we have to set exit_end to -1 for bottom (or 1 for top of channel) */
 
 if( ptr->xpos >= outer_ch_bb_llx && ptr->xpos <= outer_ch_bb_urx ) {
     /* exit_end will be either 1 or -1 */
     if( ptr->ypos > y_middle ) {
 	exit_end = 1 ;
-	x = ptr->xpos ;
+	x = (int)(ptr->xpos) ;
 	y = outer_ch_bb_ury ;
     } else {
 	exit_end = -1 ;
-	x = ptr->xpos ;
+	x = (int)(ptr->xpos) ;
 	y = outer_ch_bb_lly ;
     }
 } else if( ptr->xpos < outer_ch_bb_llx ) {
@@ -521,7 +523,7 @@ fprintf(fpS,"%s %d PSEUDO_CELL PSEUDO_PIN %d %d %d %d 0\n" ,
 
 
 
-static do_left_pseudo_pins( ptr , channel , group_number )
+static VOID do_left_pseudo_pins( ptr , channel , group_number )
 PINBOXPTR ptr ;
 int channel , group_number ;
 {
@@ -530,38 +532,38 @@ int channel , group_number ;
 int x , y ;
 
 if( channel <= numRowsG ) {
-    y = barrayG[channel]->bycenter - rowHeightG ;
+    y = (int)(barrayG[channel]->bycenter - rowHeightG) ;
 } else {
-    y = barrayG[ numRowsG ]->bycenter + rowHeightG ;
+    y = (int)(barrayG[ numRowsG ]->bycenter + rowHeightG) ;
 }
 if( channel == 1 ) {
-    x = left_edgeS[1] ;
+    x =(int)(left_edgeS[1]) ;
 } else if( channel == numChansG ) {
-    x = left_edgeS[numRowsG] ;
+    x = (int)(left_edgeS[numRowsG]) ;
 } else {
     if( left_edgeS[channel] <= left_edgeS[channel-1] ) {
-	x = left_edgeS[channel] ;
+	x = (int)(left_edgeS[channel]) ;
     } else {
-	x = left_edgeS[channel-1] ;
+	x = (int)(left_edgeS[channel-1]) ;
     }
 }
 #ifdef NSC
 fprintf(fpS,"%s %d PSEUDO_CELL PSEUDO_PIN %d %d %d -2 0 0 0\n" ,
-netarrayG[ptr->net]->name , group_number , x , y , channel ) ;
+netarrayG[ptr->net]->name , (int)group_number , (int)x , (int)y , (int)channel ) ;
 
 fprintf(fpS,"%s %d PSEUDO_CELL PSEUDO_PIN %d %d -1 -1 0 0 0\n" ,
-netarrayG[ptr->net]->name , group_number , x , y ) ;
+netarrayG[ptr->net]->name , (int)group_number , (int)x , (int)y ) ;
 #else
 fprintf(fpS,"%s %d PSEUDO_CELL PSEUDO_PIN %d %d %d -2 0\n" ,
-netarrayG[ptr->net]->name , group_number , x , y , channel ) ;
+netarrayG[ptr->net]->name , (int)group_number , (int)x , (int)y , (int)channel ) ;
 
 fprintf(fpS,"%s %d PSEUDO_CELL PSEUDO_PIN %d %d -1 -1 0\n" ,
-netarrayG[ptr->net]->name , group_number , x , y ) ;
+netarrayG[ptr->net]->name , (int)group_number , (int)x , (int)y ) ;
 #endif
 }
 
 
-static do_right_pseudo_pins( ptr , channel , group_number )
+static VOID do_right_pseudo_pins( ptr , channel , group_number )
 PINBOXPTR ptr ;
 int channel , group_number ;
 {
@@ -570,37 +572,37 @@ int channel , group_number ;
 int x , y ;
 
 if( channel == 1 ) {
-    y = barrayG[1]->bycenter - rowHeightG ;
-    x = rite_edgeS[1] ;
+    y = (int)(barrayG[1]->bycenter - rowHeightG) ;
+    x = (int)(rite_edgeS[1]) ;
 } else if( channel <= numRowsG ) {
-    y = barrayG[channel]->bycenter - rowHeightG ;
-    if( rite_edgeS[channel] < rite_edgeS[channel-1] ) {
-	x = rite_edgeS[channel] ;
+    y = (int)(barrayG[channel]->bycenter - rowHeightG) ;
+    if( (int)(rite_edgeS[channel] < rite_edgeS[channel-1] )) {
+	x = (int)(rite_edgeS[channel]) ;
     } else {
-	x = rite_edgeS[channel-1] ;
+	x = (int)(rite_edgeS[channel-1]) ;
     }
 } else {
-    y = barrayG[numRowsG]->bycenter + rowHeightG ;
-    x = rite_edgeS[numRowsG] ;
+    y = (int)(barrayG[numRowsG]->bycenter + rowHeightG) ;
+    x = (int)(rite_edgeS[numRowsG]) ;
 }
 #ifdef NSC
 fprintf(fpS,"%s %d PSEUDO_CELL PSEUDO_PIN %d %d %d 2 0 0 0\n" ,
-netarrayG[ptr->net]->name , group_number , x , y , channel ) ;
+netarrayG[ptr->net]->name , (int)group_number , (int)x , (int)y , (int)channel ) ;
 
 fprintf(fpS,"%s %d PSEUDO_CELL PSEUDO_PIN %d %d -2 -1 0 0 0\n" ,
-netarrayG[ptr->net]->name , group_number , x , y ) ;
+netarrayG[ptr->net]->name , (int)group_number , (int)x , (int)y ) ;
 #else
 fprintf(fpS,"%s %d PSEUDO_CELL PSEUDO_PIN %d %d %d 2 0\n" ,
-netarrayG[ptr->net]->name , group_number , x , y , channel ) ;
+netarrayG[ptr->net]->name , (int)group_number , (int)x , (int)y , (int)channel ) ;
 
 fprintf(fpS,"%s %d PSEUDO_CELL PSEUDO_PIN %d %d -2 -1 0\n" ,
-netarrayG[ptr->net]->name , group_number , x , y ) ;
+netarrayG[ptr->net]->name , (int)group_number , (int)x , (int)y ) ;
 #endif
 }
 
 
 
-static do_vertical_channel( ptr )
+static VOID do_vertical_channel( ptr )
 PINBOXPTR ptr ;
 {
 
@@ -608,9 +610,9 @@ PINBOXPTR core_ptr ;
 SEGBOXPTR segptr ;
 ADJASEG *adj ;
 PADBOXPTR pptr ;
-int group_number , i , padside ;
+int group_number , padside ;
 
-group_number = groupS[ ptr->newy ] ;
+group_number = (int)(groupS[ ptr->newy ]) ;
 for( adj = ptr->adjptr->next ; adj ; adj = adj->next ) {
     segptr = adj->segptr ;
     if( ptr == segptr->pin1ptr ) {
@@ -620,7 +622,7 @@ for( adj = ptr->adjptr->next ; adj ; adj = adj->next ) {
     }
     pptr = carrayG[core_ptr->cell]->padptr ;
     if( pptr ){
-	padside = pptr->padside ;
+	padside = (int)(pptr->padside) ;
     } else {
 	padside = 0 ;
     }
@@ -642,7 +644,7 @@ for( adj = ptr->adjptr->next ; adj ; adj = adj->next ) {
 }
 
 
-static do_left_vertical_channel( ptr )
+static VOID do_left_vertical_channel( ptr )
 PINBOXPTR ptr ;
 {
 
@@ -650,13 +652,10 @@ PINBOXPTR core_ptr ;
 SEGBOXPTR segptr ;
 ADJASEG *adj ;
 PADBOXPTR pptr ;
-int group_number , layer , i ;
-int length ;
+int group_number , layer;
 char *tmp_pinname ;
-char master_name[128] , pin_id[128] , tmp_name[128] ;
-char instance_name[128] , p_name[128] , *tmp_string ;
 
-group_number = groupS[ ptr->newy ] ;
+group_number = (int)(groupS[ ptr->newy ]) ;
 tmp_pinname = find_layer( ptr->pinname, &layer ) ;
 #ifdef NSC
 
@@ -683,15 +682,15 @@ if( length < strlen( tmp_name ) ) {
 }
 
 fprintf(fpS,"%s %d %s %s %d %d -1 1 %d %s %s\n" ,
-    netarrayG[ptr->net]->name , group_number , 
+    netarrayG[ptr->net]->name , (int)group_number , 
     instance_name , p_name , 
-    ptr->xpos , ptr->ypos , layer ,
+    (int)(ptr->xpos) , (int)(ptr->ypos) , (int)layer ,
     master_name , pin_id );
 #else
 fprintf(fpS,"%s %d %s %s %d %d -1 1 %d\n" ,
-    netarrayG[ptr->net]->name , group_number , 
+    netarrayG[ptr->net]->name , (int)group_number , 
     carrayG[ptr->cell]->cname , tmp_pinname , 
-    ptr->xpos , ptr->ypos , layer ) ;
+    (int)(ptr->xpos) , (int)(ptr->ypos) , (int)layer ) ;
 #endif
 for( adj = ptr->adjptr->next ; adj ; adj = adj->next ) {
     segptr = adj->segptr ;
@@ -708,7 +707,7 @@ for( adj = ptr->adjptr->next ; adj ; adj = adj->next ) {
 }
 
 
-static do_right_vertical_channel( ptr )
+static VOID do_right_vertical_channel( ptr )
 PINBOXPTR ptr ;
 {
 
@@ -716,13 +715,10 @@ PINBOXPTR core_ptr ;
 SEGBOXPTR segptr ;
 ADJASEG *adj ;
 PADBOXPTR pptr ;
-int a , group_number , layer , i ;
+int group_number , layer;
 char *tmp_pinname ;
-int length ;
-char master_name[128] , pin_id[128] , tmp_name[128] ;
-char instance_name[128] , p_name[128] , *tmp_string ;
 
-group_number = groupS[ ptr->newy ] ;
+group_number = (int)(groupS[ ptr->newy ]) ;
 tmp_pinname = find_layer( ptr->pinname, &layer ) ;
 #ifdef NSC
 
@@ -749,15 +745,15 @@ if( length < strlen( tmp_name ) ) {
 }
 
 fprintf(fpS,"%s %d %s %s %d %d -2 1 %d %s %s\n" ,
-    netarrayG[ptr->net]->name , group_number , 
+    netarrayG[ptr->net]->name , (int)group_number , 
     instance_name , p_name , 
-    ptr->xpos , ptr->ypos , layer ,
+    (int)(ptr->xpos) , (int)(ptr->ypos) , (int)layer ,
     master_name , pin_id );
 #else
 fprintf(fpS,"%s %d %s %s %d %d -2 1 %d\n" ,
-    netarrayG[ptr->net]->name , group_number , 
+    netarrayG[ptr->net]->name , (int)group_number , 
     carrayG[ptr->cell]->cname, tmp_pinname , 
-    ptr->xpos , ptr->ypos , layer ) ;
+    (int)(ptr->xpos) , (int)(ptr->ypos) , (int)layer ) ;
 #endif
 for( adj = ptr->adjptr->next ; adj ; adj = adj->next ) {
     segptr = adj->segptr ;
@@ -774,20 +770,17 @@ for( adj = ptr->adjptr->next ; adj ; adj = adj->next ) {
 }
 
 
-static do_bottom_channel( ptr )
+static VOID do_bottom_channel( ptr )
 PINBOXPTR ptr ;
 {
-int x , y , group_number , layer , i ;
+int x , y , group_number , layer;
 char *tmp_pinname ;
 ADJASEG *adj ;
 SEGBOXPTR segptr ;
 PINBOXPTR core_ptr ;
 PADBOXPTR pptr ;
-int length ;
-char master_name[128] , pin_id[128] , tmp_name[128] ;
-char instance_name[128] , p_name[128] , *tmp_string ;
 
-group_number = groupS[ ptr->newy ] ;
+group_number = (int)(groupS[ ptr->newy ]) ;
 tmp_pinname = find_layer( ptr->pinname, &layer ) ;
 strcpy( tmp_pinname , ptr->pinname ) ;
 #ifdef NSC
@@ -815,17 +808,17 @@ if( length < strlen( tmp_name ) ) {
 }
 
 fprintf(fpS,"%s %d %s %s %d %d -3 -1 %d %s %s\n" ,
-    netarrayG[ptr->net]->name , group_number ,
+    netarrayG[ptr->net]->name , (int)group_number ,
     instance_name , p_name , 
-    ptr->xpos , ptr->ypos , layer ,
+    (int)(ptr->xpos) , (int)(ptr->ypos) , (int)layer ,
     master_name , pin_id );
 #else
 fprintf(fpS,"%s %d %s %s %d %d -3 -1 %d\n" ,
-    netarrayG[ptr->net]->name , group_number ,
+    netarrayG[ptr->net]->name , (int)group_number ,
     carrayG[ptr->cell]->cname , tmp_pinname , 
-    ptr->xpos , ptr->ypos , layer );
+    (int)(ptr->xpos) , (int)(ptr->ypos) , (int)(layer) );
 #endif
-y = barrayG[1]->bycenter + barrayG[1]->bbottom - 1 ;
+y = (int)( barrayG[1]->bycenter + barrayG[1]->bbottom - 1 );
 for( adj = ptr->adjptr->next ; adj ; adj = adj->next ) {
     segptr = adj->segptr ;
     if( ptr == segptr->pin1ptr ) {
@@ -834,42 +827,40 @@ for( adj = ptr->adjptr->next ; adj ; adj = adj->next ) {
 	core_ptr = segptr->pin1ptr ;
     }
     pptr = carrayG[core_ptr->cell]->padptr ;
-    if( pptr && pptr->padside || core_ptr->row > 1 ) {
+    /* SjG : Made the &&/|| below explicit rather than inferred */
+    if( (pptr && pptr->padside) || core_ptr->row > 1 ) {
 	continue ;
     } else {
-	x = core_ptr->xpos ;
+	x = (int)(core_ptr->xpos) ;
 #ifdef NSC
 	fprintf(fpS,"%s %d PSEUDO_CELL PSEUDO_PIN %d %d 1 -1 0 0 0\n" ,
-	netarrayG[ptr->net]->name , group_number , x , y ) ;
+	netarrayG[ptr->net]->name , (int)group_number , (int)x , (int)y ) ;
 
 	fprintf(fpS,"%s %d PSEUDO_CELL PSEUDO_PIN %d %d -3 1 0 0 0\n" ,
-	netarrayG[ptr->net]->name , group_number , x , y ) ;
+	netarrayG[ptr->net]->name , (int)group_number , (int)x , (int)y ) ;
 #else
 	fprintf(fpS,"%s %d PSEUDO_CELL PSEUDO_PIN %d %d 1 -1 0\n" ,
-	netarrayG[ptr->net]->name , group_number , x , y ) ;
+	netarrayG[ptr->net]->name , (int)group_number , (int)x , (int)y ) ;
 
 	fprintf(fpS,"%s %d PSEUDO_CELL PSEUDO_PIN %d %d -3 1 0\n" ,
-	netarrayG[ptr->net]->name , group_number , x , y ) ;
+	netarrayG[ptr->net]->name , (int)group_number , (int)x , (int)y ) ;
 #endif
     }
 }
 }
 
 
-static do_top_channel( ptr )
+static VOID do_top_channel( ptr )
 PINBOXPTR ptr ;
 {
-int x , y , group_number , layer , i ;
+int x , y , group_number , layer ;
 char *tmp_pinname ;
 ADJASEG *adj ;
 SEGBOXPTR segptr ;
 PINBOXPTR core_ptr ;
 PADBOXPTR pptr ;
-int length ;
-char master_name[128] , pin_id[128] , tmp_name[128] ;
-char instance_name[128] , p_name[128] , *tmp_string ;
 
-group_number = groupS[ ptr->newy ] ;
+group_number = (int)(groupS[ ptr->newy ]) ;
 tmp_pinname = find_layer( ptr->pinname, &layer ) ;
 #ifdef NSC
 
@@ -896,17 +887,17 @@ if( length < strlen( tmp_name ) ) {
 }
 
 fprintf(fpS,"%s %d %s %s %d %d -4 1 %d %s %s\n" ,
-    netarrayG[ptr->net]->name , group_number ,
+    netarrayG[ptr->net]->name , (int)group_number ,
     instance_name , p_name , 
-    ptr->xpos , ptr->ypos , layer ,
+    (int)(ptr->xpos) , (int)(ptr->ypos) , (int)layer ,
     master_name , pin_id );
 #else
 fprintf(fpS,"%s %d %s %s %d %d -4 1 %d\n" ,
-    netarrayG[ptr->net]->name , group_number ,
+    netarrayG[ptr->net]->name , (int)group_number ,
     carrayG[ptr->cell]->cname , tmp_pinname , 
-    ptr->xpos , ptr->ypos , layer );
+    (int)(ptr->xpos) , (int)(ptr->ypos) , (int)layer );
 #endif
-y = barrayG[numRowsG]->bycenter + barrayG[numRowsG]->btop + 1 ;
+y = (int)(barrayG[numRowsG]->bycenter + barrayG[numRowsG]->btop + 1) ;
 for( adj = ptr->adjptr->next ; adj ; adj = adj->next ) {
     segptr = adj->segptr ;
     if( ptr == segptr->pin1ptr ) {
@@ -915,22 +906,24 @@ for( adj = ptr->adjptr->next ; adj ; adj = adj->next ) {
 	core_ptr = segptr->pin1ptr ;
     }
     pptr = carrayG[core_ptr->cell]->padptr ;
-    if( pptr && pptr->padside || core_ptr->row < numRowsG ) {
+    
+    /* SjG : Made the &&/|| below explicit rather than inferred */
+    if( (pptr && pptr->padside) || core_ptr->row < numRowsG ) {
 	continue ;
     } else {
-	x = core_ptr->xpos ;
+	x = (int)(core_ptr->xpos) ;
 #ifdef NSC
 	fprintf(fpS,"%s %d PSEUDO_CELL PSEUDO_PIN %d %d %d 1 0 0 0\n" ,
-	netarrayG[ptr->net]->name , group_number , x , y , numChansG ) ;
+	netarrayG[ptr->net]->name , (int)group_number , (int)x , (int)y , (int)numChansG ) ;
 
 	fprintf(fpS,"%s %d PSEUDO_CELL PSEUDO_PIN %d %d -4 -1 0 0 0\n" ,
-	netarrayG[ptr->net]->name , group_number , x , y ) ;
+	netarrayG[ptr->net]->name , (int)group_number , (int)x , (int)y ) ;
 #else
 	fprintf(fpS,"%s %d PSEUDO_CELL PSEUDO_PIN %d %d %d 1 0\n" ,
-	netarrayG[ptr->net]->name , group_number , x , y , numChansG ) ;
+	netarrayG[ptr->net]->name , (int)group_number , (int)x , (int)y , (int)numChansG ) ;
 
 	fprintf(fpS,"%s %d PSEUDO_CELL PSEUDO_PIN %d %d -4 -1 0\n" ,
-	netarrayG[ptr->net]->name , group_number , x , y ) ;
+	netarrayG[ptr->net]->name , (int)group_number , (int)x , (int)y ) ;
 #endif
     }
 }

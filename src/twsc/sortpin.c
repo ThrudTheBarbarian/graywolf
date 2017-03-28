@@ -69,14 +69,18 @@ static char SccsId[] = "@(#) sortpin.c (Yale) version 4.3 9/7/90" ;
 #endif
 #endif
 
+#include <yalecad/base.h>
+
 #include "standard.h"
+
 #include "groute.h"
 #include "feeds.h"
+#include "sort.h"
 
 static PINBOXPTR *sortArrayS ;          /* the normal array for sorting */
 static PINBOXPTR *sortArraySwapS ;
 
-sortpin()
+VOID sortpin(VOID)
 {
 
     INT cell ;                      /* current cell */
@@ -123,7 +127,7 @@ sortpin()
 
 
 /* sort the pins of a single cell by net */
-sortpin1( cell )
+VOID sortpin1( cell )
 INT cell ;
 {
 
@@ -149,7 +153,7 @@ INT cell ;
     return ;
 } /* end sortpin1 */
 
-sortpin2( cella, cellb )
+VOID sortpin2( cella, cellb )
 INT cella, cellb ;
 {
 
@@ -204,7 +208,7 @@ INT cella, cellb ;
     return ;
 } /* end sortpin2 */
 
-shellsort( term , n )
+VOID shellsort( term , n )
 PINBOXPTR term[] ;
 INT n ;
 {
@@ -226,7 +230,7 @@ for( incr = n / 2 ; incr > 0 ; incr /= 2 ) {
 }
 
 
-shellsortx( term , n )
+VOID shellsortx( term , n )
 PINBOXPTR term[] ;
 INT n ;
 {
@@ -247,7 +251,7 @@ for( incr = (n+1)/ 2 ; incr > 0 ; incr /= 2 ) {
 }
 
 
-shellsorty( term , n )
+VOID shellsorty( term , n )
 PINBOXPTR term[] ;
 INT n ;
 {
@@ -268,9 +272,9 @@ for( incr = (n+1)/ 2 ; incr > 0 ; incr /= 2 ) {
 }
 
 
-shellsort_referx( worker , head , n )
+VOID shellsort_referx( worker , head , n )
 FEED_SEG_PTR worker[] ;
-INT n ;
+INT head, n ;
 {
 
 FEED_SEG_PTR ptr ;

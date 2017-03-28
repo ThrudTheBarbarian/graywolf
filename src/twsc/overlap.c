@@ -70,9 +70,12 @@ static char SccsId[] = "@(#) overlap.c (Yale) version 4.3 9/7/90" ;
 #endif
 #endif
 
+#include <yalecad/base.h>
+
+#include "overlap.h"
 #include "ucxxglb.h"
 
-new_old( c )
+VOID new_old( c )
 INT c ;
 {
 
@@ -172,7 +175,7 @@ if( ablockG != bblockG ) {
 */
 
 
-old_assgnto_new1( alobin , ahibin , anewlobin , anewhibin )
+VOID old_assgnto_new1( alobin , ahibin , anewlobin , anewhibin )
 INT alobin , ahibin , anewlobin , anewhibin ;
 {
 
@@ -198,7 +201,7 @@ if( ablockG == bblockG ) {
 }
     
 
-new_assgnto_old1( alobin , ahibin , anewlobin , anewhibin )
+VOID new_assgnto_old1( alobin , ahibin , anewlobin , anewhibin )
 INT alobin , ahibin , anewlobin , anewhibin ;
 {
 
@@ -223,7 +226,7 @@ if( ablockG == bblockG ) {
 } 
 }
 
-old_assgnto_new2( a1lobin , a1hibin , a2lobin , a2hibin ,
+VOID old_assgnto_new2( a1lobin , a1hibin , a2lobin , a2hibin ,
 		  b1lobin , b1hibin , b2lobin , b2hibin )
 INT a1lobin , a1hibin , a2lobin , a2hibin ;
 INT b1lobin , b1hibin , b2lobin , b2hibin ;
@@ -256,7 +259,7 @@ if( ablockG == bblockG ) {
 }
 	 
 
-new_assgnto_old2( a1lobin , a1hibin , a2lobin , a2hibin ,
+VOID new_assgnto_old2( a1lobin , a1hibin , a2lobin , a2hibin ,
 		  b1lobin , b1hibin , b2lobin , b2hibin )
 INT a1lobin , a1hibin , a2lobin , a2hibin ;
 INT b1lobin , b1hibin , b2lobin , b2hibin ;
@@ -289,7 +292,7 @@ if( ablockG == bblockG ) {
 }
 
 
-sub_penal( startx , endx , block , LoBin , HiBin )
+VOID sub_penal( startx , endx , block , LoBin , HiBin )
 INT startx , endx , block , LoBin , HiBin ;
 {
 
@@ -322,7 +325,7 @@ if( LoBin == HiBin ) {
 }
 }
 
-add_penal( startx , endx , block , LoBin , HiBin )
+VOID add_penal( startx , endx , block , LoBin , HiBin )
 INT startx , endx , block , LoBin , HiBin ;
 {
 
@@ -355,7 +358,7 @@ if( LoBin == HiBin ) {
 }
 
 
-term_newpos( antrmptr , xcenter , ycenter , newaor )
+VOID term_newpos( antrmptr , xcenter , ycenter , newaor )
 PINBOXPTR antrmptr ;
 INT xcenter , ycenter , newaor ;
 {

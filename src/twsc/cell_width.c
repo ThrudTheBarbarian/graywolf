@@ -58,16 +58,21 @@ static char SccsId[] = "@(#) cell_width.c (Yale) version 1.1 9/27/91" ;
 
 /* #define MITLL */
 
-#include <string.h>
-#include "standard.h"
-#include "main.h"
-#include "config.h"
-#include "readpar.h"
-#include "parser.h"
+#include "string.h"
+
+#include <yalecad/base.h>
+#include <yalecad/cleanup.h>
 #include <yalecad/debug.h>
 #include <yalecad/message.h>
 #include <yalecad/rbtree.h>
-#include <yalecad/string.h>
+#include <yalecad/ystring.h>
+
+#include "standard.h"
+#include "main.h"
+
+#include "config.h"
+#include "readpar.h"
+#include "parser.h"
 
 #define GREATER 1
 #define LESS -1 
@@ -77,8 +82,8 @@ static char SccsId[] = "@(#) cell_width.c (Yale) version 1.1 9/27/91" ;
 
 extern INT extra_cellsG ;
 
-static INT compare_cell_length();
-static read_pads(); 
+static INT compare_cell_length(P2(CBOXPTR c1, CBOXPTR c2));
+static VOID read_pads(P1(FILE *fp)); 
 
 
 
@@ -86,50 +91,53 @@ static read_pads();
 /*------------ User defined print routine to print out the tree ------------*/
 /*--------------------------------------------------------------------------*/
 
-INT print_cell_name(c1)
+static INT print_cell_length(c1)
 CBOXPTR c1;
 {
- return;
+  return 0;
 }
 
 
-INT print_cell_length(c1)
+/*
+static INT print_cell_name(c1)
 CBOXPTR c1;
 {
-  return;
+ return 0;
 }
 
 
-INT print_cell_pins(c1)
+
+static INT print_cell_pins(c1)
 CBOXPTR c1;
 {
-  return ;
+  return 0;
 }
 
 
+*/
 /*--------------------------------------------------------------------------*/
 
 
 
 
-calc_cells_width()
+VOID calc_cells_width(VOID)
 {
 
 FILE *fp;     /*--- file pointer to stdcell.comp ---*/
 INT cell, std_length, cell_length = 0 ;
-INT Ratio, sect, xpost,xminus, ypost, yminus, corient;
-INT alength, lower, upper, counter, longest_cell, cell_count, pp;
+INT Ratio, sect, xpost = 0, ypost = 0, yminus = 0, corient;
+INT lower, upper, counter, longest_cell, cell_count, pp;
 DOUBLE avg_cell_length, deviation, percent, ratio, part_pin;
 
 YTREEPTR CellTree; 
 CBOXPTR acellptr, dummy_box, Low_Key, Hi_Key, TestTree;
-PINBOXPTR termptr, netptr;
+PINBOXPTR termptr;
 EQ_NBOXPTR eptr;
 DBOXPTR dptr;
 char *aptr, *bptr, *cptr, *nptr;
-char *add_ptr = "-XTRA", *add_fptr = "-1";
-INT xx , yy, zzz, r_term, last_term, pin_diff ;
-char layer;
+char *add_ptr = "-XTRA";
+INT xx , zzz, r_term, last_term, pin_diff ;
+char layer = '\0';
 
 system("clear");
 fprintf(stderr, "\n\n ");
@@ -169,7 +177,7 @@ for(cell = 1; cell <= numcellsG - extra_cellsG ; cell++){
 
 
 fprintf(stderr, "\n------------------------------------\n");
-fprintf(stderr, "The total number of cells = %d \n", --cell );
+fprintf(stderr, "The total number of cells = %d \n", (int)(--cell) );
 fprintf(stderr, "The avarage cell length = %f \n", avg_cell_length );
 fprintf(stderr, "The cell deviation = %f", deviation );
 fprintf(stderr,"\n------------------------------------");
@@ -200,8 +208,8 @@ percent =  (counter / (float) (numcellsG - extra_cellsG)) ;
 
 if (percent >= 0.6){
 
-fprintf(stderr,"\n\nThe Total Number of Cells b/w the Lower Limit = %d",lower);
-fprintf(stderr,"\nand the Upper Limit = %d is ----->> %d \n", upper, counter);
+fprintf(stderr,"\n\nThe Total Number of Cells b/w the Lower Limit = %d",(int)lower);
+fprintf(stderr,"\nand the Upper Limit = %d is ----->> %d \n", (int)upper, (int)counter);
 fprintf(stderr,"\nThe Percentage of Cells within the Limits = %f \n", 100*percent);
 fprintf(stderr,"\nPlease wait, conversion is being done ... \n");
 
@@ -236,8 +244,8 @@ Hi_Key->clength = avg_cell_length ;
 
   }
 
-fprintf(stderr,"\n\nThe Total Number of Cell b/w the Lower Limit = %d",lower);
-fprintf(stderr,"\nand the  Upper Limit = %d is ----->> %d \n", upper, counter);
+fprintf(stderr,"\n\nThe Total Number of Cell b/w the Lower Limit = %d",(int)lower);
+fprintf(stderr,"\nand the  Upper Limit = %d is ----->> %d \n", (int)upper, (int)counter);
 fprintf(stderr,"\nThe Percentage of Cells within the Limits = %f \n", 100*percent);
 fprintf(stderr,"\nPlease wait, conversion is being done ... \n");
 
@@ -271,9 +279,11 @@ for(TestTree = (CBOXPTR)Yrbtree_interval(CellTree,Low_Key,Hi_Key,TRUE);
 
   
 
-  fprintf(fp,"cell %d  %s  \n", cell_count, TestTree->cname);
-  fprintf(fp,"left  %d  right  %d", TestTree->tileptr->left,TestTree->tileptr->right);
-  fprintf(fp,"  bottom  %d  top  %d \n", TestTree->tileptr->bottom,TestTree->tileptr->top);
+  fprintf(fp,"cell %d  %s  \n", (int)cell_count, TestTree->cname);
+  fprintf(fp,"left  %d  right  %d", (int)(TestTree->tileptr->left),
+  									(int)(TestTree->tileptr->right));
+  fprintf(fp,"  bottom  %d  top  %d \n", (int)(TestTree->tileptr->bottom),
+  										 (int)(TestTree->tileptr->top));
 
 
 
@@ -318,16 +328,21 @@ for(TestTree = (CBOXPTR)Yrbtree_interval(CellTree,Low_Key,Hi_Key,TRUE);
     layer = *(cptr) ;
     cptr++ ;
 
-   fprintf(fp,"pin name %s  signal %s  layer %c    %d  %d \n", aptr , bptr, layer,xpost, -yminus);
+   fprintf(fp,"pin name %s  signal %s  layer %c    %d  %d \n", 
+   			aptr , bptr, layer,(int)xpost, (int)(-yminus));
 
-    fprintf(fp,"    equiv name %s  layer %c    %d  %d \n", cptr, layer, xpost, yminus);
+    fprintf(fp,"    equiv name %s  layer %c    %d  %d \n", 
+    		cptr, layer, (int)xpost, (int)yminus);
    } else  {
-   fprintf(fp,"pin name %s  signal %s  layer %c    %d  %d \n", aptr , bptr, layer,xpost,ypost);
+   fprintf(fp,"pin name %s  signal %s  layer %c    %d  %d \n", 
+   			aptr , bptr, layer, (int)xpost, (int)ypost);
      }   
 
-      fprintf(fp,"pin name %d signal TW_PASS_THRU  layer %c   %d  %d \n",xx,layer, xpost + 3 , ypost);
+      fprintf(fp,"pin name %d signal TW_PASS_THRU  layer %c   %d  %d \n",
+      		(int)xx,layer, (int)(xpost + 3) , (int)ypost);
    
-   fprintf(fp,"    equiv name %d  layer %c  %d  %d \n",++xx,layer, xpost + 3 , - ypost); 
+   fprintf(fp,"    equiv name %d  layer %c  %d  %d \n",
+   			(int)(++xx),layer, (int)(xpost + 3) , (int)(- ypost)); 
 
    xx++ ;
 
@@ -423,9 +438,13 @@ for(sect = 0; sect < Ratio ; sect++){
        continue ;
   }
 
-       fprintf(fp,"cell %d  %s  \n", cell_count, dummy_box->cname);
-       fprintf(fp,"left  %d  right  %d", dummy_box->tileptr->left,dummy_box->tileptr->right);
-       fprintf(fp,"  bottom  %d  top  %d \n", dummy_box->tileptr->bottom,dummy_box->tileptr->top);
+       fprintf(fp,"cell %d  %s  \n", (int)cell_count, dummy_box->cname);
+       fprintf(fp,"left  %d  right  %d", 
+       		(int)(dummy_box->tileptr->left),
+       		(int)(dummy_box->tileptr->right));
+       fprintf(fp,"  bottom  %d  top  %d \n", 
+       		(int)(dummy_box->tileptr->bottom),
+       		(int)(dummy_box->tileptr->top));
      
 
   xx = 100 ;
@@ -444,8 +463,8 @@ for(sect = 0; sect < Ratio ; sect++){
 
       /*-- fixing for out of space pins --*/
       for ( zzz = 0; zzz < Ratio ; zzz++) {
-            if (abs(xpost) >= ((zzz + 1) * (std_length / 2 ) ) ){
-                if (abs(xpost) == ((zzz + 1) * (std_length / 2 ) ) ){
+            if (abs((int)xpost) >= ((zzz + 1) * (std_length / 2 ) ) ){
+                if (abs((int)xpost) == ((zzz + 1) * (std_length / 2 ) ) ){
 
 	            if (xpost > 0){
 		        xpost = xpost - (( zzz + 1 ) * ( std_length / 2 )) ;
@@ -480,7 +499,7 @@ for(sect = 0; sect < Ratio ; sect++){
        yminus = eptr->typos ;
 
 
-      if (abs(yminus) >= std_length){
+      if (abs((int)yminus) >= std_length){
 	if (yminus > 0){
 	  yminus = yminus - std_length ;
 	} else { 
@@ -494,25 +513,32 @@ for(sect = 0; sect < Ratio ; sect++){
        layer = *(cptr) ;      /*-- get the equivalent pin number --*/
        cptr++ ;
     
-     fprintf(fp,"pin name %s  signal %s  layer %c    %d  %d\n", aptr , bptr, layer, xpost, - yminus);
-     fprintf(fp,"    equiv name %s  layer %c    %d  %d\n", cptr, layer, xpost, yminus);
+     fprintf(fp,"pin name %s  signal %s  layer %c    %d  %d\n", 
+     	aptr , bptr, layer, (int)xpost, (int)(- yminus));
+     fprintf(fp,"    equiv name %s  layer %c    %d  %d\n", 
+     	cptr, layer, (int)xpost, (int)yminus);
       } else {
-	      fprintf(fp,"pin name %s  signal %s  layer %c    %d  %d\n", aptr , bptr, layer, xpost, yminus);
+	      fprintf(fp,"pin name %s  signal %s  layer %c    %d  %d\n", 
+	      		aptr , bptr, layer, (int)xpost, (int)yminus);
 	    }
 
       termptr = termptr->nextpin ;
    
-   fprintf(fp,"pin name %d signal TW_PASS_THRU  layer %c   %d  %d \n",xx,layer, xpost + 3 , ypost);
-   fprintf(fp,"    equiv name %d  layer %c  %d  %d \n",++xx,layer, xpost + 3 , - ypost); 
+   fprintf(fp,"pin name %d signal TW_PASS_THRU  layer %c   %d  %d \n",
+   		(int)xx,layer, (int)(xpost + 3) , (int)ypost);
+   fprintf(fp,"    equiv name %d  layer %c  %d  %d \n",
+   		(int)(++xx),layer, (int)(xpost + 3) , (int)(- ypost)); 
 
       xx++ ;
 
    }/*---end the inner for-statement---*/
 
       xx++ ;
-      fprintf(fp,"pin name %d signal TW_PASS_THRU  layer %c   %d  %d \n",xx,layer, xpost + 1 , ypost);
+      fprintf(fp,"pin name %d signal TW_PASS_THRU  layer %c   %d  %d \n",
+      		(int)xx,layer, (int)(xpost + 1) , (int)ypost);
 
-      fprintf(fp,"    equiv name %d  layer %c  %d  %d \n",++xx,layer, xpost + 1 , - ypost); 
+      fprintf(fp,"    equiv name %d  layer %c  %d  %d \n",
+      		(int)(++xx),layer, (int)(xpost + 1) , (int)(- ypost)); 
 
 
 
@@ -560,7 +586,7 @@ return(EQUAL);
 /****************************************************************************/
 
 
-static read_pads( fp ) 
+static VOID read_pads( fp ) 
 FILE *fp ;
 {
     char buffer[LRECL], *bufferptr ;
@@ -569,13 +595,13 @@ FILE *fp ;
     INT  numtokens ;
     int  delta ;
     int  error ;
-    int lineG ;
     FILE *fp_cell ;
 
 
     fp_cell = TWOPEN ("stdcell.cel","r" , ABORT) ;
 
-    while( bufferptr = fgets(buffer,LRECL,fp_cell )){
+    /* Use ((...)) to avoid assignment as a condition warning */
+    while(( bufferptr = fgets(buffer,LRECL,fp_cell ))){
 	/* make copy because scanner adds EOS characters */
 	strcpy( copyBuf, bufferptr ) ;
 	tokens = Ystrparser( bufferptr, " \t\n", &numtokens );
@@ -589,9 +615,11 @@ FILE *fp ;
   /*-------------------------------------------------------------------*/
   /*----- Once the Pad is detected, throw in the rest of the file -----*/
   /*-------------------------------------------------------------------*/ 
+	/* Use ((...)) to avoid assignment as a condition warning */
 	if( strcmp( tokens[0], PADKEYWORD ) == STRINGEQ){
 	  fprintf( fp, "%s", copyBuf ) ; 
-          while( bufferptr = fgets(buffer,LRECL,fp_cell )){
+          /* Use ((...)) to avoid assignment as a condition warning */
+          while(( bufferptr = fgets(buffer,LRECL,fp_cell ))){
         	strcpy( copyBuf, bufferptr ) ;
 	        fprintf( fp, "%s", copyBuf ) ;
 	      } 
@@ -601,7 +629,7 @@ FILE *fp ;
     } /* end the big while loop */
 
     /* now we need to unread the last line */
-    delta = - strlen(copyBuf) ;
+    delta = (int)(- strlen(copyBuf)) ;
     error = fseek( fp, delta, RELATIVE_TO_CURPOS ) ;
 
     if( error == -1 ){

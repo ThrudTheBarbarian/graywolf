@@ -53,14 +53,21 @@ static char SccsId[] = "@(#) ucxxo1.c (Yale) version 4.7 2/23/92" ;
 #endif
 #endif
 
-#include "ucxxglb.h"
+#include <yalecad/base.h>
 #include <yalecad/debug.h>
+
+#include "dimbox.h"
+#include "graphics.h"
+#include "overlap.h"
+#include "paths.h"
+#include "ucxxglb.h"
+
 /*
 INT potential_errors , error_count , P_limit ;
 */
 
 
-ucxxo1( bxcenter , bycenter , newaor )
+INT ucxxo1( bxcenter , bycenter , newaor )
 INT bxcenter , bycenter , newaor ;
 {
 

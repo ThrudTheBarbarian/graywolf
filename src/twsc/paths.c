@@ -85,12 +85,17 @@ static char SccsId[] = "@(#) paths.c version 4.12 4/2/92" ;
 
 /* #define ZERO_CHECK */
 
-#include "standard.h"
-#include "main.h"
+#include <yalecad/base.h>
 #include <yalecad/debug.h>
-#include "readnets.h"
 #include <yalecad/message.h>
 #include <yalecad/stat.h>
+
+#include "standard.h"
+#include "main.h"
+
+#include "nets.h"
+#include "paths.h"
+#include "readnets.h"
 
 /* global variables */
 extern  DOUBLE avg_timeG ;/* average random time penalty */
@@ -103,7 +108,7 @@ INT dcalc_path_len(INT, INT);
 
 static INT errorboundS = 0 ;
 
-print_paths( ) 
+VOID print_paths(VOID) 
 {
 
     char filename[LRECL] ;
@@ -112,9 +117,9 @@ print_paths( )
     INT above, really_above, really_below, below, in ;
     INT check, way_above, way_below ; 
     INT really_way_above, really_way_below ;
-    INT *stat ;
+    INT *stat = NULL ;
     INT xspan, yspan ;
-    PATHPTR pptr, get_path_list() ;
+    PATHPTR pptr;
     GLISTPTR net ;
     DBOXPTR nptr ;
     PINBOXPTR netptr ;
@@ -151,7 +156,7 @@ print_paths( )
 	xspan = 0 ;
 	yspan = 0 ;
 	/* get pathLength for path */
-	fprintf( fp, "\npath %3d:\n",++i ) ;
+	fprintf( fp, "\npath %3d:\n",(int)(++i) ) ;
 	for( net = pptr->nets ; net ; net = net->next ){
 	    nptr = netarrayG[net->p.net] ;
 	    fprintf( fp, "\t\t%s\n", nptr->name ) ;
@@ -162,10 +167,12 @@ print_paths( )
 	    yspan += nptr->halfPy ;
 	}
 	fprintf( fp, "\tpriority:%d lower_bound:%d upper_bound:%d\n",
-	    pptr->priority, pptr->lower_bound, pptr->upper_bound ) ;
-	fprintf( fp,"\tweighted length:%d\n", pathLength ) ;
-	fprintf( fp, "\txspan:%d yspan:%d length:%d ", xspan, yspan,
-	    xspan+yspan ) ;
+	    (int)(pptr->priority), 
+	    (int)(pptr->lower_bound), 
+	    (int)(pptr->upper_bound) ) ;
+	fprintf( fp,"\tweighted length:%d\n", (int)pathLength ) ;
+	fprintf( fp, "\txspan:%d yspan:%d length:%d ", 
+			(int)xspan, (int)yspan, (int)(xspan+yspan) ) ;
 	if( pptr->priority ){
 	    ASSERT( pathLength == pptr->path_len,"print_paths",
 		"pathLength does not equal incremental value " ) ;
@@ -245,10 +252,12 @@ print_paths( )
     for( i=1;i<=numnetsG;i++ ){
 	nptr = netarrayG[i] ;
 	fprintf( fp, "net %3d:%s xspan:%d yspan:%d length:%d numpins:%d",
-	    i, nptr->name, nptr->halfPx, nptr->halfPy, 
-	    (INT)(horizontal_path_weightG * (DOUBLE) nptr->halfPx) +
-		 (INT)(vertical_path_weightG * (DOUBLE) nptr->halfPy),
-	    nptr->numpins ) ;
+	    	(int)i, nptr->name, 
+	    	(int)(nptr->halfPx), 
+	    	(int)(nptr->halfPy), 
+	    	(int)(horizontal_path_weightG * (DOUBLE) nptr->halfPx +
+		 	      vertical_path_weightG * (DOUBLE) nptr->halfPy),
+	    	(int)nptr->numpins ) ;
 	if( nptr->ignore ){
 	    fprintf( fp, " ignored\n" ) ;
 	} else {
@@ -259,24 +268,24 @@ print_paths( )
     if( num_paths ){
 	paths = (DOUBLE) num_paths ;
 	fprintf( fp, "\nSummary:\n" ) ;
-	fprintf( fp, "Total wirelength               :%5d\n", funccostG ) ;
-	fprintf( fp, "Total time penalty             :%5d\n", penaltyS ) ;
-	fprintf( fp, "Number of paths                :%5d\n", num_paths ) ;
-	fprintf( fp, "Number of active paths         :%5d\n", numpathsG ) ;
+	fprintf( fp, "Total wirelength               :%5d\n", (int)funccostG ) ;
+	fprintf( fp, "Total time penalty             :%5d\n", (int)penaltyS ) ;
+	fprintf( fp, "Number of paths                :%5d\n", (int)num_paths ) ;
+	fprintf( fp, "Number of active paths         :%5d\n", (int)numpathsG ) ;
 	fprintf( fp, "Number of paths 10%% below spec :%5d - %4.2f%%\n",
-	    below, 100.0 * (DOUBLE) below / paths ) ;
+	    (int)below, 100.0 * (DOUBLE) below / paths ) ;
 	fprintf( fp, "Number of paths 10%% above spec :%5d - %4.2f%%\n",
-	    above, 100.0 * (DOUBLE) above / paths ) ;
+	    (int)above, 100.0 * (DOUBLE) above / paths ) ;
 	fprintf( fp, "Number of paths within  spec   :%5d - %4.2f%%\n",
-	    in, 100.0 * (DOUBLE) in / paths ) ;
-	fprintf( fp, "# of non-pad paths out of spec :%5d\n", really_above +
-						really_below ) ;
-	fprintf( fp, "Number of paths 20%% below spec :%5d - %4.2f%%\n",
-	    way_below, 100.0 * (DOUBLE) way_below / paths ) ;
-	fprintf( fp, "Number of paths 20%% above spec :%5d - %4.2f%%\n",
-	    way_above, 100.0 * (DOUBLE) way_above / paths ) ;
+	    (int)in, 100.0 * (DOUBLE) in / paths ) ;
 	fprintf( fp, "# of non-pad paths out of spec :%5d\n", 
-				really_way_above + really_way_below ) ;
+		(int)(really_above + really_below) ) ;
+	fprintf( fp, "Number of paths 20%% below spec :%5d - %4.2f%%\n",
+	    (int)way_below, 100.0 * (DOUBLE) way_below / paths ) ;
+	fprintf( fp, "Number of paths 20%% above spec :%5d - %4.2f%%\n",
+	    (int)way_above, 100.0 * (DOUBLE) way_above / paths ) ;
+	fprintf( fp, "# of non-pad paths out of spec :%5d\n", 
+		(int)(really_way_above + really_way_below) ) ;
 	fprintf( fp, "Min  length                    :%4.2le\n",
 	    Ystat_min( stat, num_paths, sizeof(INT) ) ) ;
 	fprintf( fp, "Max  length                    :%4.2le\n",
@@ -375,7 +384,7 @@ INT cell ;
 } /* end function calc_incr_time */
 
 
-update_time( cell ) 
+VOID update_time( cell ) 
 INT cell ;
 {
 
@@ -483,7 +492,7 @@ INT cellb ;
 
 } /* end function calc_incr_time2 */
 
-update_time2() 
+VOID update_time2(VOID) 
 {
     PATHPTR path ;
     PSETPTR pathlist, enum_path_set() ;
@@ -517,7 +526,7 @@ static PSETPTR *path_set_arrayS ; /* set is an array of path set boxes */
 static INT path_set_countS ;      /* current set count */
 
 /* initialize set */
-init_path_set() 
+VOID init_path_set(VOID) 
 {   
     INT i ;
 
@@ -530,7 +539,7 @@ init_path_set()
 } /* end initset */
 
 /* add a path to the set if not already in set */
-add2path_set( path ) 
+VOID add2path_set( path ) 
 INT  path ;
 {  
     PSETPTR temp, cpath ;
@@ -541,7 +550,8 @@ INT  path ;
 	if( cpath->member != path_set_countS ){
 	    /* new path to be added */
 	    /* connect to the single linked list */
-	    if( temp = path_set_listS ){
+	    /* use ((...)) to avoid assignment as condition warning */
+	    if(( temp = path_set_listS )){
 		/* hook to old list */
 		path_set_listS = cpath ;
 		cpath->next = temp ;
@@ -559,12 +569,12 @@ INT  path ;
     }
 } /* end add2path_set */
 
-PSETPTR enum_path_set()
+PSETPTR enum_path_set(VOID)
 {
     return( path_set_listS ) ;
 }
 
-clear_path_set() 
+VOID clear_path_set(VOID) 
 {
     path_set_countS ++ ;
     path_set_listS = NULL ;
@@ -584,14 +594,14 @@ static INT *net_set_array ; /* set is an array of net set boxes */
 static INT net_set_count ;      /* current set count */
 
 /* initialize set */
-init_net_set() 
+VOID init_net_set(VOID) 
 {   
     net_set_array = (INT *) Ysafe_calloc((numnetsG+1), sizeof(INT) );
     net_set_count = 1 ;
 } /* end initset */
 
 /* add a net to the set if not already in set */
-add2net_set( net ) 
+VOID add2net_set( net ) 
 INT  net ;
 {  
     if( net >= 1 || net <= numnetsG ){
@@ -604,6 +614,7 @@ INT  net ;
 } /* end add2net_set */
 
 BOOL member_net_set( net )
+INT net;
 /* test for membership */
 {
     if( net_set_array[net] == net_set_count ){
@@ -613,7 +624,7 @@ BOOL member_net_set( net )
     }
 } /* end member_net_set */
 
-clear_net_set() 
+VOID clear_net_set(VOID) 
 {
     /* to clear set we only need to increment net_set_count */
     /* we can use this set up to 2 Gig times without any problem */
@@ -780,16 +791,16 @@ BOOL old_not_new ;
 
 } /* end INT dpath_len() */
 
-INT dprint_error()
+INT dprint_error(VOID)
 {
     sprintf( YmsgG, 
 	"\n\nWe found that the timing error was bound by :%d\n\n", 
-	errorboundS ) ;
+	(int)errorboundS ) ;
     M( MSG, "dprint_error", YmsgG ) ;
     return( 0 ) ;
 } /* end dprint_error() */
 
-dverify_nets()
+VOID dverify_nets(VOID)
 {
 
     INT net ;             /* net of path */
@@ -805,7 +816,8 @@ dverify_nets()
     }
 } /* end dverify_nets */
 
-dprint_paths( cell )
+VOID dprint_paths( cell )
+INT cell;
 {
     INT path_num ;        /* name of path */
     INT net ;             /* net of path */
@@ -820,15 +832,20 @@ dprint_paths( cell )
 	path_num = pptr->p.path ;
 	path = patharrayG[path_num] ;
 	fprintf( stderr, "path:%d, cur_len:%d new_len:%d\n",
-	    path_num, path->path_len, path->new_path_len ) ;
+	    (int)path_num, 
+	    (int)(path->path_len), 
+	    (int)(path->new_path_len) ) ;
 	/* for all nets k of a path i */
 	for( net_of_path=path->nets;net_of_path;net_of_path=net_of_path->next ){
 	    net = net_of_path->p.net ;
 
 	    dimptr = netarrayG[net] ;
 	    fprintf( stderr, "  net:%4d Px:%6d nPx:%6d Py:%6d nPy:%6d ",
-		net, dimptr->halfPx, dimptr->newhalfPx, dimptr->halfPy,
-		dimptr->newhalfPy ) ;
+			(int)net, 
+			(int)(dimptr->halfPx), 
+			(int)(dimptr->newhalfPx), 
+			(int)(dimptr->halfPy),
+			(int)(dimptr->newhalfPy) ) ;
 
 	    /* accumulate length of path */
 	    if( member_net_set( net ) ){
@@ -839,14 +856,14 @@ dprint_paths( cell )
     } /* end for( pptr... */
 } /* end dprint_paths() */
 
-dprint_net_set()
+VOID dprint_net_set(VOID)
 {
     INT net ;
 
     fprintf( stderr, "Current net set:\n" ) ;
     for( net = 1; net <= numnetsG; net++ ){
 	if( member_net_set( net ) ){
-	    fprintf( stderr, "%d ", net ) ;
+	    fprintf( stderr, "%d ", (int)net ) ;
 	}
     }
     fprintf( stderr, "\n" ) ;
@@ -858,7 +875,7 @@ dprint_net_set()
 
 #define TIMEDAMPFACTOR   1.0     /* damping factor on time penalty */
 
-DOUBLE calc_time_factor() 
+DOUBLE calc_time_factor(VOID) 
 {
     /* **** timing penalty controller **** */
 
@@ -877,7 +894,7 @@ DOUBLE calc_time_factor()
 
 
 
-calc_init_timeFactor() 
+VOID calc_init_timeFactor(VOID) 
 {
 
 #ifdef ZERO_CHECK

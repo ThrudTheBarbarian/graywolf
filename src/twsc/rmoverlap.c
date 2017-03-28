@@ -72,18 +72,26 @@ static char SccsId[] = "@(#) rmoverlap.c (Yale) version 4.4 12/15/90" ;
 #endif
 #endif
 
+#include <yalecad/base.h>
 #include "standard.h"
+
 #include "groute.h"
+#include "overlap.h"
 
 /* global variable references */
 extern BOOL connectFlagG ;
-PINBOXPTR depth_first_search() ;
+
+static PINBOXPTR depth_first_search(P5(PINBOXPTR ptr , 
+									   PINBOXPTR bptr1, 
+									   PINBOXPTR bptr2, 
+									   SEGBOXPTR aseg, 
+									   SEGBOXPTR edge ));
 
 /* static definitions */
 static INT *segcountS ;
 static SEGBOXPTR **chan_segS ;
 
-assgn_channel_to_seg()
+VOID assgn_channel_to_seg(VOID)
 {
 
 PINBOXPTR ptr1 , ptr2 ;
@@ -138,7 +146,7 @@ Ysafe_free( maxcount ) ;
 }
 
 
-free_chan_seg()
+VOID free_chan_seg(VOID)
 {
 INT i ;
 
@@ -150,7 +158,7 @@ Ysafe_free( segcountS ) ;
 
 }
 
-remove_overlap_segment( net )
+VOID remove_overlap_segment( net )
 INT net ;
 {
 
@@ -196,7 +204,7 @@ if( check_connectivity( net ) == 0 ) {
 }
 
 
-rm_segm_overlap( checkseg , m )
+VOID rm_segm_overlap( checkseg , m )
 SEGBOXPTR *checkseg ;
 INT m ;
 {
@@ -241,8 +249,9 @@ do {
 	    if( aptr1->xpos == bptr1->xpos ) {
 		for( adj = aptr1->adjptr->next ; adj ; adj = adj->next){
 		    seg = adj->segptr ;
-		    if( seg->pin1ptr == aptr1 && seg->pin2ptr == bptr1||
-			seg->pin1ptr == bptr1 && seg->pin2ptr == aptr1){
+		    /* SjG - make the ||/&& combination explicit rather than implicit */
+		    if( (seg->pin1ptr == aptr1 && seg->pin2ptr == bptr1) ||
+			    (seg->pin1ptr == bptr1 && seg->pin2ptr == aptr1)){
 			break ;
 		    }
 		}
@@ -259,8 +268,9 @@ do {
 	    if( aptr2->xpos ==  bptr2->xpos ) {
 		for( adj = aptr2->adjptr->next ; adj ; adj = adj->next){
 		    seg = adj->segptr ;
-		    if( seg->pin1ptr == aptr2 && seg->pin2ptr == bptr2||
-			seg->pin1ptr == bptr2 && seg->pin2ptr == aptr2){
+		    /* SjG - make the ||/&& combination explicit rather than implicit */
+		    if( (seg->pin1ptr == aptr2 && seg->pin2ptr == bptr2) ||
+			    (seg->pin1ptr == bptr2 && seg->pin2ptr == aptr2)){
 			break ;
 		    }
 		}
@@ -283,8 +293,7 @@ do {
 		bnode = depth_first_search( 
 		    aptr2 , bptr1 , bptr2 , aseg, 0 );
 		if( bnode == NULL ) {
-		    printf("connectivity is lost for net %d\n", 
-						    aptr1->net);
+		    printf("connectivity is lost for net %d\n", (int)(aptr1->net));
 		    exit(0) ;
 		}
 	    }
@@ -304,8 +313,9 @@ do {
 		    }
 		} else {
 		    /* a1 b1 b2 a2 */
-		    if( anode == aptr1 && bnode == bptr1 ||
-			anode == aptr1 && bnode == bptr2 ) {
+		    /* SjG - make the ||/&& combination explicit rather than implicit */
+		    if( (anode == aptr1 && bnode == bptr1) ||
+			    (anode == aptr1 && bnode == bptr2) ) {
 			replace_seg( aptr2 , aptr1 , bptr2 ) ;
 		    } else {
 			replace_seg( aptr1 , aptr2 , bptr1 ) ;
@@ -326,8 +336,9 @@ do {
 		    }
 		} else { /* a2 < b2 */
 		    /* b1 a1 a2 b2 */
-		    if( bnode == bptr1 && anode == aptr1 ||
-			bnode == bptr1 && anode == aptr2 ) {
+		    /* SjG - make the ||/&& combination explicit rather than implicit */
+		    if( (bnode == bptr1 && anode == aptr1) ||
+			    (bnode == bptr1 && anode == aptr2) ) {
 			replace_seg( bptr2 , bptr1 , aptr2 ) ;
 		    } else {
 			replace_seg( bptr1 , bptr2 , aptr1 ) ;
@@ -341,7 +352,7 @@ do {
 }
 
 
-PINBOXPTR depth_first_search( ptr , bptr1 , bptr2 , aseg , edge )
+static PINBOXPTR depth_first_search( ptr , bptr1 , bptr2 , aseg , edge )
 PINBOXPTR ptr , bptr1 , bptr2 ;
 SEGBOXPTR aseg , edge ;
 {
@@ -372,11 +383,11 @@ return( NULL ) ;
 }
 
 
-replace_seg( netptr, oldnode, newnode )
+VOID replace_seg( netptr, oldnode, newnode )
 PINBOXPTR netptr , oldnode , newnode ;
 {
 ADJASEGPTR adj, tmpadj ;
-SEGBOXPTR segptr ;
+SEGBOXPTR segptr = NULL  ;
 
 for( adj = netptr->adjptr->next ; adj ; adj = adj->next ) {
     segptr = adj->segptr ;
@@ -409,7 +420,7 @@ if( netptr->row != newnode->row ) {
 }
 
 
-add_adj( segptr, node )
+VOID add_adj( segptr, node )
 SEGBOXPTR segptr ;
 PINBOXPTR node ;
 {
@@ -422,7 +433,7 @@ node->adjptr->next = adjptr ;
 }
 
 
-check_overlap_at_pin( ptr )
+VOID check_overlap_at_pin( ptr )
 PINBOXPTR ptr ;
 {
 
@@ -532,7 +543,7 @@ for( adj = ptr->adjptr ; adj->next ; ) {
 }
 
 
-check_connectivity( net )
+INT check_connectivity( net )
 INT net ;
 {
 INT correctness = 1 ;
@@ -549,7 +560,7 @@ hdptr->flag = OLD ;
 depth_first_check( hdptr , 0 ) ;
 for( ptr =  hdptr ; ptr ; ptr = ptr->next ) {
     if( ptr->flag == NEW ) {
-	printf(" the connectivity of net %d after" , net ) ;
+	printf(" the connectivity of net %d after" , (int)net ) ;
 	printf(" the remove_overlap operation was lost\n" ) ;
 	correctness = 0 ;
 	exit(0) ;
@@ -558,7 +569,7 @@ for( ptr =  hdptr ; ptr ; ptr = ptr->next ) {
 return( correctness ) ;
 }
 
-depth_first_check( ptr , oldedge )
+VOID depth_first_check( ptr , oldedge )
 PINBOXPTR ptr ;
 SEGBOXPTR oldedge ;
 {
@@ -580,7 +591,7 @@ for( adj = ptr->adjptr->next ; adj ; adj = adj->next ) {
 	nextptr->flag = OLD ;
 	depth_first_check( nextptr , segptr ) ;
     } else {
-	printf(" there is a cycle in net %d after" , ptr->net ) ;
+	printf(" there is a cycle in net %d after" ,(int)(ptr->net) ) ;
 	printf(" the remove overlap function\n" ) ;
 	exit(0) ;
     }

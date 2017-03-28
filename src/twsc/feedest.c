@@ -70,15 +70,20 @@ static char SccsId[] = "@(#) feedest.c (Yale) version 4.9 3/12/91" ;
 
 #define FEEDS_VARS
 
+#include <yalecad/base.h>
+
 #include "standard.h"
-#include "groute.h"
-#include "feeds.h"
 #include "main.h"
+
+#include "feedest.h"
+#include "feeds.h"
+#include "groute.h"
 
 /* global definitions */
 INT *rowfeed_penaltyG ;
 
 extern BOOL absolute_minimum_feedsG ;
+extern INT enough_built_in_feedG ;
 
 /* static definitions */
 static DOUBLE *fd_estimateS ;
@@ -88,7 +93,7 @@ static INT chip_width_penaltyS ;
 static INT *est_min_ratioS ;
 
 
-feedest()
+VOID feedest(VOID)
 {
 
 DOUBLE ratio ;
@@ -246,7 +251,7 @@ estimate_pass_thru_penalty( 1 , numRowsG ) ;
 
 }
 
-re_estimate_feed_penalty()
+VOID re_estimate_feed_penalty(VOID)
 {
 
 INT i , n , row , row_rite , excess_fd , *old_penalty ;
@@ -317,7 +322,7 @@ Ysafe_free( old_penalty );
 }
 
 #ifdef Carl
-estimate_pass_thru_penalty( row1 , row2 )
+VOID estimate_pass_thru_penalty( row1 , row2 )
 INT row1 , row2 ;
 {
 
@@ -346,7 +351,7 @@ for( row = row1 ; row <= row2 ; row++ ) {
 }
 #else
 
-estimate_pass_thru_penalty( row1 , row2 )
+VOID estimate_pass_thru_penalty( row1 , row2 )
 INT row1 , row2 ;
 {
 
@@ -388,7 +393,7 @@ for( row = row1 ; row <= row2 ; row++ ) {
 #endif
 
 
-update_feedest( net )
+VOID update_feedest( net )
 INT net ;
 {
 
@@ -502,7 +507,7 @@ estimate_pass_thru_penalty( botrow , toprow ) ;
 }
 
 
-free_up_feedest_malloc()
+VOID free_up_feedest_malloc(VOID)
 {
 
 Ysafe_free( fd_estimateS ) ;
@@ -513,7 +518,7 @@ Ysafe_free( est_min_ratioS ) ;
 }
 
 
-update_segment_data( segptr )
+VOID update_segment_data( segptr )
 SEGBOXPTR segptr ;
 {
 PINBOXPTR ptr1 , ptr2 ;
@@ -632,26 +637,28 @@ return( segptr ) ;
 }
 
 
-dbg_cost()
+VOID dbg_cost(VOID)
 {
 FILE *fp ;
 INT row ;
 DOUBLE cost, ratio ;
 
 fp = TWOPEN("vcost.dat", "w", ABORT ) ;
-fprintf(fp, " rowHeightG = %d\n", rowHeightG ) ;
+fprintf(fp, " rowHeightG = %d\n", (int)rowHeightG ) ;
 fprintf(fp, " row  cost actual estimate    ratio\n" ) ;
 for( row = 1 ; row <= numRowsG ; row++ ) {
     cost = (DOUBLE)(rowfeed_penaltyG[row]) / (DOUBLE)(rowHeightG) ;
     ratio = (DOUBLE)(FeedInRowG[row]) / fd_estimateS[row] ;
-    fprintf(fp, " %3d %5.2f %6d %8.2f %8.2f\n", row, cost,
-		FeedInRowG[row], fd_estimateS[row], ratio ) ;
+    fprintf(fp, " %3d %5.2f %6d %8.2f %8.2f\n", (int)row, cost,
+		(int)(FeedInRowG[row]), 
+		fd_estimateS[row], 
+		ratio ) ;
 }
 TWCLOSE(fp) ;
 }
 
 
-dbx_fdpen()
+VOID dbx_fdpen(VOID)
 {
 
 FILE *fp ;
@@ -666,8 +673,12 @@ for( row = 1 ; row <= numRowsG ; row++ ) {
     for( i = 1 ; i <= chan_node_noG ; i++ ) {
 	s += feedptr[i]->needed ;
     }
-    fprintf(fp," %3d %8d %8d %8d %6d\n", row, min_feedS[row],
-		    (INT)fd_estimateS[row] , FeedInRowG[row] , s ) ;
+    fprintf(fp," %3d %8d %8d %8d %6d\n", 
+    	(int)row, 
+    	(int)(min_feedS[row]),
+		(int)(fd_estimateS[row]) , 
+		(int)(FeedInRowG[row]) , 
+		(int)s ) ;
 }
 TWCLOSE(fp) ;
 }

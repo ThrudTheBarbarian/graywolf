@@ -59,16 +59,20 @@ static char SccsId[] = "@(#) buildimp.c (Yale) version 4.9 11/7/91" ;
 #endif
 #endif
 
+#include <yalecad/base.h>
+#include <yalecad/quicksort.h>
+
 #include "standard.h"
 #include "groute.h"
 #include "feeds.h"
+#include "main.h"
 
 static INT max_impfeed_in_cellS ; /* max no. of feeds in a cell */
 INT comparetxpos() ;
 extern BOOL ignore_feedsG ;	/* Treat feedthroughs as width 0 */
 
 
-buildimp( )
+VOID buildimp(VOID)
 {
 
 IPBOXPTR *impinptr , imptr ;
@@ -143,8 +147,8 @@ for( row = 1 ; row <= numRowsG ; row++ ) {
     }
 }
 longest_blk_length = blk_most_riteG - blkleftG ;
-printf("\n block left edge is at %d\n", blkleftG ) ;
-printf(" the longest block length is %d\n" , longest_blk_length ) ;
+printf("\n block left edge is at %d\n", (int)blkleftG ) ;
+printf(" the longest block length is %d\n" , (int)longest_blk_length ) ;
 
 if( longest_blk_length < barrayG[ longest_row ]->desire ) {
     for( row = 1 ; row <= numRowsG ; row++ ) {
@@ -174,7 +178,7 @@ Ysafe_free( feasible_feednum ) ;
 }
 
 
-link_imptr( )
+VOID link_imptr(VOID)
 {
 INT i , row , *Aray ;
 CBOXPTR cellptr ;
@@ -196,7 +200,7 @@ for( row = 1 ; row <= numRowsG ; row++ ) {
 }
 
 
-decide_boundary( )
+VOID decide_boundary(VOID)
 {
 
 INT row , fcx , fcl , lcx , lcr , lcl ;
@@ -236,7 +240,7 @@ gxstopG  = xstop  ;
 }
 
 
-fixwolf( )
+VOID fixwolf(VOID)
 {
 
 INT j , last_j ;
@@ -256,14 +260,14 @@ return ;
 }
 
 
-addfeed( row , pos , feednum ) 
+VOID addfeed( row , pos , feednum ) 
 INT row , pos , feednum ;
 {
 CBOXPTR cellptr ;
 TIBOXPTR tileptr ;
 IPBOXPTR imptr ;
 
-int locFdWidth = fdWidthG;
+int locFdWidth = (int)fdWidthG;
 
 /* This seems to work to remove explicit feedthroughs. . . */
 if (ignore_feedsG) locFdWidth = 0;
@@ -272,7 +276,7 @@ cellptr = ( CBOXPTR )Ysafe_malloc( sizeof( CBOX ) ) ;
 carrayG[ numcellsG + numtermsG + feednum ] = cellptr ;
 cellptr->cname = (char *) Ysafe_malloc( 16 * sizeof( char ) ) ;
 #ifdef FEED_INSTANCES
-    sprintf( cellptr->cname , "twfeed%d", feednum ) ;
+    sprintf( cellptr->cname , "twfeed%d", (int)feednum ) ;
 #else
     sprintf( cellptr->cname , "twfeed" ) ;
 #endif

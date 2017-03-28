@@ -63,18 +63,17 @@ static char SccsId[] = "@(#) netgraph.c (Yale) version 4.7 1/15/91" ;
 #endif
 #endif
 
+#include <yalecad/base.h>
+#include <yalecad/program.h>
+#include <yalecad/quicksort.h>
+#include <yalecad/random.h>
+
 #include "standard.h"
-#include "groute.h"
 #include "main.h"
 
-typedef struct graph_edge_cost {
-    SHORT node1 ;
-    SHORT node2 ;
-    INT cost ;
-    INT channel ;
-}
-*EDGE_COST ,
-EDGE_COST_BOX ;
+#include "debug.h"
+#include "groute.h"
+#include "nets.h"
 
 /* global variable definitions */
 INT *count_G = NULL;
@@ -93,7 +92,7 @@ static INT *first_indexS = NULL;
 static PINBOXPTR **z_S ;
 static EDGE_COST *edge_dataS ;
 
-netgraph_free_up()
+VOID netgraph_free_up(VOID)
 {
 
 Ysafe_free( count_G ) ; count_G = NULL ;
@@ -103,7 +102,7 @@ Ysafe_free( stack_G ) ; stack_G = NULL ;
 Ysafe_free( vertex_G ) ; vertex_G = NULL ;
 }
 
-postFeedAssgn()
+VOID postFeedAssgn(VOID)
 {
 
 INT net , i , row , botrow , toprow , last_i ;
@@ -193,7 +192,7 @@ for( net = 1 ; net <= numnetsG ; net++ ) {
 }
 
 
-rebuild_netgraph( net )
+VOID rebuild_netgraph( net )
 INT net ;
 {
 
@@ -220,7 +219,7 @@ for( ; netptr ; netptr = netptr->next ) {
 }
 for( i = botrow ; i <= toprow ; i++ ) {
     if( pins_at_rowS[i] == 0 ) {
-	printf("there are no pin in row %d for net %d\n", i, net );
+	printf("there are no pin in row %d for net %d\n", (int)i, (int)net );
 	dbx_terminal( net , net ) ;
 	YexitPgm(PGMFAIL) ;
     } else {
@@ -392,7 +391,7 @@ return ;
 *   pins such that there are only one edge incident on them          *
 *--------------------------------------------------------------------*/
 
-remove_unnecessary_feed( net , flag )
+VOID remove_unnecessary_feed( net , flag )
 INT net , flag ;
 {
 
@@ -760,7 +759,7 @@ return ;
 }
 
 
-find_set_name( v )
+INT find_set_name( v )
 INT v ;
 {
 
@@ -785,7 +784,7 @@ return( v ) ;
  * Hopcroft and Ullman page 129 to 139 for this algorithm of    *
  * Union and Find problem.                                      *
  *--------------------------------------------------------------*/
-do_set_union( i , j )
+VOID do_set_union( i , j )
 INT i , j ;
 {
 
@@ -803,7 +802,7 @@ count_G[large] += count_G[small] ;
 }
 
 
-switchable_or_not()
+VOID switchable_or_not(VOID)
 {
 
 SEGBOXPTR segptr ;
@@ -837,7 +836,7 @@ for( net = 1 ; net <= numnetsG ; net++ ) {
 }
 
 
-free_z_memory()
+VOID free_z_memory(VOID)
 {
 
 INT i , j , last_i ;
@@ -863,12 +862,12 @@ if ( edge_dataS != NULL ) {
 
 
 
-postFeedAssgn_carl()
+VOID postFeedAssgn_carl(VOID)
 {
 
 INT net , i , row , botrow , toprow , last_i ;
 SEGBOXPTR segptr , nextseg ;
-PINBOXPTR netptr , nextptr , st_head , stptr , ptr ;
+PINBOXPTR netptr , ptr ;
 ADJASEGPTR adj , nextadj ;
 
 for( net = 1 ; net <= numnetsG ; net++ ) {
@@ -960,7 +959,7 @@ for( net = 1 ; net <= numnetsG ; net++ ) {
 
 
 
-rebuild_netgraph_carl( net )
+VOID rebuild_netgraph_carl( net )
 INT net ;
 {
 
@@ -987,7 +986,7 @@ for( ; netptr ; netptr = netptr->next ) {
 }
 for( i = botrow ; i <= toprow ; i++ ) {
     if( pins_at_rowS[i] == 0 ) {
-	printf("there are no pin in row %d for net %d\n", i, net );
+	printf("there are no pin in row %d for net %d\n", (int)i, (int)net );
 	dbx_terminal( net , net ) ;
 	YexitPgm(PGMFAIL) ;
     } else {

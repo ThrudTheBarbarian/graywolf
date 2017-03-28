@@ -50,12 +50,15 @@ static char SccsId[] = "@(#) seagate.c (Yale) version 4.7 3/7/91" ;
 #endif
 #endif
 
+#include <yalecad/base.h>
 
 #include "standard.h"
-#include "groute.h"
 #include "main.h"
-#include "readpar.h"
+
+#include "buildimp.h"
+#include "groute.h"
 #include "pads.h"
+#include "readpar.h"
 
 
 extern INT vertical_track_pitchG ;
@@ -66,13 +69,13 @@ extern BOOL min_peak_densityG ;
 extern BOOL min_total_densityG ;
 extern BOOL stand_cell_as_gate_arrayG ;
 
-seagate_input()
+VOID seagate_input(VOID)
 {
 FILE *fp ;
 CBOXPTR cellptr ;
 IPBOXPTR imptr ;
 PINBOXPTR pinptr ;
-char filename[128], *pin_name, *eqpin_name ;
+char filename[128], *pin_name = NULL, *eqpin_name = NULL ;
 INT left, rite, *Aray, left_most_pitch ;
 INT coreLeft, coreRite, coreBot, coreTop, cxcenter ;
 INT x, y, n, m, net, row, cell, padside, templateHeight ;
@@ -172,38 +175,38 @@ if( min_peak_densityG ) {
 if( global_routing_iterationsG == 0 ) {
     global_routing_iterationsG = 5 ;
 }
-fprintf( fp, "global_routing_iterations %d\n", global_routing_iterationsG);
-fprintf( fp, "chipLeft %d\n", coreLeft ) ;
-fprintf( fp, "chipRite %d\n", coreRite ) ;
-fprintf( fp, "chipTop %d\n", coreTop ) ;
-fprintf( fp, "chipBot %d\n", coreBot ) ;
-fprintf( fp, "left_most_pitch %d\n", left_most_pitch );
-fprintf( fp, "x_pitch %d\n", vertical_track_pitchG ) ;
-fprintf( fp, "y_pitch %d\n", horizontal_track_pitchG ) ;
+fprintf( fp, "global_routing_iterations %d\n", (int)global_routing_iterationsG);
+fprintf( fp, "chipLeft %d\n", (int)coreLeft ) ;
+fprintf( fp, "chipRite %d\n", (int)coreRite ) ;
+fprintf( fp, "chipTop %d\n", (int)coreTop ) ;
+fprintf( fp, "chipBot %d\n", (int)coreBot ) ;
+fprintf( fp, "left_most_pitch %d\n", (int)left_most_pitch );
+fprintf( fp, "x_pitch %d\n", (int)vertical_track_pitchG ) ;
+fprintf( fp, "y_pitch %d\n", (int)horizontal_track_pitchG ) ;
 fprintf( fp, "channel_capacity 1000\n");
-fprintf( fp, "numblocks %d\n", numRowsG + 1 ) ;
-fprintf( fp, "templateHeight %d\n", templateHeight ) ;
-fprintf( fp, "vt_offset %d\n", barrayG[1]->bycenter - coreBot ) ;
+fprintf( fp, "numblocks %d\n", (int)(numRowsG + 1) ) ;
+fprintf( fp, "templateHeight %d\n", (int)templateHeight ) ;
+fprintf( fp, "vt_offset %d\n", (int)(barrayG[1]->bycenter - coreBot) ) ;
 
 if( pin_layers_givenG ) {
     fprintf(fp,"pin_layers_given\n");
-    fprintf(fp,"feedLayer %d\n", feedLayerG );
+    fprintf(fp,"feedLayer %d\n", (int)feedLayerG );
 }
 if( rowsG > 0 || new_row_formatG ) {
     fprintf(fp,"new_row_format\n");
 }
-fprintf( fp, "top_of_rows %d\n", barrayG[numRowsG]->bycenter +
-				 barrayG[numRowsG]->btop ) ;
-fprintf( fp, "bot_of_rows %d\n", barrayG[1]->bycenter +
-				 barrayG[1]->bbottom ) ;
+fprintf( fp, "top_of_rows %d\n", (int)(barrayG[numRowsG]->bycenter +
+				 barrayG[numRowsG]->btop) ) ;
+fprintf( fp, "bot_of_rows %d\n", (int)(barrayG[1]->bycenter +
+				 barrayG[1]->bbottom) ) ;
 for( row = 1 ; row <= numRowsG ; row++ ) {
     left_edge = barrayG[row]->bxcenter + barrayG[row]->bleft ;
     cellptr = carrayG[ pairArrayG[row][ pairArrayG[row][0] ] ] ;
     rite_edge = cellptr->cxcenter + cellptr->tileptr->right ;
     bot_edge = barrayG[row]->bycenter + barrayG[row]->bbottom ;
     top_edge = barrayG[row]->bycenter + barrayG[row]->btop ;
-    fprintf(fp, "%d %d %d %d\n", left_edge , rite_edge ,
-				 bot_edge , top_edge  ) ;
+    fprintf(fp, "%d %d %d %d\n", (int)left_edge , (int)rite_edge ,
+				 (int)bot_edge , (int)top_edge  ) ;
 }
 TWCLOSE( fp ) ;
 
@@ -259,10 +262,10 @@ for( net = 1 ; net <= numnetsG ; net++ ) {
 	}
 	if( pinptr->eqptr ) {
 	    fprintf(fp, " %s %s %d %d %s\n",
-		pin_name, eqpin_name, x, y, cellptr->cname ) ;
+		pin_name, eqpin_name, (int)x, (int)y, cellptr->cname ) ;
 	} else {
 	    fprintf(fp, " %s DUMMY %d %d %s\n",
-		pin_name, x, y, cellptr->cname ) ;
+		pin_name, (int)x, (int)y, cellptr->cname ) ;
 	}
     }
 }
@@ -289,14 +292,15 @@ link_imptr() ;
 for( row = 1 ; row <= numRowsG ; row++ ) {
     n = 0;
     for( imptr = impFeedsG[row]->next ; imptr ; imptr= imptr->next ) n++;
-    fprintf(fp, " blk %d numFeeds %d\n", row+1, n ) ;
+    fprintf(fp, " blk %d numFeeds %d\n", (int)(row+1), (int)n ) ;
     for( imptr = impFeedsG[row]->next ; imptr ; imptr= imptr->next ) {
 	cellptr = carrayG[imptr->cell] ;
 	if( cellptr->corient == 0 || cellptr->corient == 2 ) {
-	    fprintf(fp, "%d %s %s %s\n", imptr->xpos, imptr->pinname,
+	    fprintf(fp, "%d %s %s %s\n", 
+	    (int)(imptr->xpos), imptr->pinname,
 		imptr->eqpinname, cellptr->cname );
 	} else {
-	    fprintf(fp, "%d %s %s %s\n", imptr->xpos, imptr->eqpinname,
+	    fprintf(fp, "%d %s %s %s\n", (int)(imptr->xpos), imptr->eqpinname,
 		imptr->pinname, cellptr->cname );
 	}
     }

@@ -43,4 +43,7 @@ EXTERN INT tw_slowG ;
 
 #undef EXTERN
 
+extern VOID readParFile(P1(VOID));
+extern VOID yaleIntro(P1(VOID)); 
+
 #endif /* READPAR_VARS */

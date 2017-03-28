@@ -88,13 +88,22 @@ static char SccsId[] = "@(#) uloop.c (Yale) version 4.14 3/23/92" ;
 
 #define UCXXGLB_VARS
 
+#include <yalecad/base.h>
+#include <yalecad/debug.h>
+#include <yalecad/message.h>
+#include <yalecad/random.h>
+
 #include "standard.h"
-#include "ucxxglb.h"
 #include "main.h"
-#include "readpar.h"
+
+#include "config.h"
+#include "debug.h"
+#include "gates.h"
+#include "graphics.h"
 #include "parser.h"
-#include "yalecad/message.h"
-#include "yalecad/debug.h"
+#include "readpar.h"
+#include "ucxxglb.h"
+#include "uloop.h"
 
 #define INITRATIO 0.95
 #define AC0 0.90
@@ -151,11 +160,6 @@ extern BOOL no_feed_estG ;
 extern BOOL good_initial_placementG ;
 
 /* function calls */
-DOUBLE expected_svalue() ;
-DOUBLE expected_value() ;
-DOUBLE partition() ;
-DOUBLE compute_and_combination() ;
-DOUBLE combination() ;
 INT eval_ratio() ;
 
 /* static variables */
@@ -183,7 +187,13 @@ static DOUBLE row_capS = 99.0 ;
 static DOUBLE a_ratioS;
 static DOUBLE total_costS;
 
-init_uloop()
+#ifdef CHECK_SANITY
+  static INT sanity_check(P1(VOID));
+  static INT sanity_check2(P1(VOID));
+  static INT sanity_check3(P1(VOID));
+#endif
+
+VOID init_uloop(VOID)
 {
     not_doneS = 1;
     acc_cntS = move_cntS ;
@@ -191,18 +201,18 @@ init_uloop()
 } /* end init_uloop */
 
 
-uloop()
+VOID uloop(VOID)
 {
 
 FENCEBOXPTR fence ;
-CBOXPTR acellptr, bcellptr ; 
-BBOXPTR ablckptr , bblckptr ;
+CBOXPTR acellptr, bcellptr = NULL ; 
+BBOXPTR ablckptr , bblckptr = NULL ;
 INT flips , rejects , do_single_cell_move , bit_class ;
-INT axcenter , bxcenter , bycenter ; 
-INT aorient , borient ;
-INT blk , pairflips ;
-INT i , j , t , count , swaps, index, shift ;
-INT abin , bbin , fds , done , single_swap ;
+INT axcenter , bxcenter = 0 , bycenter ; 
+INT aorient , borient = 0 ;
+INT blk = 0 , pairflips ;
+INT i , j = 0 , t , count , swaps, index, shift ;
+INT abin , bbin , fds , done ;
 DOUBLE target_row_penalty ;
 DOUBLE target_bin_penalty ;
 DOUBLE temp , percent_error ;
@@ -212,7 +222,7 @@ INT num_accepts , gate_switches , gate_attempts ;
 INT last_flips , delta_func , delta_time ;
 INT temp_timer, time_to_update ; /* keeps track of when to update T */
 DOUBLE iter_time, accept_deviation, calc_acceptance_ratio() ;
-DOUBLE num_time, num_func ;
+DOUBLE num_time = 0.0, num_func = 0.0 ;
 DOUBLE calc_time_factor() ; 
 /* 
     commented out variables 
@@ -665,14 +675,14 @@ get_b:  if( Equal_Width_CellsG ){
 	if( iterationG == 0 )  continue;
 	
 	/* calculate a running average of (delta) timing penalty */
-	delta_time = abs( delta_time - timingcostG ) ;
+	delta_time = abs((int)(delta_time - timingcostG)) ;
 	if( delta_time != 0 ) {
 	    num_time += 1.0 ;
 	    avg_timeG = (avg_timeG * (num_time - 1.0) + 
 			    (DOUBLE) delta_time) / num_time ;
 	
 	    /* calculate a running average of (delta) wirelength penalty */
-	    delta_func = abs( delta_func - funccostG ) ;
+	    delta_func = abs((int)(delta_func - funccostG)) ;
 	    num_func += 1.0 ;
 	    avg_funcG = (avg_funcG * (num_func - 1.0) + 
 				(DOUBLE) delta_func) / num_func ;
@@ -761,15 +771,25 @@ ratioG = ((DOUBLE)(pairflips+flips)) / attemptsG;
 if(iterationG >= 0 || good_initial_placementG ) {
     if( !gate_arrayG ) {
 	sprintf(YmsgG,"%3d: %6.2le %6ld %-8ld %-6ld %-8ld",
-	    iterationG,TG,fds,funccostG,rowpenalG,timingcostG);
+	    (int)iterationG,
+	    TG,
+	    (long)fds,
+	    (long)funccostG,
+	    (long)rowpenalG,
+	    (long)timingcostG);
 	M( MSG, NULL, YmsgG ) ;
     } else {
 	sprintf(YmsgG,"%3d: %6.2le %6ld %-8ld %-6ld %-8ld",
-	    iterationG,TG,fds,funccostG,rowpenalG,timingcostG);
+	    (int)iterationG,
+	    TG,
+	    (long)fds,
+	    (long)funccostG,
+	    (long)rowpenalG,
+	    (long)timingcostG);
 	M( MSG, NULL, YmsgG ) ;
     }
     sprintf(YmsgG,"%6ld %4.2lf %4.2lf %5.2lf %5.2lf ",
-	P_limitG,percent_error/100.0,binpenConG,roLenConG,timeFactorG);
+		(long)P_limitG,percent_error/100.0,binpenConG,roLenConG,timeFactorG);
     M( MSG, NULL, YmsgG ) ;
     if( swappable_gates_existG ) {
 	if( gate_attempts > 0 ) {
@@ -798,7 +818,7 @@ if( !called_rowconS && !(Equal_Width_CellsG)) {
 
 /*  A Negative-Feedback Approach */
 if( not_doneS || good_initial_placementG ) {
-    not_doneS = eval_ratio(&fraction_doneG);
+    not_doneS = (BOOL)eval_ratio(&fraction_doneG);
     if (first_capS && (!first_fdsS)) {
 	first_capS = 0;
     }
@@ -850,7 +870,7 @@ return ;
 
 
 
-rowcon()
+VOID rowcon(VOID)
 {
 
 INT C , R , p_first , totalCells , cellsPerRow , temp_R ;
@@ -1084,7 +1104,8 @@ return( states ) ;
 }
 
 
-sanity_check()
+#ifdef CHECK_SANITY
+INT sanity_check(VOID)
 {
 
 INT *cellxptr , cell , center , block , bin , i ;
@@ -1107,7 +1128,7 @@ return(0);
 }
 
 
-sanity_check2()
+INT sanity_check2(VOID)
 {
 
 INT *cellxptr , *clist ;
@@ -1124,7 +1145,7 @@ for( block = 1 ; block <= numRowsG ; block++ ) {
 	for( i = 1 ; i <= *cellxptr ; i++ ) {
 	    cell = cellxptr[i] ;
 	    if( clist[cell] == 1 ) {
-		printf("cell %d appears twice in clist\n",cell);
+		printf("cell %d appears twice in clist\n",(int)cell);
 		fflush(stdout);
 		return(cell);
 	    } else {
@@ -1135,7 +1156,7 @@ for( block = 1 ; block <= numRowsG ; block++ ) {
 }
 for( i = 1 ; i <= numcellsG - extra_cellsG ; i++ ) {
     if( clist[i] == 0 ) {
-	printf("cell %d appears NEVER in clist\n",i);
+	printf("cell %d appears NEVER in clist\n",(int)i);
 	fflush(stdout);
 	return(i);
     }
@@ -1146,7 +1167,7 @@ return(0);
 }
 
 
-sanity_check3()
+INT sanity_check3(VOID)
 {
 
 INT *cellxptr ;
@@ -1158,12 +1179,12 @@ for( block = 1 ; block <= numRowsG ; block++ ) {
 	for( i = 1 ; i <= *cellxptr ; i++ ) {
 	    cell = cellxptr[i] ;
 	    if( carrayG[cell]->cblock != block ) {
-		printf("cell %d has inconsistent block\n",cell);
+		printf("cell %d has inconsistent block\n",(int)cell);
 		fflush(stdout);
 		return(cell);
 	    }
 	    if( SetBin( carrayG[cell]->cxcenter ) != bin ) {
-		printf("cell %d has inconsistent bin\n",cell);
+		printf("cell %d has inconsistent bin\n",(int)cell);
 		fflush(stdout);
 		return(cell);
 	    }
@@ -1173,6 +1194,7 @@ for( block = 1 ; block <= numRowsG ; block++ ) {
 
 return(0);
 }
+#endif /* CHECK_SANITY */
 
 /* new evaluate ratio is a linear function of iterationG */
 INT eval_ratio( t )
@@ -1188,7 +1210,7 @@ DOUBLE *t;
     return((ratioG < AC4) ? 0 : 1);
 }
 
-init_control(first)
+VOID init_control(first)
 INT first;
 {
     INT i;
@@ -1226,7 +1248,7 @@ INT first;
 
 
 
-pick_fence_position(x,y,fence)
+VOID pick_fence_position(x,y,fence)
 INT *x, *y ;
 FENCEBOX *fence ;
 {
@@ -1248,11 +1270,11 @@ FENCEBOX *fence ;
     return;
 }
 
-pick_position(x,y,ox,oy,scale)
+VOID pick_position(x,y,ox,oy,scale)
 INT *x,*y,ox,oy;
 DOUBLE scale ;
 {
-    register INT i,m,n,bleft,bright;
+    register INT i,m,n,bleft = 0,bright = 0;
     DOUBLE tmp ;
     BBOXPTR bblckptr ;
 
@@ -1296,7 +1318,7 @@ DOUBLE scale ;
 }
 
 /* change range limiter according to iterationG number */
-update_window_size( iternum )
+VOID update_window_size( iternum )
 DOUBLE iternum ;
 {
 
@@ -1351,31 +1373,42 @@ DOUBLE iternum ;
     */
 }
 
-save_control( fp )
+VOID save_control( fp )
 FILE *fp ;
 {
-    fprintf(fp,"%d 0 %d\n",pairtestG,not_doneS);
-    fprintf(fp,"%d %d %d %d\n",acc_cntS,move_cntS,first_fdsS,first_capS);
+    fprintf(fp,"%d 0 %d\n",(int)pairtestG, (int)not_doneS);
+    fprintf(fp,"%d %d %d %d\n",(int)acc_cntS, (int)move_cntS, 
+    						   (int)first_fdsS, (int)first_capS);
     fprintf(fp,"%f %f %f %f\n",stepS,xalS,yalS,a_ratioS);
     fprintf(fp,"%f %f\n",ratioG,total_costS);
     fprintf(fp,"%f %f\n",bin_capS,row_capS);
     fprintf(fp,"%f %f %f\n",avg_timeG, avg_funcG, timeFactorG);
 }
 
-read_control( fp )
+VOID read_control( fp )
 FILE *fp ;
 {
     INT junk ;
-
-    fscanf(fp,"%ld %ld %ld\n",&pairtestG,&junk,&not_doneS);
-    fscanf(fp,"%ld %ld %ld %ld\n",&acc_cntS,&move_cntS,&first_fdsS,&first_capS);
+	long l1,l2,l3, l4;
+	
+    fscanf(fp,"%ld %ld %ld\n",&l1, &l2, &l3);
+    pairtestG 	= (BOOL)l1;
+    junk		= l2;
+    not_doneS	= (BOOL)l3;
+    
+    fscanf(fp,"%ld %ld %ld %ld\n",&l1, &l2, &l3, &l4);
+    acc_cntS	= l1;
+    move_cntS	= l2;
+    first_fdsS	= (BOOL)l3;
+    first_capS	= (BOOL)l4;
+    
     fscanf(fp,"%lf %lf %lf %lf\n",&stepS,&xalS,&yalS,&a_ratioS);
     fscanf(fp,"%lf %lf\n",&ratioG,&total_costS) ;
     fscanf(fp,"%lf %lf\n",&bin_capS,&row_capS);
     fscanf(fp,"%lf %lf %lf\n",&avg_timeG, &avg_funcG, &timeFactorG);
 }
 
-tw_frozen( cost )
+INT tw_frozen( cost )
 INT cost ;
 {
 

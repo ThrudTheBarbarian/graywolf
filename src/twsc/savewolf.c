@@ -55,13 +55,23 @@ static char SccsId[] = "@(#) savewolf.c (Yale) version 4.6 9/19/91" ;
 #endif
 #endif
 
+#include "string.h"
+
+#include <yalecad/base.h>
+#include <yalecad/message.h>
+#include <yalecad/program.h>
+
 #include "standard.h"
 #include "main.h"
-#include "groute.h"
+
+#include "config.h"
 #include "feeds.h"
-#include "readpar.h"
+#include "graphics.h"
+#include "groute.h"
 #include "parser.h"
-#include <yalecad/message.h>
+#include "readpar.h"
+#include "savewolf.h"
+#include "uloop.h"
 
 #if SIZEOF_VOID_P == 64
 #define INTSCANSTR "%ld"
@@ -69,10 +79,9 @@ static char SccsId[] = "@(#) savewolf.c (Yale) version 4.6 9/19/91" ;
 #define INTSCANSTR "%d"
 #endif
 
-savewolf(flag)
+VOID savewolf(flag)
 INT flag ;
 {
-
 FILE *fp ;
 INT xcenter , ycenter ;
 INT cell , block , orient ;
@@ -109,15 +118,15 @@ fp = TWOPEN( filename , "w", ABORT ) ;
 #endif
 
 fprintf( fp, "%f\n", TG ) ;
-fprintf( fp, "%d\n", iterationG ) ;
-fprintf( fp, "%d\n", ffeedsG ) ;
+fprintf( fp, "%d\n", (int)iterationG ) ;
+fprintf( fp, "%d\n", (int)ffeedsG ) ;
 fprintf( fp, "1\n" ) ;
 
 fprintf( fp, "%f\n", binpenConG ) ;
 fprintf( fp, "%f\n", roLenConG ) ;
 /* was cost_scale_factor added for backward compatibility */
 fprintf( fp, "%f\n", 1.0 ) ;
-fprintf( fp, "%d\n", estimate_feedsG ) ;
+fprintf( fp, "%d\n",(int) estimate_feedsG ) ;
 save_feeds( fp ) ;
 save_control( fp ) ;
 
@@ -128,8 +137,8 @@ for( cell = 1 ; cell <= lastpadG ; cell++ ) {
     block   = cellptr->cblock    ;
     xcenter = cellptr->cxcenter  ;
     ycenter = cellptr->cycenter  ;
-    fprintf( fp , "%d %d %d %d %d\n", cell , block , 
-			       orient , xcenter , ycenter ) ;
+    fprintf( fp , "%d %d %d %d %d\n", (int)cell , (int)block , 
+			       (int)orient , (int)xcenter , (int)ycenter ) ;
 }
 TWCLOSE( fp ) ;
 #ifndef VMS
@@ -140,7 +149,7 @@ rename(file1, file2);
 return ;
 }
 
-TW_oldin( fp )
+VOID TW_oldin( fp )
 FILE *fp ;
 {
 
@@ -151,18 +160,26 @@ INT number_of_core_cells ;
 DOUBLE cost_scale_factor ;
 CBOXPTR ptr ;
 PINBOXPTR pinptr ;
+int w1, w2, w3, w4, w5;
 
 
 fscanf( fp , "%lf" , &TG ) ;
-fscanf( fp , INTSCANSTR , &iterationG ) ;
-fscanf( fp , INTSCANSTR , &numfds ) ;
-fscanf( fp , INTSCANSTR , &dummy ) ;
+fscanf( fp , "%d" , &w1 ) ;
+iterationG = w1;
+
+fscanf( fp , "%d" , &w1 ) ;
+numfds = w1;
+
+fscanf( fp , "%d" , &w1 ) ;
+dummy = w1;
 
 fscanf( fp , "%lf" , &binpenConG ) ;
 fscanf( fp , "%lf" , &roLenConG ) ;
 /* no longer use cost_scale_factor but save for backwards compatibility */
 fscanf( fp , "%lf" , &cost_scale_factor ) ;
-fscanf( fp , INTSCANSTR , &estimate_feedsG ) ;
+fscanf( fp , "%d" , &w1 ) ;
+estimate_feedsG = w1;
+
 read_feeds( fp ) ;
 
 read_control( fp ) ;
@@ -171,9 +188,13 @@ read_control( fp ) ;
 last_cell = 0 ;
 number_of_core_cells = numcellsG - extra_cellsG ;
 /* ignore the spacer cells */
-while( fscanf( fp , " " INTSCANSTR " " INTSCANSTR " " INTSCANSTR
-		" " INTSCANSTR " " INTSCANSTR " ",
-		&cell , &block , &orient , &xcenter , &ycenter ) == 5 ) {
+while( fscanf( fp , " %d %d %d %d %d ", &w1 , &w2 , &w3 , &w4 , &w5 ) == 5 ) {
+	cell	= w1;
+	block	= w2;
+	orient	= w3;
+	xcenter	= w4;
+	ycenter	= w5;
+	
     ptr = carrayG[ cell ] ;
     if( cell <= number_of_core_cells ) {
 	/* check to make sure block is valid */
@@ -206,7 +227,7 @@ while( fscanf( fp , " " INTSCANSTR " " INTSCANSTR " " INTSCANSTR
 /* now check to make sure we have the same number of cells */
 if( last_cell != number_of_core_cells ){
     sprintf( YmsgG, "Wrong number of cells in restart file:%d vs %d in cell file.\n",
-    last_cell, number_of_core_cells ) ;
+    (int)last_cell, (int)number_of_core_cells ) ;
     M( ERRMSG, "TW_oldin", YmsgG ) ;
     M( ERRMSG, NULL, "Fatal Error. Must exit\n\n" ) ;
     TWCLOSE( fpoG ) ;

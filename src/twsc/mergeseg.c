@@ -66,8 +66,16 @@ static char SccsId[] = "@(#) mergeseg.c (Yale) version 4.4 12/15/90" ;
 #endif
 #endif
 
+#include <yalecad/base.h>
+#include <yalecad/quicksort.h>
+
 #include "standard.h"
+
+#include "feedest.h"
 #include "groute.h"
+#include "mergeseg.h"
+#include "overlap.h"
+
 #define NORTH 1
 #define SOUTH 2
 #define WEST  3
@@ -92,7 +100,7 @@ static INT nthS, sthS, wstS, estS ;
  *  new nodes.                                                      *
  *------------------------------------------------------------------*/
 
-mergeseg( netptr )
+VOID mergeseg( netptr )
 PINBOXPTR netptr ;
 {
 PINBOXPTR ptr ;
@@ -131,7 +139,7 @@ mergedge( netptr, EAST  ) ;
 }
 
 
-mergedge( netptr, direction )
+VOID mergedge( netptr, direction )
 PINBOXPTR netptr ;
 INT direction ;
 {
@@ -215,11 +223,11 @@ if( n == 0 ) {
 }
 
 
-rplacseg( netptr, oldnode, newnode )
+VOID rplacseg( netptr, oldnode, newnode )
 PINBOXPTR netptr, oldnode, newnode ;
 {
 ADJASEG *adj, *tmpadj ;
-SEGBOX *segptr ;
+SEGBOX *segptr = NULL ;
 
 for( adj = netptr->adjptr->next ; adj ; adj = adj->next ) {
     segptr = adj->segptr ;
@@ -244,7 +252,7 @@ update_segment_data( segptr ) ;
 }
 
 
-set_steiner_flag( ptr1, ptr2, ptr3 , stptr )
+VOID set_steiner_flag( ptr1, ptr2, ptr3 , stptr )
 PINBOXPTR ptr1, ptr2, ptr3, stptr ;
 {
 PINBOXPTR hiptr, loptr ;
@@ -290,7 +298,7 @@ if( hiptr->row > stptr->row ) {
 }
 
 
-recheck_steiner_flag( stptr )
+VOID recheck_steiner_flag( stptr )
 PINBOXPTR stptr ;
 {
 ADJASEG *adj ;

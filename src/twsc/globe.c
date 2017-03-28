@@ -89,15 +89,30 @@ static char SccsId[] = "@(#) globe.c (Yale) version 4.24 5/12/92" ;
 
 #define GLOBE_VARS
 
-#include "standard.h"
-#include "groute.h"
-#include "main.h"
-#include "parser.h"
-#include "feeds.h"
+#include "string.h"
+
+#include <yalecad/base.h>
 #include <yalecad/assign.h>
 #include <yalecad/debug.h>
-#include <yalecad/message.h>
 #include <yalecad/file.h>
+#include <yalecad/message.h>
+#include <yalecad/quicksort.h>
+#include <yalecad/random.h>
+
+#include "standard.h"
+#include "main.h"
+
+#include "buildimp.h"
+#include "feeds.h"
+#include "findcostf.h"
+#include "findunlap.h"
+#include "globe.h"
+#include "groute.h"
+#include "nets.h"
+#include "overlap.h"
+#include "paths.h"
+#include "parser.h"
+#include "utemp.h"
 
 #define CARL_NEW
 #define PICK_INT(l,u) (((l)<(u)) ? ((RAND % ((u)-(l)+1))+(l)) : (l))
@@ -119,15 +134,13 @@ static INT wkS ;
 static LONG global_wire_lengthS ;
 static INT swap_limitS ;
 
-globe() 
+INT globe(VOID)
 {
 
-INT row , net , cost , last_cost , swaps , found , total_final_cost ;
-INT total_cost , total_final_global_wire , total_global_wire ;
-INT last_global_wire , total_reduction , index , i , j , k , check ;
+INT row , net , swaps ;
+INT total_reduction , index , i , j , k , check ;
 INT iterations, initial_time, last_index ;
 LONG initial_wire ;
-PINBOXPTR netptr , cnetptr ;
 int ok = 1;
 
 implicit_pins_usedG = 0 ;
@@ -178,14 +191,14 @@ if( placement_improveG ){
     rebuild_cell_paths() ;
     initial_wire = global_wire_lengthS = swap_cost( FALSE ) ;
     initial_time = timingcostG ;
-    sprintf(YmsgG,"initial total global wire   :\t%d\n", global_wire_lengthS);
+    sprintf(YmsgG,"initial total global wire   :\t%d\n", (int)global_wire_lengthS);
     M( MSG, NULL, YmsgG ) ;
-    sprintf(YmsgG,"initial total timing penalty:\t%d\n\n\n", timingcostG);
+    sprintf(YmsgG,"initial total timing penalty:\t%d\n\n\n", (int)timingcostG);
     M( MSG, NULL, YmsgG ) ;
 
     M( MSG, NULL, "\nSteiner cell swap and rotation optimization\n" ) ;
     swap_limitS = - (int)( (double) global_wire_lengthS * 0.00005 ) ;
-    sprintf(YmsgG,"swap_limit:%d\n", swap_limitS ) ;
+    sprintf(YmsgG,"swap_limit:%d\n", (int)swap_limitS ) ;
     M( MSG, NULL, YmsgG ) ;
 
     for( ; ; ) {
@@ -221,8 +234,8 @@ if( placement_improveG ){
 	iterations++ ;
 	total_reduction += swaps ;
 	if( iterations == 1 || iterations % 10 == 0 ) {
-	    sprintf(YmsgG,"reduction:\t%d\t\ttotal_red:%d\n", swaps , 
-		total_reduction ) ;
+	    sprintf(YmsgG,"reduction:\t%d\t\ttotal_red:%d\n", (int)swaps , 
+		(int)total_reduction ) ;
 	    M( MSG, NULL, YmsgG ) ;
 	}
 	if( swaps >= swap_limitS ) {
@@ -232,11 +245,11 @@ if( placement_improveG ){
 	}
     }
 
-    sprintf(YmsgG,"iterations              :\t%d\n", iterations ) ;
+    sprintf(YmsgG,"iterations              :\t%d\n", (int)iterations ) ;
     M( MSG, NULL, YmsgG ) ;
-    sprintf(YmsgG,"final total global wire :\t%d\n", global_wire_lengthS ) ;
+    sprintf(YmsgG,"final total global wire :\t%d\n", (int)global_wire_lengthS ) ;
     M( MSG, NULL, YmsgG ) ;
-    sprintf(YmsgG,"final total time penalty:\t%d\n", timingcostG ) ;
+    sprintf(YmsgG,"final total time penalty:\t%d\n", (int)timingcostG ) ;
     M( MSG, NULL, YmsgG ) ;
     sprintf(YmsgG,"\nTotal global wire reduced by:\t%5.3f%%\n",
       100.0 * (1.0 - (DOUBLE) global_wire_lengthS / (DOUBLE) initial_wire ) ) ;
@@ -250,9 +263,9 @@ if( placement_improveG ){
     M( MSG, NULL, "\nVERIFICATION\n" ) ;
 
     global_wire_lengthS = swap_cost( FALSE ) ;
-    sprintf(YmsgG,"final total global wire :\t%d\n", global_wire_lengthS);
+    sprintf(YmsgG,"final total global wire :\t%d\n", (int)global_wire_lengthS);
     M( MSG, NULL, YmsgG ) ;
-    sprintf(YmsgG,"final total time penalty:\t%d\n\n\n", timingcostG);
+    sprintf(YmsgG,"final total time penalty:\t%d\n\n\n", (int)timingcostG);
     M( MSG, NULL, YmsgG ) ;
 } else {
     M( WARNMSG, "globe", "global routing placement improvement off\n" ) ;
@@ -306,13 +319,13 @@ return(ok) ;
 }
 
 
-globe_free_up()
+VOID globe_free_up(VOID)
 {
     netgraph_free_up();
 }
 
 
-preFeedAssgn()
+VOID preFeedAssgn(VOID)
 {
 
 SEGBOXPTR segptr , nextptr ;
@@ -346,7 +359,7 @@ for( net = 1 ; net <= numnetsG ; net++ ) {
 }
 
 
-free_static_in_globe()
+VOID free_static_in_globe(VOID)
 {
 
 INT i ;
@@ -362,15 +375,15 @@ Ysafe_free( total_feed_in_the_rowG ) ;
 
 
 #ifdef CARL_NEW
-FeedAssgn( row )
+VOID FeedAssgn( row )
 INT row ;
 {
 
 PINBOXPTR netptr , ptr1 , ptr2 ;
 SEGBOXPTR segptr , nextptr ;
-IPBOXPTR imptr , iptr , ipinptr[40] , i_imptr , f_imptr ;
-INT net , impcount , firstnode , spacing ;
-INT i , j , k , last_i , last_j ;
+IPBOXPTR imptr , i_imptr , f_imptr ;
+INT net ;
+INT i ;
 INT min_i , min_x , x , jog_num ;
 INT comparenptr() ;
 
@@ -506,7 +519,7 @@ if( v_tracks - 400 * num_parts >= 100 || num_parts == 0 ) {
 
 if( row % 5 == 0 ) {
     fprintf(fpoG,"Divide-and-Conquer Subdivisions in LA:%d at row:%d\n", 
-						num_parts, row ) ;
+						(int)num_parts, (int)row ) ;
     fflush(fpoG);
 }
 
@@ -890,7 +903,7 @@ for( k = 1 ; k <= chan_node_no ; k++ ) {
 #endif
 
 
-row_seg_intersect( ptr1 , ptr2 , segptr )
+VOID row_seg_intersect( ptr1 , ptr2 , segptr )
 PINBOXPTR ptr1 , ptr2 ;
 SEGBOXPTR segptr ;
 {
@@ -917,7 +930,7 @@ workerS[ wkS ]->segptr = segptr ;
 }
 
 
-copy_workerS_field( aptr, bptr )
+VOID copy_workerS_field( aptr, bptr )
 FEED_SEG_PTR aptr, bptr ;
 {
 aptr->netptr = bptr->netptr ;
@@ -927,9 +940,10 @@ aptr->segptr = bptr->segptr ;
 
 
 #ifdef CARL_NEW
-assgn_impin( imptr , fsptr , row )
+VOID assgn_impin( imptr , fsptr , row )
 IPBOXPTR imptr ;
 FEED_SEG_PTR fsptr ;
+INT row;
 {
 
 INT net ;
@@ -957,7 +971,7 @@ if( fsptr->segptr ) {
 #define TWF
 #ifdef TWF
     if( ptr2->row == ptr1->row ) {
-	segptr->switchvalue == nswLINE ;
+	segptr->switchvalue = nswLINE ;
 	segptr->flag = TRUE ;
     } else if( add_Lcorner_feedG &&
 	ABS( ptr1->xpos - ptr2->xpos ) >= average_feed_sepG ) {
@@ -967,7 +981,7 @@ if( fsptr->segptr ) {
     }
 #else
     if( ptr2->row == ptr1->row ) {
-	segptr->switchvalue == nswLINE ;
+	segptr->switchvalue = nswLINE ;
 	segptr->flag = TRUE ;
 	/*  else if( add_Lcorner_feed &&			 */
 	/*  ABS( ptr1->xpos - ptr2->xpos ) >= average_feed_sep ) */
@@ -997,9 +1011,10 @@ if( strncmp( carrayG[netptr->cell]->cname, "twfeed", 6 ) == STRINGEQ ){
 }
 }
 #else
-assgn_impin( imptr , fsptr , row )
+VOID assgn_impin( imptr , fsptr , row )
 IPBOXPTR imptr ;
 FEED_SEG_PTR fsptr ;
+INT row
 {
 
 INT net ;
@@ -1045,7 +1060,7 @@ netptr->eqptr->pinname = imptr->eqpinname ;
 }
 
 
-local_Assgn( row , node )
+VOID local_Assgn( row , node )
 INT row , node ;
 {
 
@@ -1160,7 +1175,7 @@ feedptr[node]->needed = 0 ;
 
 
 
-unequiv_pin_pre_processing()
+VOID unequiv_pin_pre_processing(VOID)
 {
 DBOXPTR dimptr ;
 PINBOXPTR ptr ;
@@ -1217,7 +1232,7 @@ for( net = 1 ; net <= numnetsG ; net++ ) {
 }
 
 
-relax_padPins_pinloc()
+VOID relax_padPins_pinloc(VOID)
 {
 INT i ;
 PINBOXPTR pinptr ;
@@ -1234,7 +1249,7 @@ for( i = lastpadG ; i > numcellsG ; i-- ) {
 }
 
 
-relax_unequiv_pinloc()
+VOID relax_unequiv_pinloc(VOID)
 {
 DBOXPTR dimptr ;
 PINBOXPTR ptr ;
@@ -1256,7 +1271,7 @@ for( net = 1 ; net <= numnetsG ; net++ ) {
 }
 
 
-check_unequiv_connectivity()
+INT check_unequiv_connectivity(VOID)
 {
 INT net, channel, correctness ;
 ADJASEG *adj ;
@@ -1279,7 +1294,7 @@ for( net = 1 ; net <= numnetsG ; net++ ) {
 	    if( channel != adj->segptr->flag ) {
 		correctness = 0 ;
 		printf(" unequivalent pin connection violation" ) ;
-		printf(" for net %d pin %d\n", net, pinptr->terminal ) ;
+		printf(" for net %d pin %d\n", (int)net, (int)(pinptr->terminal)) ;
 	    }
 	}
     }
@@ -1303,10 +1318,10 @@ BOOL perim_flag ;
     INT net ;
     LONG global_wire_length ;
     INT newtimepenal ;
-    FILE *fp ;
+    FILE *fp = NULL ;
     static BOOL outputL = TRUE ;
     INT p_path, s_path ;
-    INT Px, Sx, Py, Sy, Ppath, Spath ; 	/* used to cummulate info */
+    INT Px = 0, Sx = 0, Py = 0, Sy = 0, Ppath = 0, Spath = 0 ; 	/* used to cummulate info */
 
     /* -----------------------------------------------------------------
 	We are going to use the half perimeter fields to calculate the
@@ -1345,12 +1360,12 @@ BOOL perim_flag ;
 	if( perim_flag ){
 	    if( net_p->newhalfPx != xwire ){
 		fprintf( stderr, "new x half perim:%d doesn't match calc.:%d\n",
-		    net_p->newhalfPx, xwire ) ;
+		    (int)(net_p->newhalfPx), (int)xwire ) ;
 		net_p->newhalfPx = xwire ;
 	    }
 	    if( net_p->newhalfPy != ywire ){
 		fprintf( stderr, "new y half perim:%d doesn't match calc.:%d\n",
-		    net_p->newhalfPy, ywire ) ;
+		    (int)(net_p->newhalfPy), (int)ywire ) ;
 		net_p->newhalfPy = ywire ;
 	    }
 	    
@@ -1361,9 +1376,15 @@ BOOL perim_flag ;
 		    net_p->newhalfPy = ywire ;
 		    p_path = dpath_len( net, TRUE ) ;
 		    s_path = dpath_len( net, FALSE ) ;
-		    fprintf( fp, "%d\t%d\t%d\t%d\t%d\t%d\t%d\t%d\n", net, 
-		    net_p->numpins, net_p->halfPx, xwire, net_p->halfPy, ywire,
-		    p_path, s_path ) ;
+		    fprintf( fp, "%d\t%d\t%d\t%d\t%d\t%d\t%d\t%d\n", 
+		    	(int)net, 
+		    	(int)(net_p->numpins), 
+		    	(int)(net_p->halfPx), 
+		    	(int)xwire, 
+		    	(int)(net_p->halfPy), 
+		    	(int)ywire,
+		    	(int)p_path, 
+		    	(int)s_path ) ;
 		    Px += net_p->halfPx ;
 		    Py += net_p->halfPy ;
 		    Sx += xwire ;
@@ -1383,7 +1404,12 @@ BOOL perim_flag ;
 	    fprintf( fp, 
 	    "----------------------------------------------------------------\n");
 	    fprintf( fp, " \t \t%d\t%d\t%d\t%d\t%d\t%d\n", 
-		Px,Sx,Py,Sy,Ppath,Spath ) ;
+		(int)Px,
+		(int)Sx,
+		(int)Py,
+		(int)Sy,
+		(int)Ppath,
+		(int)Spath ) ;
 	    TWCLOSE(fp) ;
 	}
     ) ;
@@ -1394,7 +1420,7 @@ BOOL perim_flag ;
     D( "twsc/swap_cost",
 	if( timingcostG != newtimepenal ){
 	    fprintf( stderr, "Timing penalty mismatch %d vs %d\n",
-		timingcostG, newtimepenal ) ;
+		(int)timingcostG, (int)newtimepenal ) ;
 	}
     ) ;
 
@@ -1406,14 +1432,14 @@ BOOL perim_flag ;
 
 
 
-improve_place_sequential( row , index )
+INT improve_place_sequential( row , index )
 INT row , index ;
 {
 
 INT cell1 , cell2 , shift1 , shift2 , swap ;
 LONG global_wire , new_global_wire ;
-INT cell , pin , xpos , other_cell ;
-LONG ic , fc ;
+INT cell , pin , other_cell ;
+LONG ic = 0 , fc ;
 INT net, xwire ;
 INT newtimepenal ;
 DBOXPTR net_p ;
@@ -1620,14 +1646,14 @@ if( accept_greedy( (INT)(global_wire-new_global_wire), timingcostG-newtimepenal,
 }
 
 
-cell_rotate( row , index )
+INT cell_rotate( row , index )
 INT row , index ;
 {
 
 INT cell, swap ;
 LONG global_wire , new_global_wire ;
-INT pin , xpos ;
-LONG ic, fc ;
+INT pin ;
+LONG ic = 0, fc ;
 INT net, xwire, xc, left, right, dist_l, dist_r ;
 INT newtimepenal ;
 DBOXPTR net_p ;
@@ -1776,14 +1802,14 @@ if( accept_greedy( (INT)(global_wire-new_global_wire), timingcostG-newtimepenal,
 }
 } /* end cell_rotate() */
 
-elim_unused_feedsSC()
+VOID elim_unused_feedsSC(VOID)
 {
 
-CBOXPTR ptr , cellptr , first_cptr , last_cptr ;
+CBOXPTR cellptr , first_cptr , last_cptr ;
 PINBOXPTR termptr ;
-INT row, feed_count, i , last , cell_left , length , max_length ;
-INT j , k , elim , cell , limit , left_edge , corient ;
-INT *Aray , longest_row , shift , *row_len , total_elim ;
+INT row = 0, i , cell_left , length , max_length ;
+INT k , cell , limit , left_edge ;
+INT *Aray , longest_row = 0 , shift , *row_len , total_elim ;
 
 row_len = (INT *) Ysafe_calloc( (1+numRowsG) , sizeof(INT) ) ;
 for( i = 1 ; i <= numRowsG ; i++ ) {
@@ -1827,7 +1853,7 @@ for( ; ; ) {
 
     if( i == 0 ) {
 	fprintf(fpoG,"Eliminated %d unused feeds in the longest row\n",
-							total_elim ) ;
+							(int)total_elim ) ;
 	break ;
     } else {
 	total_elim++ ;
@@ -1858,21 +1884,21 @@ for( i = 1 ; i <= numRowsG ; i++ ) {
     last_cptr  = carrayG[ Aray[ Aray[0] ] ] ;
     length = last_cptr->cxcenter + last_cptr->tileptr->right -
 	     first_cptr->cxcenter - first_cptr->tileptr->left ;
-    fprintf( fpoG, "%3d            %7d \n", i, length );
+    fprintf( fpoG, "%3d            %7d \n", (int)i, (int)length );
     if( max_length < length ) {
 	longest_row = i ;
 	max_length = length ;
     }
 }
 fprintf( fpoG, "\nLONGEST Row is:%d   Its length is:%d\n",
-			    longest_row , max_length ) ;
+			    (int)longest_row , (int)max_length ) ;
 
 
 Ysafe_free( row_len );
 return ;
 }
  
-rebuild_nextpin()
+VOID rebuild_nextpin(VOID)
 {
     INT net, cell ;
     PINBOXPTR netptr , cnetptr ;
@@ -1905,7 +1931,7 @@ rebuild_nextpin()
     }
 } /* end rebuild_nextpin */
 
-rebuild_cell_paths()
+VOID rebuild_cell_paths(VOID)
 {
     INT i ;
     CBOXPTR ptr ;

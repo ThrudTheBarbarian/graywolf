@@ -73,12 +73,18 @@ static char SccsId[] = "@(#) readnets.y (Yale) version 4.12 4/21/91" ;
 #endif
 #endif
 
-#include <yalecad/message.h>
+#include <yalecad/base.h>
 #include <yalecad/debug.h>
 #include <yalecad/hash.h>
+#include <yalecad/message.h>
+#include <yalecad/program.h>
+#include <yalecad/ystring.h>
+
 #include "readnets.h"  /* redefine yacc and lex globals */
-#include "standard.h"  
-#include "main.h"  
+#include "standard.h"
+#include "main.h"
+#include "nets.h"
+#include "paths.h"
 
 #undef  REJECT         /* undefine TimberWolfSC definition */
 #define STARTPATH  1   /* flag for start of path */
@@ -98,6 +104,16 @@ static YHASHPTR net_hash_tableS ;
 static PATHPTR pathPtrS = NULL ;  /* start of path list */
 static PATHPTR curPathS ; /* current bottom of path list so list */
 			/* is in order given by user debug easier */
+
+static INT free_net_data(P1(INT *data));
+static VOID bad_net(P2(char *net, BOOL fatal));
+static VOID process_net_rec(P1(char *netname)); 
+static VOID ignore_net(P1(VOID));
+static VOID ignore_route(P1(VOID));
+static VOID end_path(P3(INT lower_bound, INT upper_bound, INT priority));
+static VOID add_path(P2(BOOL pathFlag, char *net));
+static VOID check_paths(P1(VOID));
+static VOID build_path_array(P1(VOID));
 
 typedef union {
     INT ival ;
@@ -274,12 +290,7 @@ YYSTYPE yyvs[YYSTACKSIZE];
 /* ********************* #include "readnets_l.h" *******************/
 
 
-static free_net_data();
-static bad_net();
-char *Ystrclone();
-
-
-readnets( fp )
+VOID readnets( fp )
 FILE *fp ;
 { 
     /* static free_net_data() ; */
@@ -314,13 +325,15 @@ FILE *fp ;
 
 } /* end readnets */
 
-static free_net_data( data )
+/* has to return INT to be passed as function cleanly */
+static INT free_net_data( data )
 INT *data ;
 {
     Ysafe_free( data ) ;
+    return 0;
 } /* free_swap_data */
 
-process_net_rec( netname ) 
+static VOID process_net_rec( netname ) 
 char *netname ;
 {
     INT *data ;
@@ -334,38 +347,39 @@ char *netname ;
     
 } /* end process_net_rec */
 
-ignore_net()
+static VOID ignore_net(VOID)
 {
     if( netS ){
 	netarrayG[netS]->ignore = 1 ;
     }
 } /* end ignore_net */
 
-ignore_route()
+static VOID ignore_route(VOID)
 {
     if( netS ){
 	netarrayG[netS]->ignore = -1 ;
     }
 } /* end ignore_route */
 
-yyerror(s)
+int yyerror(s)
 char    *s;
 {
     sprintf(YmsgG,"problem reading %s.net:", cktNameG );
     M( ERRMSG, "yacc", YmsgG ) ;
     sprintf(YmsgG, "  line %d near '%s' : %s\n" ,
-	line_countS+1, yytext, s );
+	(int)(line_countS+1), yytext, s );
     M( ERRMSG,NULL, YmsgG ) ;
     Ymessage_error_count() ;
     abortFlagS = TRUE ;
+    return 0;
 }
 
-yywrap()
+int yywrap()
 {
     return(1);
 }                      
 
-add_path( pathFlag, net )
+static VOID add_path( pathFlag, net )
 BOOL pathFlag ;
 char *net ;
 {
@@ -391,7 +405,8 @@ char *net ;
 	    (GLISTPTR) Ysafe_malloc( sizeof(GLISTBOX) ) ;
 	netPtrS->next = tempNetPtr ;
     }
-    if( data = (INT *) Yhash_search( net_hash_tableS , net, NULL, FIND)){
+    /* Use ((...)) to avoid assignment as a condition warning */
+    if(( data = (INT *) Yhash_search( net_hash_tableS , net, NULL, FIND))){
 	/* get data from field */
 	netPtrS->p.net = *data ;
     } else {
@@ -404,7 +419,7 @@ char *net ;
 
 } /* end add_path */
 
-end_path(lower_bound, upper_bound, priority )
+static VOID end_path(lower_bound, upper_bound, priority )
 INT lower_bound, upper_bound, priority ;
 {
     GLISTPTR nets, path_ptr, tempPath ;
@@ -426,7 +441,8 @@ INT lower_bound, upper_bound, priority ;
 	    net_number = nets->p.net ;
 	    dimptr = netarrayG[net_number] ;
 
-	    if( tempPath = dimptr->paths ){
+	    /* Use ((...)) to avoid assignment as a condition warning */
+	    if(( tempPath = dimptr->paths )){
 		path_ptr = dimptr->paths = 
 		(GLISTPTR) Ysafe_malloc( sizeof(GLISTBOX) ) ;
 		path_ptr->next = tempPath ;
@@ -443,7 +459,7 @@ INT lower_bound, upper_bound, priority ;
 	
 } /* end function end_path */
 
-check_paths()
+static VOID check_paths(VOID)
 {
     INT i ;             /* counter */
     DBOXPTR nptr ;      /* traverse the nets */
@@ -462,7 +478,7 @@ check_paths()
 } /* check_paths */
 
 
-build_path_array()
+static VOID build_path_array(VOID)
 {
     INT i ;
     PATHPTR curPtr ;
@@ -476,21 +492,20 @@ build_path_array()
     }
 } /* end build_path_array */
 
-PATHPTR get_path_list()
+PATHPTR get_path_list(VOID)
 {
     return( pathPtrS ) ;
 } /* end get_path_list */
 
-INT get_total_paths()
+INT get_total_paths(VOID)
 {
     return( total_num_pathS ) ;
 } /* end get_total_paths */
 
-add_paths_to_cells()
+VOID add_paths_to_cells(VOID)
 {
     INT i ;
     INT net_number ;
-    INT total_cells ;
     PSETPTR pathlist, enum_path_set() ;
     CBOXPTR ptr ;
     GLISTPTR  path_ptr, tempPath ;
@@ -515,7 +530,8 @@ add_paths_to_cells()
 	}
 	/* now add UNIQUE list of paths to this cell */
 	for( pathlist=enum_path_set(); pathlist; pathlist=pathlist->next){
-	    if( tempPath = ptr->paths ){
+	    /* Use ((...)) to avoid assignment as a condition warning */
+	    if(( tempPath = ptr->paths )){
 		path_ptr = ptr->paths = 
 		    (GLISTPTR) Ysafe_malloc( sizeof(GLISTBOX) ) ;
 		path_ptr->next = tempPath ;
@@ -530,7 +546,7 @@ add_paths_to_cells()
     }
 }
 
-static bad_net( net, fatal )
+static VOID bad_net( net, fatal )
 char *net ;
 BOOL fatal ;
 {
@@ -561,7 +577,7 @@ yyparse()
     register char *yys;
     extern char *getenv();
 
-    if (yys = getenv("YYDEBUG"))
+    if ((yys = getenv("YYDEBUG")))
     {
         yyn = *yys;
         if (yyn >= '0' && yyn <= '9')
@@ -578,7 +594,8 @@ yyparse()
     *yyssp = yystate = 0;
 
 yyloop:
-    if (yyn = yydefred[yystate]) goto yyreduce;
+    /* Use ((...)) to avoid assignment as a condition warning */
+    if ((yyn = yydefred[yystate])) goto yyreduce;
     if (yychar < 0)
     {
         if ((yychar = yylex()) < 0) yychar = 0;
@@ -630,7 +647,7 @@ yynewerror:
             sprintf( err_msg, "\nsyntax error - found:%s expected:",
                 yyname[yychar] ) ;
             two_or_more = 0 ;
-            if( test_state = yysindex[yystate] ){
+            if( (test_state = yysindex[yystate]) ){
                 for( i = YYERRCODE+1; i <= YYMAXTOKEN; i++ ){
                     expect = test_state + i ;
                     if( expect <= YYTABLESIZE && yycheck[expect] == i ){
@@ -643,7 +660,7 @@ yynewerror:
                      }
                  }
              }
-            if( test_state = yyrindex[yystate] ){
+            if( (test_state = yyrindex[yystate]) ){
                 for( i = YYERRCODE+1; i <= YYMAXTOKEN; i++ ){
                     expect = test_state + i ;
                     if( expect <= YYTABLESIZE && yycheck[expect] == i ){
@@ -777,7 +794,7 @@ case 18:
 			/* convert integer to string */
 			/* this allows integers to be used as strings */
 			/* a kluge but timberwolf's old parser supported it */
-			sprintf( bufferS,"%d", yyvsp[0].ival ) ;
+			sprintf( bufferS,"%d", (int)(yyvsp[0].ival) ) ;
 			/* now clone string */
 			yyval.string = (char *) Ystrclone( bufferS ) ;
 		    }

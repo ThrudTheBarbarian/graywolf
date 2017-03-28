@@ -50,14 +50,18 @@ static char SccsId[] = "@(#) acceptt.c version 4.7 4/2/92" ;
 
 #include <yalecad/base.h>
 #include <yalecad/debug.h>
+#include <yalecad/random.h>
+
 #include "main.h"
 #include "standard.h"
+
+#include "acceptt.h"
 
 #define MASK 0x3ff
 
 static DOUBLE table1S[1024] , table2S[1024] , table3S[1024] ;
  
-init_table()
+VOID init_table(VOID)
 {
     INT i2 ;
     table1S[0] = 1.0 ;
@@ -104,7 +108,7 @@ INT d_wire, d_time, d_penal ;
 {
 
     DOUBLE fred ;
-    register unsigned fract ;
+    register unsigned int fract ;
 
     /* d_time = (INT) ( 10.0 * timeFactorG * (DOUBLE) d_time ) ; */
     d_time = (INT) ( timeFactorG * (DOUBLE) d_time ) ;
@@ -125,7 +129,7 @@ INT d_wire, d_time, d_penal ;
 	    return( FALSE ) ;
 	}
     } else {
-	fract = (INT)( -fred * 8388608.0 ) ;
+	fract = (unsigned int)( -fred * 8388608.0 ) ;
 	if( (table1S[ (fract >> 20) & MASK ] * 
 			table2S[ (fract >> 10) & MASK] * 
 			table3S[ fract & MASK ]) > 

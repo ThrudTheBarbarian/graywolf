@@ -62,9 +62,15 @@ static char SccsId[] = "@(#) cglbroute.c (Yale) version 4.5 12/15/90" ;
 #endif
 #endif
 
+#include <yalecad/base.h>
+#include <yalecad/random.h>
+
 #include "standard.h"
 #include "main.h"
+
+#include "coarseglb.h"
 #include "groute.h"
+
 #define OVERHEAD_INIT 100
 #define OVERHEAD_DELTA 20
 
@@ -83,7 +89,7 @@ static INT LswitchsegS , svalueS , evalueS ;
 static INT *crowdmaxS , glb_crowdmaxS , *node_rightS ;
 static DOUBLE  ctrackContS , factor_hereS , factor_oneS , factor_twoS ;
 
-cglb_initial()
+VOID cglb_initial(VOID)
 {
 
 INT i , j , net , x , tilted_seg ;
@@ -142,12 +148,12 @@ for( net = 1 ; net <= numnetsG ; net++ ) {
 	}
     }
 }
-fprintf(fpoG," the number of net = %d\n", numnetsG ) ;
-fprintf(fpoG," the number of tilted segment = %d\n", tilted_seg ) ;
+fprintf(fpoG," the number of net = %d\n", (int)numnetsG ) ;
+fprintf(fpoG," the number of tilted segment = %d\n", (int)tilted_seg ) ;
 }
 
 
-proj_tree_to_grid( )
+VOID proj_tree_to_grid(VOID)
 {
 
 SEGBOXPTR segptr ;
@@ -222,8 +228,8 @@ for( net = 1 ; net <= numnetsG ; net++ ) {
 	    if( ptr1->pinloc >= NEITHER || ptr1->row == 0 ) {
 		lowV++ ;
 	    }
-	    if( ptr2->pinloc <= NEITHER && segptr->flag ||
-				ptr2->row == numChansG ) {
+	    /* SjG : Made the &&/|| below explicit rather than inferred */
+	    if( (ptr2->pinloc <= NEITHER && segptr->flag) || ptr2->row == numChansG ) {
 		highV-- ;
 	    }
 	    if( k <= numRowsG ) {
@@ -254,7 +260,8 @@ for( net = 1 ; net <= numnetsG ; net++ ) {
 	} else { /* switchvalue == swL_down */
 	    h = highH ;
 	    k = lowV  ;
-	    if( ptr1->row == 0 || ptr1->pinloc >= NEITHER && segptr->flag ) {
+	    /* SjG : Made the &&/|| below explicit rather than inferred */
+	    if( ptr1->row == 0 || (ptr1->pinloc >= NEITHER && segptr->flag) ) {
 		lowV++ ;
 	    }
 	    if( ptr2->row == numChansG || ptr2->pinloc <= NEITHER ) {
@@ -294,12 +301,12 @@ for( net = 1 ; net <= numnetsG ; net++ ) {
 }
 
 
-set_cbucket( )
+VOID set_cbucket(VOID)
 {
 
 HCAPPTR hcaptr , headptr ;
 SEGBOXPTR segptr ;
-INT j , last_j , row , max , net ;
+INT j , row , max , net ;
 
 glb_crowdmaxS = 0 ;
 crowdmaxS = (INT *)Ysafe_calloc( numRowsG + 1, sizeof(INT) ) ;
@@ -317,7 +324,7 @@ for( row = 1 ; row <= numRowsG ; row++ ) {
 }
 
 entryptS = (HCAPPTR **)Ysafe_malloc( ( numRowsG+1 ) * sizeof(HCAPPTR *) ) ;
-entrysizeS = glb_crowdmaxS + OVERHEAD_INIT;
+entrysizeS = (int)(glb_crowdmaxS + OVERHEAD_INIT);
 for( row = 1 ; row <= numRowsG ; row++ ) {
     entryptS[row] = (HCAPPTR *)Ysafe_malloc( ( entrysizeS + 1 ) * sizeof( HCAPPTR )) ;
     for( j = 0 ; j <= entrysizeS ; j++ ) {
@@ -350,7 +357,7 @@ for( net = 1 ; net <= numnetsG ; net++ ) {
 	}
     }
 }
-fprintf(fpoG," the number of switchable L segment = %d\n", LswitchsegS );
+fprintf(fpoG," the number of switchable L segment = %d\n", (int)LswitchsegS );
 swLsegptrS = ( SEGBOXPTR *)Ysafe_malloc( 
 	    ( LswitchsegS + 2 * numnetsG ) * sizeof( SEGBOXPTR ) ) ;
 
@@ -366,7 +373,7 @@ for( net = 1 ; net <= numnetsG ; net++ ) {
 }
 
 
-cglbroute()
+VOID cglbroute(VOID)
 {
 
 SEGBOXPTR segptr ;
@@ -694,9 +701,9 @@ while( ++trys < maxtrys ) {
 }
 
 
-free_cglb_initial()
+VOID free_cglb_initial(VOID)
 {
-INT i , j , last_j , row ;
+INT i , j , row ;
 
 Ysafe_free( node_rightS ) ;
 for( i = 1 ; i <= numRowsG ; i++ ) {
@@ -718,7 +725,7 @@ Ysafe_free( swLsegptrS ) ;
 }
 
 
-reinitial_Hdensity()
+VOID reinitial_Hdensity(VOID)
 {
 
 INT i , j ;
@@ -731,7 +738,7 @@ for( i = 1 ; i <= numRowsG ; i++ ) {
 }
 
 
-update_switchvalue()
+VOID update_switchvalue(VOID)
 {
 
 INT net , x , tilted_seg ;
@@ -787,14 +794,14 @@ for( net = 1 ; net <= numnetsG ; net++ ) {
 	}
     }
 }
-fprintf(fpoG," the number of tilted segment = %d\n", tilted_seg ) ;
-fprintf(fpoG," the number of switchable L segment = %d\n", LswitchsegS );
+fprintf(fpoG," the number of tilted segment = %d\n", (int)tilted_seg ) ;
+fprintf(fpoG," the number of switchable L segment = %d\n", (int)LswitchsegS );
 }
 
 
-rebuild_cbucket()
+VOID rebuild_cbucket(VOID)
 {
-INT row , j , last_j ;
+INT row , j ;
 HCAPPTR hcaptr , headptr ;
 
 for( row = 1 ; row <= numRowsG ; row++ ) {
@@ -843,7 +850,7 @@ for( row = 1 ; row <= numRowsG ; row++ ) {
 
 
 #ifdef DEBUG
-check_cbucket()
+VOID check_cbucket(VOID)
 {
 INT row, j ;
 HCAPPTR dptr , denptr ;
@@ -865,7 +872,7 @@ for( row = 1 ; row <= numRowsG ; row++ ) {
 }
 }
 
-print_bucket( row )
+VOID print_bucket( row )
 INT row ;
 {
 INT j ;
@@ -873,14 +880,19 @@ HCAPPTR denptr ;
 FILE *fp ;
 
 fp = TWOPEN("bucket.dat", "a", ABORT ) ;
-fprintf(fp, "\n ROW = %d\n", row ) ;
-fprintf(fp, " sizeof densitybox = %d\n", sizeof(HCAPBOX) ) ;
-fprintf(fp, " %d %d\n", HcapacityS[row][1], HcapacityS[row][2] ) ;
+fprintf(fp, "\n ROW = %d\n", (int)row ) ;
+fprintf(fp, " sizeof densitybox = %d\n", (int)sizeof(HCAPBOX) ) ;
+fprintf(fp, " %d %d\n", (int)(HcapacityS[row][1]), 
+						(int)(HcapacityS[row][2]) ) ;
 fprintf(fp," density  cbin       denptr      nextptr      prevptr\n" ) ;
 for( j = 1 ; j <= chan_node_noG ; j++ ) {
     denptr = HcapacityS[row][j] ;
-    fprintf(fp," %7d %5d %12x %12x %12x\n", denptr->density,
-    denptr->x_coord, denptr, denptr->next, denptr->prev ) ;
+    fprintf(fp," %7d %5d %12p %12p %12p\n", 
+    	(int)(denptr->density),
+    	(int)(denptr->x_coord), 
+    	denptr, 
+    	denptr->next, 
+    	denptr->prev ) ;
 }
 fprintf(fp,"\n\n" ) ;
 for( j = crowdmaxS[row] ; j >= 0 ; j-- ) {
@@ -888,8 +900,10 @@ for( j = crowdmaxS[row] ; j >= 0 ; j-- ) {
     if( denptr == NULL ) continue ;
     fprintf(fp,"\n       denptr density x_coord\n" ) ;
     for( ; denptr ; denptr = denptr->next ) {
-	fprintf(fp, " %12x %7d %7d\n",
-	    denptr, denptr->density, denptr->x_coord ) ;
+	fprintf(fp, " %12p %7d %7d\n",
+	    denptr, 
+	    (int)(denptr->density), 
+	    (int)(denptr->x_coord) ) ;
     }
 }
 TWCLOSE(fp) ;

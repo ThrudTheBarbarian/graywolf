@@ -74,13 +74,17 @@ static char SccsId[] = "@(#) debug2.c (Yale) version 4.7 12/15/90" ;
 #endif
 #endif
 
-#include "standard.h"
-#include "groute.h"
-#include "feeds.h"
-#include "pads.h"
-
+#include <yalecad/base.h>
 #include <yalecad/debug.h>
 #include <yalecad/message.h>
+
+#include "coarseglb.h"
+#include "debug.h"
+#include "feeds.h"
+#include "groute.h"
+#include "standard.h"
+#include "pads.h"
+
 
 /*
 extern FEED_SEG_PTR *worker ;
@@ -94,7 +98,7 @@ extern INT *min_feed , *FeedInRow ;
 
 
 
-dbx_adj( net )
+VOID dbx_adj( net )
 INT net ;
 {
 
@@ -104,9 +108,9 @@ ADJASEGPTR adjptr ;
 SEGBOXPTR segptr ;
 
 fp = TWOPEN("adj.dat" , "w", ABORT ) ;
-fprintf(fp,"\nnet %5d\n\n" , net ) ;
+fprintf(fp,"\nnet %5d\n\n" , (int)net ) ;
 for( netptr = netarrayG[net]->pins; netptr ;netptr = netptr->next ) {
-    fprintf(fp," pin %5d\n", netptr->terminal );
+    fprintf(fp," pin %5d\n", (int)(netptr->terminal) );
     fprintf(fp,"   pin1  pin2  xpos1 xpos2  row1 row2  sw\n" ) ;
     for( adjptr = netptr->adjptr->next ; adjptr ;
 			adjptr = adjptr->next ) {
@@ -114,15 +118,15 @@ for( netptr = netarrayG[net]->pins; netptr ;netptr = netptr->next ) {
 	pin1ptr = segptr->pin1ptr ;
 	pin2ptr = segptr->pin2ptr ;
 	fprintf(fp,"  %5d %5d  %5d %5d  %4d %4d  %2d\n",
-	    pin1ptr->terminal , pin2ptr->terminal ,
-	    pin1ptr->xpos , pin2ptr->xpos ,
-	    pin1ptr->row , pin2ptr->row , segptr->switchvalue ) ;
+	    (int)(pin1ptr->terminal) , (int)(pin2ptr->terminal) ,
+	    (int)(pin1ptr->xpos) , (int)(pin2ptr->xpos) ,
+	    (int)(pin1ptr->row) , (int)(pin2ptr->row) , (int)(segptr->switchvalue) ) ;
     }
 }
 TWCLOSE(fp) ;
 }
 
-dbx_netseg( net1 , net2 )
+VOID dbx_netseg( net1 , net2 )
 INT net1 , net2 ;
 {
 
@@ -133,23 +137,23 @@ INT net ;
 
 fp = TWOPEN("netseg.dat" , "w", ABORT ) ;
 for( net = net1 ; net <= net2 ; net++ ) {
-    fprintf(fp,"\nnet %5d\n" , net ) ;
+    fprintf(fp,"\nnet %5d\n" , (int)net ) ;
     fprintf(fp,"   pin1  pin2  xpos1 xpos2  row1 row2  sw loc1 loc2\n");
     for( segptr = netsegHeadG[net]->next ;
 	segptr ; segptr = segptr->next ) {
 	pin1ptr = segptr->pin1ptr ;
 	pin2ptr = segptr->pin2ptr ;
 	fprintf(fp,"  %5d %5d  %5d %5d  %4d %4d  %2d %4d %4d\n",
-	    pin1ptr->terminal , pin2ptr->terminal ,
-	    pin1ptr->xpos , pin2ptr->xpos ,
-	    pin1ptr->row , pin2ptr->row , segptr->switchvalue ,
-	    pin1ptr->pinloc , pin2ptr->pinloc ) ;
+	    (int)(pin1ptr->terminal) , (int)(pin2ptr->terminal) ,
+	    (int)(pin1ptr->xpos) , (int)(pin2ptr->xpos) ,
+	    (int)(pin1ptr->row) , (int)(pin2ptr->row) , (int)(segptr->switchvalue) ,
+	    (int)(pin1ptr->pinloc) , (int)(pin2ptr->pinloc) ) ;
     }
 }
 TWCLOSE(fp) ;
 }
 
-dbx_seg( segptr )
+VOID dbx_seg( segptr )
 SEGBOXPTR segptr ;
 {
 
@@ -159,17 +163,17 @@ PINBOXPTR pin1ptr , pin2ptr ;
 fp = TWOPEN("seg.dat" , "a", ABORT ) ;
 pin1ptr = segptr->pin1ptr ;
 pin2ptr = segptr->pin2ptr ;
-fprintf(fp,"\nnet %5d\n" , pin1ptr->net ) ;
+fprintf(fp,"\nnet %5d\n" , (int)(pin1ptr->net) ) ;
 fprintf(fp,"   pin1  pin2  xpos1 xpos2  row1 row2  sw loc1 loc2\n");
 fprintf(fp,"  %5d %5d  %5d %5d  %4d %4d  %2d %4d %4d\n",
-    pin1ptr->terminal , pin2ptr->terminal , pin1ptr->xpos ,
-    pin2ptr->xpos , pin1ptr->row , pin2ptr->row ,
-    segptr->switchvalue , pin1ptr->pinloc , pin2ptr->pinloc ) ;
+    (int)(pin1ptr->terminal) , (int)(pin2ptr->terminal) , (int)(pin1ptr->xpos) ,
+    (int)(pin2ptr->xpos) , (int)(pin1ptr->row) , (int)(pin2ptr->row) ,
+    (int)(segptr->switchvalue) , (int)(pin1ptr->pinloc) , (int)(pin2ptr->pinloc) ) ;
 TWCLOSE(fp) ;
 }
 
 
-dbx_feed( row1 , row2 )
+VOID dbx_feed( row1 , row2 )
 INT row1 , row2 ;
 {
 
@@ -185,22 +189,23 @@ for( row = row1 ; row <= row2 ; row++ ) {
     actual = 0 ;
     needed = 0 ;
     feedptr = feedpptrG[row] ;
-    fprintf(fp,"\nrow %2d" , row ) ;
+    fprintf(fp,"\nrow %2d" , (int)row ) ;
     q = chan_node_noG / 10 ;
     r = chan_node_noG % 10 ;
     for( i = 0 ; i <= q-1 ; i++ ) {
 	t = 10 * i ;
 	fprintf(fp,"\n\n       %4d %4d %4d %4d %4d %4d %4d %4d %4d %4d"
-	, t+1 , t+2 , t+3 , t+4 , t+5 , t+6 , t+7 , t+8 , t+9 , t+10) ;
+	, (int)(t+1) , (int)(t+2) , (int)(t+3) , (int)(t+4) , (int)(t+5) , 
+	  (int)(t+6) , (int)(t+7) , (int)(t+8) , (int)(t+9) , (int)(t+10)) ;
 	fprintf(fp,"\nactual" ) ;
 	for( j = 1 ; j <= 10 ; j++ ) {
 	    node = t + j ;
-	    fprintf(fp," %4d", feedptr[node]->actual ) ;
+	    fprintf(fp," %4d", (int)(feedptr[node]->actual) ) ;
 	}
 	fprintf(fp,"\nneeded" ) ;
 	for( j = 1 ; j <= 10 ; j++ ) {
 	    node = t + j ;
-	    fprintf(fp," %4d", feedptr[node]->needed ) ;
+	    fprintf(fp," %4d", (int)(feedptr[node]->needed) ) ;
 	}
 	fprintf(fp,"\n diff " ) ;
 	for( j = 1 ; j <= 10 ; j++ ) {
@@ -208,21 +213,22 @@ for( row = row1 ; row <= row2 ; row++ ) {
 	    actual += feedptr[node]->actual ;
 	    needed += feedptr[node]->needed ;
 	    fprintf(fp," %4d",
-		feedptr[node]->actual - feedptr[node]->needed ) ;
+			(int)(feedptr[node]->actual - feedptr[node]->needed) ) ;
 	}
     }
     t = 10 * q ;
     fprintf(fp,"\n\n       %4d %4d %4d %4d %4d %4d %4d %4d %4d %4d"
-    , t+1 , t+2 , t+3 , t+4 , t+5 , t+6 , t+7 , t+8 , t+9 , t+10) ;
+    , (int)(t+1) , (int)(t+2) , (int)(t+3) , (int)(t+4) , (int)(t+5) , 
+      (int)(t+6) , (int)(t+7) , (int)(t+8) , (int)(t+9) , (int)(t+10)) ;
     fprintf(fp,"\nactual" ) ;
     for( j = 1 ; j <= r ; j++ ) {
 	node = t + j ;
-	fprintf(fp," %4d", feedptr[node]->actual ) ;
+	fprintf(fp," %4d", (int)(feedptr[node]->actual) ) ;
     }
     fprintf(fp,"\nneeded" ) ;
     for( j = 1 ; j <= r ; j++ ) {
 	node = t + j ;
-	fprintf(fp," %4d", feedptr[node]->needed ) ;
+	fprintf(fp," %4d", (int)(feedptr[node]->needed) ) ;
     }
     fprintf(fp,"\n diff " ) ;
     for( j = 1 ; j <= r ; j++ ) {
@@ -230,22 +236,22 @@ for( row = row1 ; row <= row2 ; row++ ) {
 	actual += feedptr[node]->actual ;
 	needed += feedptr[node]->needed ;
 	fprintf(fp," %4d",
-	    feedptr[node]->actual - feedptr[node]->needed ) ;
+	    (int)(feedptr[node]->actual - feedptr[node]->needed) ) ;
     }
-    fprintf(fp,"\n actual feedthru pin in row %d is %d\n", row, actual);
-    fprintf(fp,"\n needed feedthru pin in row %d is %d\n", row, needed);
+    fprintf(fp,"\n actual feedthru pin in row %d is %d\n", (int)row, (int)actual);
+    fprintf(fp,"\n needed feedthru pin in row %d is %d\n", (int)row, (int)needed);
     fprintf(fp,"\n total difference in row %d is %d\n",
-				    row ,actual - needed );
+				    (int)row ,(int)(actual - needed) );
     total_actual += actual ;
     total_needed += needed ;
 }
-fprintf(fp,"\n total actual feedthru pins = %d\n" , total_actual ) ;
-fprintf(fp,"\n total needed feedthru pins = %d\n" , total_needed ) ;
+fprintf(fp,"\n total actual feedthru pins = %d\n" , (int)total_actual ) ;
+fprintf(fp,"\n total needed feedthru pins = %d\n" , (int)total_needed ) ;
 TWCLOSE(fp) ;
 }
 
 
-dbx_imp( row1 , row2 )
+VOID dbx_imp( row1 , row2 )
 INT row1 , row2 ;
 {
 
@@ -256,7 +262,7 @@ FILE *fp ;
 
 fp = TWOPEN("imp.dat" , "w", ABORT ) ;
 for( row = row1 ; row <= row2 ; row++ ) {
-    fprintf(fp,"\nrow %d\n" , row ) ;
+    fprintf(fp,"\nrow %d\n" , (int)row ) ;
     fprintf(fp," node terminal   xpos  NETBOX position\n" ) ;
     for( imptr = impFeedsG[row]->next ; imptr ; imptr = imptr->next ) {
 	k = set_node( imptr->xpos ) ;
@@ -267,15 +273,15 @@ for( row = row1 ; row <= row2 ; row++ ) {
 	} else {
 	    s = " " ;
 	}
-	fprintf(fp," %4d %8d %6d  %6s %8s\n", k ,
-	    imptr->terminal , imptr->xpos ,
-	    (INT)tearrayG[imptr->terminal] , s ) ;
+	fprintf(fp," %4d %8d %6d  %6s %8s\n", (int)k ,
+	    (int)(imptr->terminal) , (int)(imptr->xpos) ,
+	    tearrayG[imptr->terminal]->pinname , s ) ;
     }
 }
 TWCLOSE(fp) ;
 }
 
-dbx_funcost()
+VOID dbx_funcost(VOID)
 {
 
 INT net , cost , minx , miny , maxx , maxy ;
@@ -308,11 +314,11 @@ for( net = 1 ; net <= numnetsG ; net++ ) {
     cost += ( maxx - minx ) + ( maxy - miny ) ;
 }
 if( cost != funccostG ) {
-    printf("cost = %d funccost = %d\n" , cost , funccostG ) ;
+    printf("cost = %d funccost = %d\n" , (int)cost , (int)funccostG ) ;
 }
 }
 
-mst_graph( net1 , net2 )
+VOID mst_graph( net1 , net2 )
 INT net1 , net2 ;
 {
 
@@ -363,7 +369,9 @@ for( net = net1 ; net <= net2 ; net++ ) {
 	    y2 = pin2ptr->ypos ;
 	}
 	fprintf(fp,"%d, %d, %d, %d, %d, color: black\n",
-	    net, pin1ptr->xpos , y1 , pin2ptr->xpos , y2 ) ;
+	    (int)net, (int)(pin1ptr->xpos) , 
+	    (int)y1 , (int)(pin2ptr->xpos) , 
+	    (int)y2 ) ;
     }
     for( netptr = netarrayG[net]->pins ; netptr ; netptr = netptr->next ) {
 	if( netptr->pinloc == NEITHER ) {
@@ -372,7 +380,9 @@ for( net = net1 ; net <= net2 ; net++ ) {
 		y1 = cellptr->cycenter + cellptr->tileptr->bottom ;
 		y2 = cellptr->cycenter + cellptr->tileptr->top ;
 		fprintf(fp,"%d, %d, %d, %d, %d, color: black\n",
-		    net, netptr->xpos, y1 , netptr->xpos , y2 ) ;
+		    (int)net, (int)(netptr->xpos), 
+		    (int)y1 , (int)(netptr->xpos) , 
+		    (int)y2 ) ;
 	    }
 	}
     }
@@ -384,10 +394,14 @@ for( row = 1 ; row <= numRowsG ; row++ ) {
     x2 = cellptr2->cxcenter + cellptr2->tileptr->right ;
     y1 = cellptr1->cycenter + cellptr1->tileptr->bottom ;
     y2 = cellptr2->cycenter + cellptr2->tileptr->top ;
-    fprintf(fp,"0, %d, %d, %d, %d, color: black\n", x1, y1, x1, y2 ) ;
-    fprintf(fp,"0, %d, %d, %d, %d, color: black\n", x1, y2, x2, y2 ) ;
-    fprintf(fp,"0, %d, %d, %d, %d, color: black\n", x1, y1, x2, y1 ) ;
-    fprintf(fp,"0, %d, %d, %d, %d, color: black\n", x2, y1, x2, y2 ) ;
+    fprintf(fp,"0, %d, %d, %d, %d, color: black\n", 
+    	(int)x1, (int)y1, (int)x1, (int)y2 ) ;
+    fprintf(fp,"0, %d, %d, %d, %d, color: black\n", 
+    	(int)x1, (int)y2, (int)x2, (int)y2 ) ;
+    fprintf(fp,"0, %d, %d, %d, %d, color: black\n", 
+    	(int)x1, (int)y1, (int)x2, (int)y1 ) ;
+    fprintf(fp,"0, %d, %d, %d, %d, color: black\n", 
+    	(int)x2, (int)y1, (int)x2, (int)y2 ) ;
 }
 for( cell = numcellsG + 1 ; cell <= numcellsG + numtermsG ; cell++ ) {
     cellptr = carrayG[cell] ;
@@ -395,10 +409,14 @@ for( cell = numcellsG + 1 ; cell <= numcellsG + numtermsG ; cell++ ) {
     x2 = cellptr->cxcenter + cellptr->tileptr->right ;
     y1 = cellptr->cycenter + cellptr->tileptr->bottom ;
     y2 = cellptr->cycenter + cellptr->tileptr->top ;
-    fprintf(fp,"0, %d, %d, %d, %d, color: black\n", x1, y1, x1, y2 ) ;
-    fprintf(fp,"0, %d, %d, %d, %d, color: black\n", x1, y2, x2, y2 ) ;
-    fprintf(fp,"0, %d, %d, %d, %d, color: black\n", x1, y1, x2, y1 ) ;
-    fprintf(fp,"0, %d, %d, %d, %d, color: black\n", x2, y1, x2, y2 ) ;
+    fprintf(fp,"0, %d, %d, %d, %d, color: black\n", 
+    	(int)x1, (int)y1, (int)x1, (int)y2 ) ;
+    fprintf(fp,"0, %d, %d, %d, %d, color: black\n", 
+    	(int)x1, (int)y2, (int)x2, (int)y2 ) ;
+    fprintf(fp,"0, %d, %d, %d, %d, color: black\n", 
+    	(int)x1, (int)y1, (int)x2, (int)y1 ) ;
+    fprintf(fp,"0, %d, %d, %d, %d, color: black\n", 
+    	(int)x2, (int)y1, (int)x2, (int)y2 ) ;
 }
 TWCLOSE(fp) ;
 }
@@ -407,7 +425,7 @@ TWCLOSE(fp) ;
 
 
 
-dbx_fdasgn( row )
+VOID dbx_fdasgn( row )
 INT row ;
 {
 
@@ -480,7 +498,7 @@ for( net = 1 ; net <= numnetsG ; net++ ) {
 
 
 
-check_cost()
+VOID check_cost(VOID)
 {
 
     CBOXPTR ptr ;
@@ -490,8 +508,8 @@ check_cost()
     INT cell , net , block ;
     INT x , y , cost ;
     INT tmp ;
-    INT xmin, ymin, xmax, ymax ;
-    INT Ln, Bn, Rn, Tn ;
+    INT xmin = 0, ymin = 0, xmax = 0, ymax = 0 ;
+    INT Ln = 0, Bn = 0, Rn = 0, Tn = 0 ;
     extern INT extra_cellsG ;
     INT penal, rpenal ;
     INT bin ;
@@ -523,8 +541,9 @@ check_cost()
 	dimptr =  netarrayG[ net ] ;
 	if( dimptr->ignore == 1 ){
 	    continue ;
-	} 
-	if( netptr = dimptr->pins ) {
+	}
+	/* use ((...)) to avoid assignment as condition warning */
+	if(( netptr = dimptr->pins )) {
 
 	    xmin = dimptr->xmin ;
 	    xmax = dimptr->xmax ;
@@ -590,7 +609,7 @@ check_cost()
     }
 
     if( cost != funccostG ){
-	fprintf( stderr, "funcost:%d cost:%d\n", funccostG, cost ) ;
+	fprintf( stderr, "funcost:%d cost:%d\n", (int)funccostG, (int)cost ) ;
 	funccostG = cost ;
     }
 
@@ -600,14 +619,14 @@ check_cost()
 	    penal += ABS( binptrG[block][bin]->penalty ) ;
 	}
     }
-    sprintf( YmsgG, "binpenalG:%d penal:%d\n", binpenalG, penal ) ;
+    sprintf( YmsgG, "binpenalG:%d penal:%d\n", (int)binpenalG, (int)penal ) ;
     ASSERT( binpenalG == penal, NULL, YmsgG ) ;
 
     rpenal = 0 ;
     for( block = 1 ; block <= numRowsG ; block++ ) {
 	rpenal += ABS(barrayG[block]->oldsize - barrayG[block]->desire) ;
     }
-    sprintf( YmsgG, "rowpenalG:%d rpenal:%d\n", rowpenalG, rpenal ) ;
+    sprintf( YmsgG, "rowpenalG:%d rpenal:%d\n", (int)rowpenalG, (int)rpenal ) ;
     ASSERT( rowpenalG == rpenal, NULL, YmsgG ) ;
 
 } /* end check_funcost */

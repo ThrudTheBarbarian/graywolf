@@ -69,65 +69,79 @@ static char SccsId[] = "@(#) sort.c (Yale) version 4.3 9/7/90" ;
 #endif
 #endif
 
+#include <yalecad/base.h>
+
 #include "standard.h"
+
 #include "groute.h"
 #include "feeds.h"
 
-typedef struct graph_edge_cost {
-    SHORT node1 ;
-    SHORT node2 ;
-    INT cost ;
-    INT channel ;
-}
-*EDGE_COST ,
-EDGE_COST_BOX ;
-
-compare_cost( a , b )
-EDGE_COST *a , *b ;
+INT compare_cost( a , b )
+void *a , *b ;
 {
-return( (*a)->cost - (*b)->cost ) ;
+	EDGE_COST *ec1 = (EDGE_COST *)a;
+	EDGE_COST *ec2 = (EDGE_COST *)b;
+	
+return( (*ec1)->cost - (*ec2)->cost ) ;
 }
 
 
 INT comparegdx( a , b )
-CHANGRDPTR *a , *b ;
+void *a , *b ;
 {
-return( (*a)->netptr->xpos - (*b)->netptr->xpos ) ;
+	CHANGRDPTR *c1 = (CHANGRDPTR *)a;
+	CHANGRDPTR *c2 = (CHANGRDPTR *)b;
+	
+return( (*c1)->netptr->xpos - (*c2)->netptr->xpos ) ;
 }
 
 INT comparetxpos( a , b )
-IPBOXPTR *a , *b ;
+void *a , *b ;
 {
-return( (*a)->txpos - (*b)->txpos ) ;
+	IPBOXPTR *i1	= (IPBOXPTR *)a;
+	IPBOXPTR *i2	= (IPBOXPTR *)b;
+	
+return( (*i1)->txpos - (*i2)->txpos ) ;
 }
 
 INT comparenptr( a , b )
-FEED_SEG_PTR *a , *b ;
+void *a , *b ;
 {
-return( (*a)->netptr->xpos - (*b)->netptr->xpos ) ;
+	FEED_SEG_PTR *f1 = (FEED_SEG_PTR *)a;
+	FEED_SEG_PTR *f2 = (FEED_SEG_PTR *)b;
+	
+return( (*f1)->netptr->xpos - (*f2)->netptr->xpos ) ;
 }
 
-comparepinx( a , b )
-PINBOXPTR *a , *b ;
+INT comparepinx( a , b )
+void *a , *b ;
 {
-return( (*a)->xpos - (*b)->xpos ) ;
+	PINBOXPTR *p1 = (PINBOXPTR *)a;
+	PINBOXPTR *p2 = (PINBOXPTR *)b;
+	
+return( (*p1)->xpos - (*p2)->xpos ) ;
 }
 
 INT comparex( a , b )
-INT *a , *b ;
+void *a , *b ;
 
 {
-    return( carrayG[ *a ]->cxcenter - carrayG[ *b ]->cxcenter ) ;
+	INT *i1 = (INT *)a;
+	INT *i2 = (INT *)b;
+	
+    return( carrayG[ *i1 ]->cxcenter - carrayG[ *i2 ]->cxcenter ) ;
 }
 
 
 INT cmpr_sx( aptr, bptr )
-PINBOXPTR *aptr, *bptr ;
+void *aptr, *bptr ;
 {
-
-if( (*aptr)->xpos > (*bptr)->xpos ) {
+	PINBOXPTR *a = (PINBOXPTR *)aptr;
+	PINBOXPTR *b = (PINBOXPTR *)bptr;
+	
+if( (*a)->xpos > (*b)->xpos ) {
     return(1) ;
-} else if( (*aptr)->xpos < (*bptr)->xpos ) {
+} else if( (*a)->xpos < (*b)->xpos ) {
     return(-1) ;
 } else {
     return(0) ;
@@ -136,12 +150,14 @@ if( (*aptr)->xpos > (*bptr)->xpos ) {
 
 
 INT cmpr_lx( aptr, bptr )
-PINBOXPTR *aptr, *bptr ;
+void *aptr, *bptr ;
 {
-
-if( (*aptr)->xpos > (*bptr)->xpos ) {
+	PINBOXPTR *a = (PINBOXPTR *)aptr;
+	PINBOXPTR *b = (PINBOXPTR *)bptr;
+	
+if( (*a)->xpos > (*b)->xpos ) {
     return(-1) ;
-} else if( (*aptr)->xpos < (*bptr)->xpos ) {
+} else if( (*a)->xpos < (*b)->xpos ) {
     return(1) ;
 } else {
     return(0) ;
@@ -150,12 +166,14 @@ if( (*aptr)->xpos > (*bptr)->xpos ) {
 
 
 INT cmpr_sy( aptr, bptr )
-PINBOXPTR *aptr, *bptr ;
+void *aptr, *bptr ;
 {
+	PINBOXPTR *a = (PINBOXPTR *)aptr;
+	PINBOXPTR *b = (PINBOXPTR *)bptr;
 
-if( (*aptr)->newy > (*bptr)->newy ) {
+if( (*a)->newy > (*b)->newy ) {
     return(1) ;
-} else if( (*aptr)->newy < (*bptr)->newy ) {
+} else if( (*a)->newy < (*b)->newy ) {
     return(-1) ;
 } else {
     return(0) ;
@@ -164,12 +182,14 @@ if( (*aptr)->newy > (*bptr)->newy ) {
 
 
 INT cmpr_ly( aptr, bptr )
-PINBOXPTR *aptr, *bptr ;
+void *aptr, *bptr ;
 {
+	PINBOXPTR *a = (PINBOXPTR *)aptr;
+	PINBOXPTR *b = (PINBOXPTR *)bptr;
 
-if( (*aptr)->newy > (*bptr)->newy ) {
+if( (*a)->newy > (*b)->newy ) {
     return(-1) ;
-} else if( (*aptr)->newy < (*bptr)->newy ) {
+} else if( (*a)->newy < (*b)->newy ) {
     return(1) ;
 } else {
     return(0) ;

@@ -57,14 +57,19 @@ static char SccsId[] = "@(#) findrcost.c (Yale) version 4.6 12/15/90" ;
 #endif
 #endif
 
+#include <yalecad/base.h>
+
 #include "standard.h"
+
+#include "findrcost.h"
+#include "graphics.h"
 #include "groute.h"
 
 static INT **cedgebinS ;
 static INT cedge_binwidthS ;
 static INT num_edgebinS ;
 
-findrcost()
+VOID findrcost(VOID)
 {
 
 SEGBOXPTR segptr ;
@@ -109,7 +114,7 @@ for( chan = 1 ; chan <= numChansG ; chan++ ) {
     }
     tracksG += max_trk ;
 }
-printf(" the starting value of tracks = %4d\n" , tracksG ) ;
+printf(" the starting value of tracks = %4d\n" , (int)tracksG ) ;
 k = max_tdensityG + 100 ;
 for( chan = 1 ; chan <= numChansG ; chan++ ) {
     DboxHeadG[ chan ]  = hdptr = ( DENSITYPTR *)Ysafe_calloc( k + 1,
@@ -136,7 +141,7 @@ for( chan = 1 ; chan <= numChansG ; chan++ ) {
 }
 }
 
-initial_tracks( segptr )
+VOID initial_tracks( segptr )
 SEGBOXPTR segptr ;
 {
 
@@ -200,7 +205,7 @@ for( ptr = ptr1 ; ptr != ptr2 ; ptr = ptr->nextgrd ) {
 /* the set_cedgebin() , reset_track , facing_cellheight() function
     would be used only when the cells are in uneven height */
 
-set_cedgebin()
+VOID set_cedgebin(VOID)
 {
 
 CBOXPTR cellptr ;
@@ -248,7 +253,7 @@ for( row = 1 ; row <= numRowsG ; row++ ) {
 }
 
 
-reset_track()
+VOID reset_track(VOID)
 {
 
 CBOXPTR cellptr ;
@@ -292,7 +297,7 @@ for( ; cell <= lastpadG ; cell++ ) {
 }
 
 
-facing_cellheight( pin , row , pinloc , status )
+INT facing_cellheight( pin , row , pinloc , status )
 INT pin, row , pinloc , status ;
 {
 
@@ -360,7 +365,7 @@ if( 1 <= row  && row <= numRowsG ) {
 }
 }
 
-fcellheight( pin , fcell , status )
+INT fcellheight( pin , fcell , status )
 INT pin , *fcell , status ;
 {
 

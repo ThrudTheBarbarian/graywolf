@@ -51,6 +51,9 @@ static char SccsId[] = "@(#) unlap.c (Yale) version 4.5 10/14/90" ;
 #endif
 #endif
 
+#include <yalecad/base.h>
+#include <yalecad/quicksort.h>
+
 #include "standard.h"
 #include "groute.h"
 
@@ -63,12 +66,12 @@ extern INT extra_cellsG ;
 extern BOOL no_feed_at_endG ;
 extern BOOL rigidly_fixed_cellsG ;
 
-unlap(flag)
+VOID unlap(flag)
 INT flag ;
 {
 
 CBOXPTR cellptr ;
-INT *num , i , cell_count , last , row , current , limit ;
+INT *num , i , cell_count , limit ;
 INT cell , block , k ;
 INT cell_left , left_edge , right_edge ;
 INT fixed , unfixed ;
@@ -209,7 +212,7 @@ for( block = 1 ; block <= numRowsG ; block++ ) {
 	cellptr = carrayG[ pairArrayG[block][i] ] ;
         cell_left = cellptr->tileptr->left ;
 	if( flag == 2 && cellptr->cxcenter != left_edge - cell_left ) {
-	    printf("ERROR cell %d\n", pairArrayG[block][i] );
+	    printf("ERROR cell %d\n", (int)(pairArrayG[block][i]) );
 	}
         cellptr->cxcenter = left_edge - cell_left ;
 	left_edge += cellptr->tileptr->right - cell_left ;

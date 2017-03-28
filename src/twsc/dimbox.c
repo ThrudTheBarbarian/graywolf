@@ -70,7 +70,13 @@ static char SccsId[] = "@(#) dimbox.c (Yale) version 4.5 11/18/91" ;
 #endif
 #endif
 
+#include <yalecad/base.h>
+
 #include "standard.h"
+#include "dimbox.h"
+#include "paths.h"
+
+
 #define break_pt 5
 
 static INT prev_netS , curr_netS , test_newnetS ;
@@ -78,7 +84,7 @@ static INT validLS , validRS , validBS , validTS ;
 static INT kS ;
 static PINBOXPTR *memoptrS ;
 
-init_dimbox()
+VOID init_dimbox(VOID)
 {
     INT maxpin, get_max_pin() ;
 
@@ -89,7 +95,7 @@ init_dimbox()
 } /* end init_dimbox */
 
 
-new_dbox( antrmptr , costptr )
+VOID new_dbox( antrmptr , costptr )
 PINBOXPTR antrmptr ;
 INT *costptr ;
 {
@@ -137,7 +143,7 @@ for( termptr = antrmptr ; termptr ; termptr = termptr->nextpin ) {
 }
 
 
-new_dbox2( antrmptr , bntrmptr , costptr )
+VOID new_dbox2( antrmptr , bntrmptr , costptr )
 PINBOXPTR antrmptr , bntrmptr ;
 INT *costptr ;
 {
@@ -230,14 +236,15 @@ for( ; termptr ; termptr = nextptr ) {
 }
 
 
-wire_boundary1( dimptr )
+VOID wire_boundary1( dimptr )
 DBOXPTR dimptr ;
 {
 
 PINBOXPTR netptr ;
 INT x , y ;
 
-if( netptr = dimptr->pins ) {
+/* Use ((...)) to avoid assignment as a condition warning */
+if(( netptr = dimptr->pins )) {
     if( netptr->flag == 1 ) {
 	dimptr->newxmin = dimptr->newxmax = netptr->newx ;
 	dimptr->newymin = dimptr->newymax = netptr->newy ;
@@ -269,7 +276,7 @@ for( netptr = netptr->next ; netptr; netptr = netptr->next ) {
 }
 }
 
-check_validbound( dimptr , termptr , nextptr )
+VOID check_validbound( dimptr , termptr , nextptr )
 DBOXPTR dimptr ;
 PINBOXPTR termptr , nextptr ;
 {
@@ -355,7 +362,7 @@ if( nextptr == PINNULL || curr_netS != nextptr->net ) {
 }
 }
 
-wire_boundary2( c , dimptr )
+VOID wire_boundary2( c , dimptr )
 DBOXPTR dimptr ;
 INT c ;
 {
@@ -369,7 +376,8 @@ if( c == 15 ) {
     }
     return ;
 }
-if( netptr = dimptr->pins ) {
+/* Use ((...)) to avoid assignment as a condition warning */
+if(( netptr = dimptr->pins )) {
     if( netptr->flag == 1 ) {
 	netptr->flag = 0 ;
 	switch( c ) {
@@ -751,7 +759,7 @@ for( netptr = netptr->next ; netptr; netptr = netptr->next ) {
 }
 }
 
-dbox_pos( antrmptr ) 
+VOID dbox_pos( antrmptr ) 
 PINBOXPTR antrmptr ;
 {
 
@@ -778,7 +786,7 @@ for( termptr = antrmptr ; termptr != PINNULL;termptr=termptr->nextpin ) {
 }
 
 
-dbox_pos_swap( antrmptr ) 
+VOID dbox_pos_swap( antrmptr ) 
 PINBOXPTR antrmptr ;
 {
 
@@ -803,7 +811,7 @@ for( termptr = antrmptr ; termptr != PINNULL;termptr=termptr->nextpin ) {
 }
 
 
-init_dbox_pos_swap( antrmptr ) 
+VOID init_dbox_pos_swap( antrmptr ) 
 PINBOXPTR antrmptr ;
 {
 

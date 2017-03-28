@@ -63,11 +63,15 @@ static char SccsId[] = "@(#) debug.c (Yale) version 4.5 9/7/90" ;
 #endif
 #endif
 
+#include <yalecad/base.h>
+
 #include "standard.h"
+
+#include "debug.h"
 #include "groute.h"
 #include "pads.h"
 
-cellbox_data( first_cell , last_cell )
+VOID cellbox_data( first_cell , last_cell )
 INT first_cell , last_cell ;
 {
 
@@ -87,8 +91,8 @@ for( cell = first_cell ; cell <= last_cell ; cell++ ) {
 	padside = 0 ;
     }
     fprintf( fp , "%5d  %6d  %6d      %2d      %2d %4d  %4d\n" ,
-	cell , ptr->cxcenter , ptr->cycenter , ptr->corient ,
-	padside , ptr->cblock , ptr->cclass ) ;
+	(int)cell , (int)(ptr->cxcenter) , (int)(ptr->cycenter) , (int)(ptr->corient) ,
+	(int)padside , (int)(ptr->cblock) , (int)(ptr->cclass) ) ;
 }
 
 TWCLOSE( fp ) ;
@@ -96,7 +100,7 @@ TWCLOSE( fp ) ;
 }
 
 
-cellterm_data( first_cell , last_cell )
+VOID cellterm_data( first_cell , last_cell )
 INT first_cell , last_cell ;
 {
 
@@ -118,26 +122,27 @@ for( cell = first_cell ; cell <= last_cell ; cell++ ) {
     corient = ptr->corient ;
 
     fprintf( fp , "%5d  %6d  %6d      %2d      %2d %4d  %4d\n" ,
-	cell , ptr->cxcenter , ptr->cycenter , corient ,
-	padside , ptr->tileptr->left , ptr->tileptr->right ) ;
+		(int)cell , (int)(ptr->cxcenter) , (int)(ptr->cycenter) , (int)(corient) ,
+		(int)padside , (int)(ptr->tileptr->left) , (int)(ptr->tileptr->right) ) ;
     fprintf(fp,"   pin  net   tx   ty   xpos   ypos   newx   newy ") ;
     fprintf(fp,"loc flag\n" ) ;
     if( cell <= numcellsG ) {
 	for( termptr = ptr->pins ;termptr;termptr = termptr->nextpin ) {
 	    fprintf(fp," %5d %4d %4d %4d %6d %6d %6d %6d %3d %2d\n"
-		, termptr->terminal , termptr->net , 
-		termptr->txpos[ corient/2 ] ,
-		termptr->typos[ corient%2 ] , termptr->xpos ,
-		termptr->ypos , termptr->newx , termptr->newy ,
-		termptr->pinloc , termptr->flag );
+		, (int)(termptr->terminal) , (int)(termptr->net) , 
+		(int)(termptr->txpos[ corient/2 ]) ,
+		(int)(termptr->typos[ corient%2 ]) , (int)(termptr->xpos) ,
+		(int)(termptr->ypos) , (int)(termptr->newx) , (int)(termptr->newy) ,
+		(int)(termptr->pinloc) , (int)(termptr->flag) );
 	}
     } else {
 	for( termptr = ptr->pins; termptr; termptr = termptr->next ){
 	    fprintf(fp," %5d %4d %4d %4d %6d %6d %6d %6d %3d %2d\n"
-		, termptr->terminal , termptr->net ,termptr->txpos[1]
-		, termptr->typos[1] , termptr->xpos ,
-		termptr->ypos , termptr->newx , termptr->newy ,
-		termptr->pinloc , termptr->flag );
+		, (int)(termptr->terminal) , (int)(termptr->net) ,
+		(int)(termptr->txpos[1]), (int)(termptr->typos[1]) , 
+		(int)(termptr->xpos) ,(int)(termptr->ypos) , 
+		(int)(termptr->newx) , (int)(termptr->newy) ,
+		(int)(termptr->pinloc) , (int)(termptr->flag) );
 	}
     }
 }
@@ -146,7 +151,7 @@ TWCLOSE( fp ) ;
 }
 
 
-dbx_terminal( first_net , last_net )
+VOID dbx_terminal( first_net , last_net )
 INT first_net , last_net ;
 {
 
@@ -157,12 +162,12 @@ INT net ;
 fp = TWOPEN( "netbox.dat" , "w", ABORT ) ;
 
 for( net = first_net ; net <= last_net ; net++ ) {
-    fprintf(fp,"net %d\n" , net ) ;
+    fprintf(fp,"net %d\n" , (int)net ) ;
     fprintf(fp," terminal  pinname  xpos  cell loc row \n");
     for( netptr = netarrayG[net]->pins ; netptr ; netptr = netptr->next ) {
 	fprintf(fp,"    %5d %8s %5d %5d %3d %2d\n" ,
-	    netptr->terminal , netptr->pinname , netptr->xpos ,
-	    netptr->cell , netptr->pinloc, netptr->row ) ;
+	    (int)(netptr->terminal) , netptr->pinname , (int)(netptr->xpos) ,
+	    (int)(netptr->cell) , (int)(netptr->pinloc), (int)(netptr->row) ) ;
     }
 }
     
@@ -170,7 +175,7 @@ TWCLOSE( fp ) ;
 }
 
 
-dbx_grd( ptr1 , ptr2 )
+VOID dbx_grd( ptr1 , ptr2 )
 CHANGRDPTR ptr1 , ptr2 ;
 {
 
@@ -190,7 +195,7 @@ if( flag == 1 ) {
 }
 }
 
-pairCheck( first_row , last_row )
+VOID pairCheck( first_row , last_row )
 INT first_row , last_row ;
 {
 
@@ -210,14 +215,14 @@ fprintf(fp,"cedge_binwidth = %d num_edgebin = %d\n",
 
 for( row = first_row ; row <= last_row ; row++ ) {
     Aray = pairArrayG[row] ;
-    fprintf(fp,"\nROW %d\n" , row ) ;
-    fprintf(fp," total number of cells in this row = %d\n",Aray[0] ) ;
+    fprintf(fp,"\nROW %d\n" , (int)row ) ;
+    fprintf(fp," total number of cells in this row = %d\n",(int)(Aray[0]) ) ;
     cellptr = carrayG[ Aray[1] ] ;
     most_left = cellptr->cxcenter + cellptr->tileptr->left ;
     cellptr = carrayG[ Aray[Aray[0]] ] ;
     most_rite = cellptr->cxcenter + cellptr->tileptr->right ;
     fprintf(fp," most_left is at %d most_rite is at %d\n", 
-				    most_left , most_rite ) ;
+				    (int)most_left , (int)most_rite ) ;
     fprintf(fp,"   i  cell  left right   n\n" ) ;
     prev_cell_rite = carrayG[ Aray[1] ]->cxcenter +
 		     carrayG[ Aray[1] ]->tileptr->left ;
@@ -230,7 +235,7 @@ for( row = first_row ; row <= last_row ; row++ ) {
 	n = ( curr_cell_left - prev_cell_rite ) / fdWidthG ;
 	prev_cell_rite = curr_cell_rite ;
 	fprintf(fp," %3d %5d %5d %5d %3d\n",
-	    i , cell , curr_cell_left , curr_cell_rite , n ) ;
+	    (int)i , (int)cell , (int)curr_cell_left , (int)curr_cell_rite , (int)n ) ;
     }
 }
 TWCLOSE( fp ) ;
@@ -239,7 +244,7 @@ TWCLOSE( fp ) ;
 
 
 
-dbx_track( start_chan , end_chan )
+VOID dbx_track( start_chan , end_chan )
 INT start_chan , end_chan ;
 {
 INT chan ;
@@ -250,13 +255,13 @@ PINBOXPTR netptr ;
 
 fp = TWOPEN( "track.dat" , "w", ABORT ) ;
 for( chan = start_chan ; chan <= end_chan ; chan++ ) {
-fprintf(fp,"\n channel = %d\n" , chan ) ;
+fprintf(fp,"\n channel = %d\n" , (int)chan ) ;
 fprintf(fp,"\n terminal   xpos track   net cell\n");
 for( gdptr = BeginG[chan] ; gdptr ; gdptr = gdptr->nextgrd ) {
     netptr = gdptr->netptr ;
     fprintf(fp ,"%9d %6d %5d %5d %5d \n" 
-    , netptr->terminal , netptr->xpos , gdptr->tracks ,
-    netptr->net , netptr->cell ) ;
+    , (int)(netptr->terminal) , (int)(netptr->xpos) , (int)(gdptr->tracks) ,
+    (int)(netptr->net) , (int)(netptr->cell) ) ;
 }
 }
 TWCLOSE( fp ) ;

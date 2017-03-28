@@ -55,11 +55,17 @@ static char SccsId[] = "@(#) ucxxo2.c (Yale) version 4.8 2/23/92" ;
 #endif
 #endif
 
-#include "ucxxglb.h"
-#include "readpar.h"
+#include <yalecad/base.h>
 #include <yalecad/debug.h>
 
-ucxxo2( newaor , newbor )
+#include "dimbox.h"
+#include "graphics.h"
+#include "overlap.h"
+#include "paths.h"
+#include "readpar.h"
+#include "ucxxglb.h"
+
+INT ucxxo2( newaor , newbor )
 INT newaor , newbor ;
 {
 
@@ -67,12 +73,12 @@ CBOXPTR acellptr , bcellptr ;
 TIBOXPTR atileptr , btileptr ;
 PINBOXPTR antrmptr , bntrmptr ;
 DOUBLE temp ;
-INT cost , error_light_is_on ;
+INT cost , error_light_is_on = 0 ;
 INT axcenter , aycenter , bxcenter , bycenter ;
 INT aleft , aright ;
 INT bleft , bright ;
-INT a1LoBin, a2LoBin, b1LoBin, b2LoBin ;
-INT a1HiBin, a2HiBin, b1HiBin, b2HiBin ;
+INT a1LoBin = 0, a2LoBin = 0, b1LoBin = 0, b2LoBin = 0 ;
+INT a1HiBin = 0, a2HiBin = 0, b1HiBin = 0, b2HiBin = 0 ;
 INT startxa1 , endxa1 , startxa2 , endxa2 ;
 INT startxb1 , endxb1 , startxb2 , endxb2 ;
 INT truth ;

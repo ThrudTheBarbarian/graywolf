@@ -53,13 +53,17 @@ static char SccsId[] = "@(#) changrid.c (Yale) version 4.5 8/29/91" ;
 #endif
 #endif
 
+#include <yalecad/base.h>
+#include <yalecad/quicksort.h>
+
 #include "standard.h"
+
 #include "groute.h"
 
-changrid( )
+VOID changrid(VOID)
 {
 
-CHANGRDPTR **gdptr , grdptr , cgdptr , ngdptr ;
+CHANGRDPTR **gdptr , grdptr , cgdptr , ngdptr = NULL ;
 PINBOXPTR netptr ;
 INT row , net , channel , terminal ;
 INT *numPins , *PinInChan ;
@@ -104,7 +108,7 @@ for( net = 1 ; net <= numnetsG ; net++ ) {
 #ifdef DEBUG
     if( tearrayG[ terminal ] == PINNULL ) {
 	printf(" netptr for pin = %8d is NULL; net:%d row:%d\n" , 
-			terminal , net , row ) ;
+			(int)terminal , (int)net , (int)row ) ;
 	fflush(stdout) ;
     }
 #endif
@@ -220,7 +224,7 @@ Ysafe_free( PinInChan ) ;
 }
 
 
-pre_findrcost()
+VOID pre_findrcost(VOID)
 {
 
 SEGBOXPTR segptr ;

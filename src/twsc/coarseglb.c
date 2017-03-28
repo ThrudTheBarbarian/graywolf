@@ -67,13 +67,26 @@ static char SccsId[] = "@(#) coarseglb.c (Yale) version 4.10 12/9/91" ;
 #endif
 #endif
 
+#include <yalecad/base.h>
+#include <yalecad/relpos.h>
+
 #include "standard.h"
-#include "groute.h"
 #include "main.h"
+
+#include "buildimp.h"
+#include "cglbroute.h"
+#include "coarseglb.h"
+#include "feedest.h"
 #include "feeds.h"
+#include "globe.h"
+#include "graphics.h"
+#include "groute.h"
 #include "parser.h"
 #include "pads.h"
 #include "readpar.h"
+#include "rowevener.h"
+#include "seagate.h"
+#include "steiner.h"
 
 /* static definitions */
 static INT *accumulate_feedS , *feed_diffS , *diff_in_rowfeedS ;
@@ -89,7 +102,7 @@ extern INT actual_feed_thru_cells_addedG ;
 extern BOOL no_feed_at_endG ;
 extern BOOL ignore_feedsG ;
 
-coarseglb() 
+VOID coarseglb(VOID) 
 {
 
 INT shift ;
@@ -130,7 +143,7 @@ rebuild_cbucket() ;
 
 printf( "\n----start doing coarse global routing ------ \n") ;
 while(1) {
-    printf(" ITERATION %2d\n", ++iteration ) ;
+    printf(" ITERATION %2d\n", (int)(++iteration) ) ;
     cglbroute()  ;
     compute_feed_diff( iteration ) ;
     shift = space_for_feed( ) ;
@@ -154,7 +167,7 @@ free_cglb_data( ) ;
 }
 
 
-assign_row_to_pin()
+VOID assign_row_to_pin(VOID)
 {
 
 CBOXPTR cellptr ;
@@ -172,7 +185,7 @@ for( i = 1 ; i <= numcellsG ; i++ ) {
 
 
     
-set_up_grid( )
+VOID set_up_grid(VOID)
 {
 
 INT i , j , x , row_rite ;
@@ -278,7 +291,7 @@ for( cell = numcellsG + 1 ; cell <= lastpadG ; cell++ ) {
 }
 }
 
-initialize_feed_need()
+VOID initialize_feed_need(VOID)
 {
 
 INT i , row ;
@@ -296,7 +309,7 @@ feed_config() ;
 }
 
 
-feed_config( )
+VOID feed_config(VOID)
 {
 
 INT row , cell , cxcenter , k ;
@@ -324,7 +337,7 @@ for( cell = 1 ; cell <= numcellsG ; cell++ ) {
 }
 
 
-set_node( x )
+INT set_node( x )
 INT x ;
 {
 
@@ -341,7 +354,7 @@ if( h < 1 ) {
 }
 
 
-compute_feed_diff( iteration )
+VOID compute_feed_diff( iteration )
 INT iteration ;
 {
 
@@ -404,13 +417,13 @@ for( i = 1 ; i <= numRowsG ; i++ ) {
 }
 
 
-space_for_feed( )
+INT space_for_feed(VOID)
 {
 
 PINBOXPTR pinptr ;
 CBOXPTR cellptr ;
 INT row , i , Flag , shiftFlag , *Aray ;
-INT nodex , node , shift , patch_shift ;
+INT nodex , node , shift = 0 , patch_shift ;
 INT locFdWidth = fdWidthG;
 
 // if ( ignore_feedsG ) locFdWidth = 0;
@@ -526,7 +539,7 @@ return( shiftFlag ) ;
 }
 
 
-update_feed_config( iteration )
+VOID update_feed_config( iteration )
 INT iteration ;
 {
 
@@ -655,7 +668,7 @@ if( rowsG == 0 && blk_most_riteG >= right_Pads_left_edgeS ) {
 }
 
 
-no_of_feedthru_cells()
+INT no_of_feedthru_cells(VOID)
 {
 
 INT i , row , n , difference , lastcell_rite , total_feedthrus ;
@@ -697,7 +710,7 @@ return( total_feedthrus ) ;
 }
 
 
-addin_feedcell()
+VOID addin_feedcell(VOID)
 {
 
 INT row , i , k , r , last , feednum , row_left ;
@@ -822,13 +835,13 @@ TWCLOSE(fp) ;
 }
 
 
-final_feed_config( )
+VOID final_feed_config(VOID)
 {
 
 IPBOXPTR imptr ;
 FEED_DATA *feedptr ;
 CBOXPTR first_cptr , last_cptr ;
-INT i , row , longest_row , max_length , k , length , *Aray ;
+INT i , row , longest_row = 0 , max_length , k , length , *Aray ;
 INT delta_row_len ;
 
 for( row = 1 ; row <= numRowsG ; row++ ) {
@@ -866,22 +879,22 @@ for( i = 1 ; i <= numRowsG ; i++ ) {
     length = last_cptr->cxcenter + last_cptr->tileptr->right -
 	     first_cptr->cxcenter - first_cptr->tileptr->left ;
     delta_row_len = length - barrayG[i]->desire ;
-    fprintf( fpoG, "%3d            %7d                %6d\n", i,
-			length , delta_row_len );
+    fprintf( fpoG, "%3d            %7d                %6d\n", (int)i,
+			(int)length , (int)delta_row_len );
     if( max_length < length ) {
 	longest_row = i ;
 	max_length = length ;
     }
 }
 fprintf( fpoG, "\nLONGEST Row is:%d   Its length is:%d\n",
-			    longest_row , max_length ) ;
+			    (int)longest_row , (int)max_length ) ;
 longest_row_lengthG = max_length ;
 printf("\n  longest Row is:%d   Its length is:%d\n",
-			    longest_row , max_length ) ;
+			    (int)longest_row , (int)max_length ) ;
 }
 
 
-free_cglb_data()
+VOID free_cglb_data(VOID)
 {
 
 INT i , net ;

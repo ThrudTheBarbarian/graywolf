@@ -12,6 +12,8 @@ REVISIONS:  Fri Jan 25 23:47:24 PST 1991 - removed redundant variables.
 #ifndef GLOBE_H
 #define GLOBE_H
 
+#include <yalecad/base.h>
+
 #ifdef GLOBE_VARS
 #define EXTERN 
 #else
@@ -35,71 +37,6 @@ REVISIONS:  Fri Jan 25 23:47:24 PST 1991 - removed redundant variables.
 #define swUP 8
 #define swDOWN 9
 
-typedef struct changrdbox {
-    PINBOXPTR netptr ;
-    SHORT cross ;
-    SHORT tracks ;
-    struct changrdbox *prevgrd ;
-    struct changrdbox *nextgrd ;
-    struct densitybox *dptr ;
-}
-*CHANGRDPTR ,
-CHANGRDBOX ;
-
-typedef struct tgridbox {
-    CHANGRDPTR up ;
-    CHANGRDPTR down ;
-}
-*TGRIDPTR ,
-TGRIDBOX ;
-
-typedef struct densitybox {
-    CHANGRDPTR grdptr ;
-    struct densitybox *next ;
-    struct densitybox *back ;
-}
-*DENSITYPTR ,
-DENSITYBOX ;
-
-typedef struct segm_box {
-    SHORT flag ;
-    UNSIGNED_INT switchvalue : 8 ;
-    UNSIGNED_INT swap_flag   : 8 ;
-    PINBOXPTR pin1ptr ;
-    PINBOXPTR pin2ptr ;
-    struct segm_box *next ;
-    struct segm_box *prev ;
-}
-*SEGBOXPTR ,
-SEGBOX ;
-
-typedef struct adjacent_seg {
-    struct adjacent_seg *next ;
-    struct segm_box *segptr ;
-}
-*ADJASEGPTR ,
-ADJASEG ;
-
-typedef struct imp_box {
-    char *pinname ;
-    char *eqpinname ;
-    INT txpos ;
-    struct imp_box *next ;
-    struct imp_box *prev ;
-    INT cell ;
-    INT xpos ;
-    INT terminal ;
-} IPBOX , *IPBOXPTR ;
-
-typedef struct feedcountbox {
-    SHORT needed ;
-    SHORT actual ;
-    struct imp_box *firstimp ;
-    struct imp_box *lastimp  ;
-} FEED_DBOX ,
-*FEED_DATA ;
- 
-
 #define GRDNULL ( ( CHANGRDPTR ) NULL ) 
 #define DENSENULL ( ( DENSITYPTR ) NULL ) 
 
@@ -112,7 +49,6 @@ EXTERN SEGBOXPTR *netsegHeadG ;
 EXTERN SEGBOXPTR *netsegTailG ;
 EXTERN DOUBLE mean_widthG ;
 EXTERN INT **pairArrayG ;
-EXTERN INT numnetsG ;
 EXTERN INT numSegsG ;
 EXTERN INT numSwSegsG ;
 EXTERN INT tracksG ;
@@ -124,11 +60,9 @@ EXTERN INT gxstopG ;
 EXTERN INT blkleftG , blkriteG ;
 EXTERN INT gtopChanG , gbotChanG ;
 EXTERN INT uneven_cell_heightG ;
-EXTERN INT ffeedsG , track_pitchG ;
+EXTERN INT track_pitchG ;
 
-EXTERN INT fdthrusG ; 
 EXTERN INT chan_node_noG ;
-EXTERN INT enough_built_in_feedG ;
 EXTERN INT *FeedInRowG ;
 EXTERN INT blk_most_leftG ;
 EXTERN INT blk_most_riteG ;
@@ -143,5 +77,8 @@ EXTERN FEED_DATA **feedpptrG ;
 EXTERN IPBOXPTR *impFeedsG ;
 
 #undef EXTERN  
+
+extern VOID globroute(P1(VOID));
+extern VOID process_cross(P2(SEGBOXPTR segptr, INT status));
 
 #endif /* GLOBE_H */

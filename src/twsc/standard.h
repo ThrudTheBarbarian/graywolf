@@ -279,6 +279,94 @@ typedef struct swapbox {        /* list of list of pins to be swapped */
     YHASHPTR pin_grp_hash ;	
 } SWAPBOX ;
 
+typedef struct changrdbox {
+    PINBOXPTR netptr ;
+    SHORT cross ;
+    SHORT tracks ;
+    struct changrdbox *prevgrd ;
+    struct changrdbox *nextgrd ;
+    struct densitybox *dptr ;
+}
+*CHANGRDPTR ,
+CHANGRDBOX ;
+
+typedef struct tgridbox {
+    CHANGRDPTR up ;
+    CHANGRDPTR down ;
+}
+*TGRIDPTR ,
+TGRIDBOX ;
+
+typedef struct densitybox {
+    CHANGRDPTR grdptr ;
+    struct densitybox *next ;
+    struct densitybox *back ;
+}
+*DENSITYPTR ,
+DENSITYBOX ;
+
+typedef struct segm_box {
+    SHORT flag ;
+    UNSIGNED_INT switchvalue : 8 ;
+    UNSIGNED_INT swap_flag   : 8 ;
+    PINBOXPTR pin1ptr ;
+    PINBOXPTR pin2ptr ;
+    struct segm_box *next ;
+    struct segm_box *prev ;
+}
+*SEGBOXPTR ,
+SEGBOX ;
+
+typedef struct adjacent_seg {
+    struct adjacent_seg *next ;
+    struct segm_box *segptr ;
+}
+*ADJASEGPTR ,
+ADJASEG ;
+
+typedef struct imp_box {
+    char *pinname ;
+    char *eqpinname ;
+    INT txpos ;
+    struct imp_box *next ;
+    struct imp_box *prev ;
+    INT cell ;
+    INT xpos ;
+    INT terminal ;
+} IPBOX , *IPBOXPTR ;
+
+typedef struct feedcountbox {
+    SHORT needed ;
+    SHORT actual ;
+    struct imp_box *firstimp ;
+    struct imp_box *lastimp  ;
+} FEED_DBOX ,
+*FEED_DATA ;
+
+typedef struct psetrec {
+    INT  member; /* integer for determining membership */
+    INT  path ;  /* data */
+    struct psetrec *next ;
+} PSETBOX, *PSETPTR ; /* path set record */
+
+typedef struct graph_edge_cost {
+    SHORT node1 ;
+    SHORT node2 ;
+    INT cost ;
+    INT channel ;
+}
+*EDGE_COST ,
+EDGE_COST_BOX ;
+
+typedef struct feed_assgn_box {
+    PINBOXPTR netptr ;
+    PINBOXPTR refer  ;
+    SEGBOXPTR segptr ;
+}
+*FEED_SEG_PTR ,
+FEED_SEG ;
+
+
 /* ****************** GLOBALS ************************** */
 /* THE MAJOR PARTS OF THE DATA STRUCTURES */
 EXTERN CBOXPTR  *carrayG  ;
@@ -324,7 +412,7 @@ EXTERN DOUBLE timeFactorG ;
 #undef EXTERN  
 
 /* *********************** PROTOTYPES FOR TWSC ******************** */
-extern init_table( P1(void) ) ;
+extern VOID init_table( P1(void) ) ;
 extern BOOL acceptt( P3(INT d_wire,INT d_time,INT d_penal) ) ;
 extern BOOL accept_greedy( P3(INT d_wire,INT d_time,INT d_penal) ) ;
 

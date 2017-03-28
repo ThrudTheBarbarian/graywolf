@@ -15,16 +15,7 @@ REVISIONS:
 #define EXTERN extern 
 #endif
 
-typedef struct feed_assgn_box {
-    PINBOXPTR netptr ;
-    PINBOXPTR refer  ;
-    SEGBOXPTR segptr ;
-}
-*FEED_SEG_PTR ,
-FEED_SEG ;
-
 EXTERN INT *feeds_in_rowG ;
-EXTERN INT *FeedInRowG ;
 EXTERN INT fdWidthG ;
 EXTERN INT *fdcel_addedG ;
 EXTERN INT **fdcel_needG ;

@@ -17,6 +17,8 @@ REVISIONS:  Nov 23, 1990 - added fields for drawing rectilinear
 #ifndef PADS_H
 #define PADS_H 
 
+#include <yalecad/base.h>
+
 /* control for pad spacing */
 #define UNIFORM_PADS  0
 #define VARIABLE_PADS 1
@@ -108,5 +110,23 @@ EXTERN PADBOXPTR *sortarrayG ;  /* the sorted array of pads */
 EXTERN PADBOXPTR *placearrayG ; /* array where the pads will be placed */
 
 #undef EXTERN
+
+/* from placepads.c */
+extern VOID placepads(P1(VOID));
+extern VOID setVirtualCore(P1(BOOL flag));
+extern VOID get_global_pos(P5(INT cell, INT *l, INT *b, INT *r, INT *t));
+extern VOID placepads_retain_side(P1(BOOL flag));
+extern VOID print_pads(P3(char * message, PADBOXPTR *array, INT howmany));
+
+/* from configpads.c */
+extern VOID align_pads(P1(VOID));
+extern VOID calc_constraints(P7(PADBOXPTR pad, INT side, DOUBLE *lb, DOUBLE *ub, 
+							  	BOOL *spacing_restricted,
+							  	INT *lowpos, INT *uppos));
+extern VOID dimension_pads(P1(VOID));
+extern VOID orient_pads(P1(VOID));
+
+/* from sortpad.c */
+extern VOID sort_pads(P1(VOID));
 
 #endif /* PADS_H */

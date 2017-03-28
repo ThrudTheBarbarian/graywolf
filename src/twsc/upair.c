@@ -56,10 +56,19 @@ static char SccsId[] = "@(#) upair.c (Yale) version 4.12 5/12/92" ;
 #endif
 #endif
 
-#include "standard.h"
-#include "main.h"
+#include <yalecad/base.h>
 #include <yalecad/debug.h>
 #include <yalecad/message.h>
+#include <yalecad/random.h>
+
+#include "debug.h"
+#include "findcostf.h"
+#include "standard.h"
+#include "main.h"
+#include "ucxxglb.h"
+
+#include "pads.h"
+
 #define PICK_INT(l,u) (((l)<(u)) ? ((RAND % ((u)-(l)+1))+(l)) : (l))
 
 /* global references */
@@ -67,7 +76,7 @@ extern INT **pairArrayG ;
 extern BOOL orientation_optimizationG ;
 extern BOOL placement_improveG ;
 
-upair()
+VOID upair(VOID)
 {
 
 CBOXPTR acellptr, bcellptr ; 
@@ -294,15 +303,16 @@ ort:if( ablckptr->borient == 1 ) {
 	check_cost() ;
     ) ;
 }
-sprintf( YmsgG, " %3d %6.3f %9d  %3d%s  %-8ld\n", iterationG+1, TG, funccostG,
-	(INT)( 100.0 * (DOUBLE)(flips) / (DOUBLE)(attmaxG) ) , "%" ,
-	timingcostG ) ;
+sprintf( YmsgG, " %3d %6.3f %9d  %3d%s  %-8ld\n", (int)(iterationG+1), TG, 
+	(int)funccostG,
+	(int)( 100.0 * (DOUBLE)(flips) / (DOUBLE)(attmaxG) ) , "%" ,
+	(long)timingcostG ) ;
 M( MSG, NULL, YmsgG ) ;
 return;
 }
 
 
-eval_range( acellptr , bcellptr, axc , anxc , bxc , bnxc )
+INT eval_range( acellptr , bcellptr, axc , anxc , bxc , bnxc )
 CBOXPTR acellptr , bcellptr ;
 INT axc , anxc , bxc , bnxc ;
 {

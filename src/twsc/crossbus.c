@@ -52,8 +52,11 @@ static char SccsId[] = "@(#) crossbus.c (Yale) version 4.5 10/14/90" ;
 #endif
 #endif
 
+#include <yalecad/base.h>
+
 #include "standard.h"
 #include "main.h"
+
 #include "groute.h"
 #include "pads.h"
 
@@ -62,16 +65,16 @@ extern INT left_row_boundaryG ;
 extern INT row_extentG ;
 extern BOOL exclude_noncrossbus_padsG ;
 
-handle_crossbuses()
+VOID handle_crossbuses(VOID)
 {
 
 PINBOXPTR netptr ;
-FENCEBOXPTR fence , fence2, save_fence , prev_fence ;
+FENCEBOXPTR fence , fence2, save_fence = NULL , prev_fence ;
 INT cell , net , process , row_area , area ;
 INT length , max_x , min_x , max_y , min_y , count , cross_bus ;
 INT block , x , y , avg_length , left , right ;
 INT large_pos , large_neg , ro_height , tmp , i ;
-INT distance , j , save_j , side ;
+INT distance , j , save_j = 0 , side ;
 INT *left_pins , *rite_pins , *top_pins , *bot_pins , bound ;
 
 left_pins = (INT *) Ysafe_malloc( (1 + numtermsG) * sizeof( INT ) ) ;
@@ -487,13 +490,13 @@ return ;
 
 
 
-check_violations()
+VOID check_violations(VOID)
 {
 
 FENCEBOXPTR fence ;
 INT cell , total_r , total_l , x , error , row_error ;
 INT max_x , min_x , row , min_block , max_block ;
-INT r_error ;
+INT r_error = 0 ;
 
 total_r = 0 ;
 total_l = 0 ;
@@ -580,8 +583,8 @@ for( cell = 1 ; cell <= numcellsG ; cell++ ) {
 	}
     }
 }
-fprintf(fpoG,"Total placement violations to the left:%d\n", total_l );
-fprintf(fpoG,"Total placement violations to the rite:%d\n", total_r );
+fprintf(fpoG,"Total placement violations to the left:%d\n", (int)total_l );
+fprintf(fpoG,"Total placement violations to the rite:%d\n", (int)total_r );
 
 return ;
 }
@@ -589,10 +592,10 @@ return ;
 
 
 
-reduce_violations()
+INT reduce_violations(VOID)
 {
 
-FENCEBOXPTR fence , save_fence ;
+FENCEBOXPTR fence , save_fence = NULL ;
 INT cell , x , error , work , l_error , r_error , row ;
 INT max_x , min_x , i ;
 

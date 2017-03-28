@@ -65,18 +65,22 @@ static char SccsId[] = "@(#) output.c (Yale) version 4.14 9/23/91" ;
 /* added on 06/01/90 Sury */
 /* #define NSC */
 
+#include "string.h"
+
+#include <yalecad/base.h>
+#include <yalecad/debug.h>
+#include <yalecad/message.h>
+#include <yalecad/relpos.h>
+
 #include "standard.h"
-#include "groute.h"
 #include "main.h"
+
+#include "groute.h"
 #include "readpar.h"
 #include "config.h"
 #include "pads.h"
-#include <string.h>
-#include <yalecad/debug.h>
-#include <yalecad/message.h>
 
 /* external functions */
-char *strtok(); /* added 06/01/90 sury */
 INT comparex() ;
 
 /* global variables */
@@ -90,7 +94,12 @@ extern BOOL stand_cell_as_gate_arrayG ;
 /* static definitions */
 static char a_lineS[LRECL] ;
 
-output()
+/* static functions */
+static VOID create_cel_file(P1(VOID));
+static VOID add_new_line(P4(INT x_rel , INT block , char *fixed_ptr , FILE *fp));
+static INT load_a_lineS(P1(FILE *fp));
+
+VOID output(VOID)
 {
 
 FILE *fpp1 , *fpp2 ;
@@ -98,7 +107,7 @@ INT locx , locy , height , width ;
 INT xloc , i , cell , block , orient ;
 INT num ;
 INT xloc2 , yloc2 , yloc ;
-INT *array , desire , k , limit ;
+INT *array , desire ;
 INT left , right , bottom , top , end ;
 INT *deleted_feeds ;
 INT eliminated_feeds ;
@@ -107,9 +116,7 @@ CBOXPTR cellptr ;
 TIBOXPTR tptr ;
 PADBOXPTR pptr ;
 /* added on 06/01/90 Sury */
-INT length;
-INT row ;
-char instance_name[LRECL], tmp_name[LRECL], *tmp_string;
+INT row = 0 ;
 
 
 deleted_feeds = (INT *) Ysafe_malloc( numcellsG * sizeof(INT) ) ;
@@ -142,11 +149,11 @@ for( block = 1 ; block <= numRowsG ; block++ ) {
     }
 
     if( barrayG[block]->borient > 0 ) {
-	fprintf(fpp2,"%d %d %d  %d %d  0 0\n", block ,
-			    left, bottom, left + desire, top ) ;
+	fprintf(fpp2,"%d %d %d  %d %d  0 0\n", (int)block ,
+			    (int)left, (int)bottom, (int)(left + desire), (int)top ) ;
     } else {
-	fprintf(fpp2,"%d %d %d  %d %d  0 0\n", block ,
-			    left, bottom, right, bottom + desire ) ;
+	fprintf(fpp2,"%d %d %d  %d %d  0 0\n", (int)block ,
+			    (int)left, (int)bottom, (int)right, (int)(bottom + desire) ) ;
     }
 
     num = pairArrayG[block][0] ;
@@ -204,20 +211,20 @@ for( block = 1 ; block <= numRowsG ; block++ ) {
 	}
 	fprintf(fpp1,"%s %d %d  %d %d  %d %d\n",
 			instance_name,
-			xloc, yloc, xloc + xloc2,
-			yloc + yloc2, orient, block ) ;
+			(int)xloc, (int)yloc,(int)(xloc + xloc2),
+			(int)(yloc + yloc2), (int)orient, (int)block ) ;
 #else
 	fprintf(fpp1,"%s %d %d  %d %d  %d %d\n",
 			cellptr->cname ,
-			xloc, yloc, xloc + xloc2,
-			yloc + yloc2, orient, block ) ;
+			(int)xloc, (int)yloc, (int)(xloc + xloc2),
+			(int)(yloc + yloc2), (int)orient, (int)block ) ;
 #endif
     }
 }
 
 if( deleted_feeds[0] > 0 ) {
     fprintf(fpoG,"Confirming number of eliminated feeds:%d\n",
-					    eliminated_feeds ) ;
+					    (int)eliminated_feeds ) ;
 }
 
 /* now output the pads and macros */
@@ -271,28 +278,28 @@ for( i = numcellsG + 1 ; i <= lastpadG ; i++ ) {
 	sprintf( instance_name , "%s" , tmp_name ) ;
 	}
     fprintf(fpp1,"%s %d %d  %d %d  %d %d\n", instance_name,
-				locx, locy, locx + width,
-				locy + height, orient, row ) ;
+				(int)locx, (int)locy, (int)(locx + width),
+				(int)(locy + height), (int)orient, (int)row ) ;
     fprintf(fpp2,"%s %d %d  %d %d  %d %d\n", instance_name,
-				locx, locy, locx + width,
-				locy + height, orient, row ) ;
+				(int)locx, (int)locy, (int)(locx + width),
+				(int)(locy + height), (int)orient, (int)row ) ;
 #else
     /* normal case */
     fprintf(fpp1,"%s %d %d  %d %d  %d %d\n", cellptr->cname ,
-				locx, locy, locx + width,
-				locy + height, orient, row ) ;
+				(int)locx, (int)locy, (int)(locx + width),
+				(int)(locy + height), (int)orient, (int)row ) ;
     fprintf(fpp2,"%s %d %d  %d %d  %d %d\n", cellptr->cname ,
-				locx, locy, locx + width,
-				locy + height, orient, row ) ;
+				(int)locx, (int)locy, (int)(locx + width),
+				(int)(locy + height), (int)orient, (int)row ) ;
 #endif
 #else
     /* DEC case */
     fprintf(fpp1,"%s %d %d  %d %d  %d %d\n", cellptr->cname ,
-		    locx, locy, locx + width,
-		    locy + height, orient, -cellptr->padside ) ;
+		    (int)locx, (int)locy, (int)(locx + width),
+		    (int)(locy + height), (int)orient, (int)(-cellptr->padside) ) ;
     fprintf(fpp2,"%s %d %d  %d %d  %d %d\n", cellptr->cname ,
-		    locx, locy, locx + width,
-		    locy + height, orient, -cellptr->padside ) ;
+		    (int)locx, (int)locy, (int)(locx + width),
+		    (int)(locy + height), (int)orient, (int)(-cellptr->padside) ) ;
 #endif
 
 }
@@ -312,12 +319,12 @@ return ;
 
 
 
-final_free_up()
+VOID final_free_up(VOID)
 {
 INT i, j, k, row, pin, net, cell, chan, track ;
 CBOXPTR cellptr ;
 DBOXPTR dimptr ;
-PINBOXPTR ptr, nextptr ;
+PINBOXPTR ptr, nextptr = NULL ;
 ADJASEGPTR adj, nextadj ;
 SEGBOXPTR segptr, nextseg ;
 CHANGRDPTR gdptr, nextgrd ;
@@ -388,7 +395,7 @@ for( cell = 1 ; cell <= numcellsG ; cell++ ) {
     }
 }
 fprintf( fpoG,"Actual # of Feed Cells Added:\t%d\n\n\n",
-    actual_feed_thru_cells_addedG ) ;
+    (int)actual_feed_thru_cells_addedG ) ;
 k = numcellsG + numtermsG + actual_feed_thru_cells_addedG ;
 for( cell = numcellsG + numtermsG + 1 ; cell <= k ; cell++ ) {
     cellptr = carrayG[cell] ;
@@ -439,14 +446,14 @@ Ysafe_free( netsegHeadG ) ;
 
 
 
-create_cel_file()
+static VOID create_cel_file(VOID)
 {
 
 
 FILE *fpoG2 , *fp ;
 char *token , fixed_string[32] , filename[256] ;
 char cell_name[32] ;
-INT ignore_line , block , offset , test , carrayG_index , is_a_cell ;
+INT ignore_line , block , offset , test , carrayG_index , is_a_cell = 0 ;
 
 
 if( rowsG > 0 ) {
@@ -514,20 +521,20 @@ TWCLOSE(fpoG2) ;
 
 
 
-add_new_line( x_rel , block , fixed_ptr , fp )
+static VOID add_new_line( x_rel , block , fixed_ptr , fp )
 INT x_rel , block ;
 char *fixed_ptr ;
 FILE *fp ;
 {
 
 fprintf(fp, "initially %s %d from left of block %d\n",
-				fixed_ptr , x_rel , block ) ;
+				fixed_ptr , (int)x_rel , (int)block ) ;
 return ;
 }
 
 
 
-load_a_lineS(fp)
+static INT load_a_lineS(fp)
 FILE *fp ;
 {
 
@@ -550,13 +557,13 @@ if( (int) (tmp = fgetc(fp)) != EOF ) {
 }
 
 /* ******************************************************************** */
-density()
+VOID density(VOID)
 {
     /* set all the cells at density */
     INT row ;
     INT cell ;
     INT block ;
-    INT rowtop ;
+    INT rowtop = 0 ;
     INT corient ;
     INT rowcenter ;
     CBOXPTR cellptr ;
@@ -576,8 +583,10 @@ density()
 		        barrayG[row]->bheight / 2;
 	    D( "twsc/buildDensityArray",
 		fprintf( stderr, "row:%d oldy:%d newy:%d tracks:%d\n",
-		    row, barrayG[row]->bycenter, rowcenter, 
-		    maxTrackG[row] ) ;
+		    (int)row, 
+		    (int)(barrayG[row]->bycenter), 
+		    (int)rowcenter, 
+		    (int)(maxTrackG[row]) ) ;
 	    ) ;
 	    barrayG[row]->bycenter = rowcenter ;
 	}

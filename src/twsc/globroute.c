@@ -55,9 +55,16 @@ static char SccsId[] = "@(#) globroute.c (Yale) version 4.5 12/15/90" ;
 #endif
 #endif
 
+#include <yalecad/base.h>
+#include <yalecad/random.h>
+
 #include "standard.h"
-#include "groute.h"
 #include "main.h"
+
+#include "changrid.h"
+#include "findrcost.h"
+#include "groute.h"
+#include "urcost.h"
 
 /* global variables */
 extern INT Max_numPinsG ;
@@ -65,7 +72,7 @@ extern INT Max_numPinsG ;
 #define TOP 1
 #define BOT 0
 
-globroute()
+VOID globroute(VOID)
 {
 
 INT flips , attempts , net ;
@@ -84,7 +91,7 @@ pre_findrcost( ) ;
 findrcost() ;
 
 fprintf(fpoG,"\n\nTHIS IS THE ORIGINAL NUMBER OF TRACKS: %d\n\n\n" , 
-							tracksG ) ;
+							(int)tracksG ) ;
 fflush(fpoG);
 
 flips    =  0 ;
@@ -95,7 +102,7 @@ segment  = ( SEGBOXPTR *)Ysafe_malloc(
 
 while( ++attempts < attlimit ) {
     if( attempts % 1000 == 0 ) {
-	printf(" tracks = %3d at attempts = %5d\n" ,tracksG ,attempts ) ;
+	printf(" tracks = %3d at attempts = %5d\n" ,(int)tracksG ,(int)attempts ) ;
     }
     do {
 	net = (INT) ( (DOUBLE) numnetsG * ( (DOUBLE) RAND / 
@@ -151,15 +158,15 @@ while( ++attempts < attlimit ) {
 }
 
 Ysafe_free( segment );
-fprintf(fpoG,"no. of accepted flips: %d\n", flips ) ;
-fprintf(fpoG,"no. of attempted flips: %d\n", attempts ) ;
-fprintf(fpoG,"THIS IS THE NUMBER OF TRACKS: %d\n\n\n" , tracksG ) ;
+fprintf(fpoG,"no. of accepted flips: %d\n", (int)flips ) ;
+fprintf(fpoG,"no. of attempted flips: %d\n", (int)attempts ) ;
+fprintf(fpoG,"THIS IS THE NUMBER OF TRACKS: %d\n\n\n" , (int)tracksG ) ;
 fflush(fpoG);
 
 return ;
 }
 
-process_cross( segptr , status )
+VOID process_cross( segptr , status )
 INT status ;
 SEGBOXPTR segptr ;
 {

@@ -46,10 +46,11 @@ EXTERN DOUBLE rowSepG ;
 EXTERN INT    rowSepAbsG ;
 EXTERN DOUBLE stopdegG ;
 
-EXTERN unsigned Yrandom_seed() ;
-EXTERN unsigned randomSeedG  ;
-EXTERN unsigned randomSeed2G ;
+EXTERN UNSIGNED_INT randomSeedG  ;
+EXTERN UNSIGNED_INT randomSeed2G ;
 
 #undef EXTERN
+
+extern VOID execute_global_router(P1(VOID));
 
 #endif /* MAIN_H */

@@ -85,22 +85,29 @@ static char SccsId[] = "@(#) placepads.c version 4.15 5/12/92" ;
 
 #define PAD_VARS
 
-#include <standard.h>
-#include <pads.h>
-#include <config.h>
-#include <parser.h>
+#include <yalecad/base.h>
 #include <yalecad/debug.h>
+#include <yalecad/random.h>
+#include <yalecad/relpos.h>
+
+#include "standard.h"
+
+#include "pads.h"
+#include "config.h"
+#include "graphics.h"
+#include "groute.h"
+#include "parser.h"
 
 /* global references */
 extern INT **pairArrayG ;
 
 /* ***************** STATIC FUNCTION DEFINITIONS ******************* */
-static find_optimum_locations( P1(void) ) ;
-static place_pad( P2(PADBOXPTR pad,INT bestside ) ) ;
-static place_children( P5(PADBOXPTR pad,INT side,DOUBLE lb,DOUBLE ub,BOOL sr) ) ;
+static VOID find_optimum_locations( P1(void) ) ;
+static VOID place_pad( P2(PADBOXPTR pad,INT bestside ) ) ;
+static VOID place_children( P5(PADBOXPTR pad,INT side,DOUBLE lb,DOUBLE ub,BOOL sr) ) ;
 static INT find_cost_for_a_side(P5(PADBOXPTR pad,INT side,DOUBLE lb,DOUBLE ub,
-   BOOL spacing_restricted ) ) ;
-static find_core( P1(void) ) ;
+   								   BOOL spacing_restricted ) ) ;
+static VOID find_core( P1(void) ) ;
 
 /* ***************** STATIC VARIABLE DEFINITIONS ******************* */
 static BOOL virtualCoreS = FALSE ;
@@ -116,7 +123,7 @@ It must also adhere to user-specified restrictions on side, position,
 spacing and ordering.
 ____________________________________________________________________*/
 
-placepads()
+VOID placepads(VOID )
 {
     if( padspacingG == EXACT_PADS ){
 	return ;
@@ -155,7 +162,7 @@ placepads()
 } /* end placepads */
 /* ***************************************************************** */
 
-static find_optimum_locations()
+static VOID find_optimum_locations(VOID)
 {
     INT i ;                  /* pad counter */
     INT side ;               /* loop thru valid sides */
@@ -163,7 +170,7 @@ static find_optimum_locations()
     INT bestpos ;            /* best modified position for pad */
     INT besttie ;            /* best position for pad for tiebreak */
     INT bestcost ;           /* best cost for pad or padgroup */
-    INT bestside ;           /* best side to place pad or padgroup */
+    INT bestside = 0 ;           /* best side to place pad or padgroup */
     PADBOXPTR pad ;          /* current pad */
 
     /** FIND OPTIMUM PLACE FOR PADS ACCORDING TO THE RESTRICTIONS **/
@@ -227,11 +234,11 @@ BOOL spacing_restricted ;
     INT pos ;         /* current pos. of current core pin constrained*/
     INT dist ;        /* current distance from core pin to pad */
     INT cost ;        /* sum of the opt pad pins to closest core pin */
-    INT dist2 ;       /* under restrictions dist from core pin to pad */
+    INT dist2 = 0 ;       /* under restrictions dist from core pin to pad */
     INT lowpos ;      /* convert lower bound to a position */
     INT uppos ;       /* convert upper bound to a position */
-    INT bestpos ;     /* best constrained pos for pad to core for 1 net */
-    INT besttie ;     /* best position for pad to core for 1 net */
+    INT bestpos = 0 ;     /* best constrained pos for pad to core for 1 net */
+    INT besttie = 0 ;     /* best position for pad to core for 1 net */
     INT bestdist ;    /* best distance for pad to core for 1 net */
     INT tiebreak ;    /* best place to put pad pin unconstrained */
     BOOL pinFound ;   /* true if we find a match on current net */
@@ -344,7 +351,7 @@ BOOL spacing_restricted ;
 
 	    if( pinFound ){
 		/*** SUM UP THE BEST POSITION OF ALL PINS       */
-		sumposS  += bestpos ; 
+		sumposS  += bestpos ;
 		sumtieS += besttie ;
 
 		/*** KEEP TRACK OF THE TOTAL COST FOR THIS SIDE */
@@ -414,7 +421,7 @@ BOOL spacing_restricted ;
  **** are set in those routines.  Otherwise set sumposS and sumtieS
  **** to their proper values.
  ***/
-static place_pad( pad, bestside )
+static VOID place_pad( pad, bestside )
 PADBOXPTR pad ;
 INT bestside ;
 {
@@ -452,7 +459,7 @@ INT bestside ;
 
 /**** RECURSIVELY SET THE PADSIDE OF ALL CHILDREN OF THE ROOT PAD TO THE
  **** PADSIDE OF THE PARENT. GIVEN THAT SIDE, SET THE OPTIMAL CXCENTER */
-static place_children( pad, side, lb, ub, spacing_restricted )
+static VOID place_children( pad, side, lb, ub, spacing_restricted )
 PADBOXPTR pad ;
 INT side ;
 DOUBLE lb, ub ;
@@ -539,7 +546,7 @@ BOOL spacing_restricted ;
 
 /* ***************************************************************** */
 #ifdef DEBUG
-print_pads( message, array, howmany )
+VOID print_pads( message, array, howmany )
 char *message ;
 PADBOXPTR *array ;
 INT howmany ;
@@ -556,8 +563,14 @@ INT howmany ;
 	cptr = carrayG[ ptr->cellnum ] ;
 	fprintf( stderr, 
 	    "pad:%s x:%d y:%d type:%d side:%d pos:%d tie:%d orient:%d\n",
-	    cptr->cname, cptr->cxcenter, cptr->cycenter, ptr->hierarchy,
-	    ptr->padside, ptr->position, ptr->tiebreak, cptr->corient ) ;
+			cptr->cname,
+			(int)(cptr->cxcenter),
+			(int)(cptr->cycenter),
+			(int)(ptr->hierarchy),
+			(int)(ptr->padside),
+			(int)(ptr->position),
+			(int)(ptr->tiebreak),
+			(int)(cptr->corient)) ;
     }
     fprintf( stderr, "\n" ) ;
 
@@ -570,7 +583,7 @@ INT howmany ;
 /* ***************************************************************** */
 
 
-static find_core()
+static VOID find_core(VOID)
 {
     INT minx, maxx ;
     INT miny, maxy ;
@@ -651,7 +664,7 @@ static find_core()
 } /* end FindCore */
 
 /* turn virtual core on and off */
-setVirtualCore( flag )
+VOID setVirtualCore( flag )
 BOOL flag ;
 {
     virtualCoreS = flag ;
@@ -659,7 +672,7 @@ BOOL flag ;
 
 
 /* given a cell it returns bounding box of cell in global coordinates */
-get_global_pos( cell, l, b, r, t )
+VOID get_global_pos( cell, l, b, r, t )
 INT cell ; 
 INT *l, *r, *b, *t ;
 {
@@ -681,7 +694,7 @@ INT *l, *r, *b, *t ;
 
 } /* end get_global_pos */
 
-placepads_retain_side( flag )
+VOID placepads_retain_side( flag )
 BOOL flag;
 {
     retain_sideS = flag ;

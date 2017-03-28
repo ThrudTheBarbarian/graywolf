@@ -57,13 +57,18 @@ static char SccsId[] = "@(#) configure.c (Yale) version 4.12 3/19/91" ;
 
 #define CONFIG_VARS
 
+#include <yalecad/base.h>
+#include <yalecad/debug.h>
+#include <yalecad/program.h>
+#include <yalecad/relpos.h>
+
 #include "standard.h"
+#include "main.h"
+
 #include "config.h"
 #include "parser.h"
 #include "pads.h"
-#include "main.h"
 #include "readpar.h"
-#include <yalecad/debug.h>
 
 /*  
  *  Configure the rows of standard cells along with possibly
@@ -89,7 +94,7 @@ static INT mttshiftS ;
 static INT mbbshiftS ;
 
 
-configure() 
+VOID configure(VOID) 
 {
 
 INT block ;
@@ -117,11 +122,11 @@ INT rite ;
 INT top ;
 INT padside ;
 INT middleRow ;
-INT URmacro , Rmacro ;
+INT URmacro = 0 , Rmacro = 0 ;
 INT count_mtt , count_mbb ;
 INT Mf ;
 INT rowcenter ;
-INT rowtop ;
+INT rowtop = 0 ;
 INT l, r, b, t ;
 INT xc, yc ;
 CBOXPTR padptr ;
@@ -930,17 +935,21 @@ desiredLG = 0 ;
 for( block = 1 ; block <= numRowsG ; block++ ) {
     barrayG[block]->orig_desire = barrayG[block]->desire ;
     desiredLG += barrayG[block]->desire ;
-    fprintf(fpoG,"block:%d desire:%d\n",block,barrayG[block]->desire);
+    fprintf(fpoG,"block:%d desire:%d\n",
+    	(int)block, (int)(barrayG[block]->desire));
 
     D( "configure", 
 	xc = barrayG[block]->bxcenter ;
 	yc = barrayG[block]->bycenter ;
 	fprintf( stderr, "\tblock:%d l:%d r:%d b:%d t:%d\n",
-	    block, barrayG[block]->bleft+xc, barrayG[block]->bright+xc,
-	    barrayG[block]->bbottom+yc, barrayG[block]->btop+yc ) ;
+	    (int)block, 
+	    (int)(barrayG[block]->bleft+xc), 
+	    (int)(barrayG[block]->bright+xc),
+	    (int)(barrayG[block]->bbottom+yc), 
+	    (int)(barrayG[block]->btop+yc) ) ;
     ) ;
 }
-fprintf(fpoG,"Total Desired Length: %d\n", desiredLG ) ;
+fprintf(fpoG,"Total Desired Length: %d\n", (int)desiredLG ) ;
 
 random_placement() ;
 /*
@@ -953,11 +962,11 @@ return ;
 
 
 
-random_placement()
+VOID random_placement(VOID)
 {
 
 INT cell , row , borient ,  blk , widthS ;
-INT block ;
+INT block = 0 ;
 INT empty ;
 INT *filledTo ;
 INT *endRow ;

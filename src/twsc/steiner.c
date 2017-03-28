@@ -55,9 +55,15 @@ static char SccsId[] = "@(#) steiner.c (Yale) version 4.7 1/20/91" ;
 #endif
 #endif
 
+#include <yalecad/base.h>
+
 #include "standard.h"
-#include "groute.h"
+
 #include "feeds.h"
+#include "feedest.h"
+#include "groute.h"
+#include "mergeseg.h"
+#include "steiner.h"
 
 /* global variables */
 INT Max_numPinsG ;
@@ -73,7 +79,7 @@ SEGBOXPTR makeseg() ;
 static PINBOXPTR   *vertexS ;
 static INT **costS , *lowcostS , *closestS , *components , max_pinS ;
 
-steiner()
+VOID steiner(VOID)
 {
 
 
@@ -204,13 +210,12 @@ Ysafe_free( add_st_flagG ) ;
 }
 
 
-make_net_Tree( startptr )
+VOID make_net_Tree( startptr )
 PINBOXPTR startptr ;
 {
-
 PINBOXPTR netptr , iptr , jptr ;
-INT i , j , k , n , c , row , irow , jrow ;
-INT x_diff , min_costS , first_new ;
+INT i , j , k = 0 , n , c , row , irow , jrow ;
+INT x_diff , min_costS = 0 , first_new = 0 ;
 
 n = 0 ;
 for( netptr = startptr ; netptr ; netptr = netptr->next ) {
@@ -345,7 +350,7 @@ for( i = 2 ; i <= n ; i++ ) {
 
 
 #ifdef EVEN_ROW
-redo_steiner()
+VOID redo_steiner(VOID)
 {
 
 INT net , i ;
