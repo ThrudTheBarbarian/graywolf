@@ -90,11 +90,14 @@ static char SccsId[] = "@(#) readcells.y version 1.19 5/22/92" ;
 #endif
 
 #include <string.h>
+
 #include <yalecad/base.h>
 #include <yalecad/message.h>
 #include <yalecad/debug.h>
 #include <yalecad/string.h>
-#include "globals.h"
+
+#include <output.h>
+#include <readcells.h>
 
 #undef REJECT 
 #ifdef DEBUG
@@ -803,7 +806,7 @@ YYSTYPE yyvs[YYSTACKSIZE];
 /* ********************* #include "readcells_l.h" *******************/
 /* ********************* #include "readcells_l.h" *******************/
 
-readcells( fp )
+VOID readcells( fp )
 FILE *fp ;
 { 
 #ifdef YYDEBUG
@@ -822,7 +825,7 @@ FILE *fp ;
 
 } /* end readcells */
 
-yyerror(s)
+int yyerror(s)
 char    *s;
 {
     sprintf(YmsgG,"problem reading %s.cel:", cktNameG );
@@ -830,9 +833,10 @@ char    *s;
     sprintf(YmsgG, "  line %d near '%s' : %s\n" ,
 	line_countS+1, yytext, s );
     M( MSG,"yacc", YmsgG ) ;
+    return 0;
 } /* end yyerror */
 
-yywrap()
+int yywrap(void)
 {
     return(1);
 }                      
@@ -864,7 +868,8 @@ yyparse()
     *yyssp = yystate = 0;
 
 yyloop:
-    if (yyn = yydefred[yystate]) goto yyreduce;
+    /* Use ((...)) to avoid assignment as a condition warning */
+    if ((yyn = yydefred[yystate])) goto yyreduce;
     if (yychar < 0)
     {
         if ((yychar = yylex()) < 0) yychar = 0;
@@ -1260,7 +1265,7 @@ case 190:
 			/* convert integer to string */
 			/* this allows integers to be used as strings */
 			/* a kluge but timberwolf's old parser supported it */
-			sprintf( bufferS,"%d", yyvsp[0].ival ) ;
+			sprintf( bufferS,"%d", (int)(yyvsp[0].ival) ) ;
 			/* now clone string */
 			yyval.string = Ystrclone( bufferS ) ;
 		    }

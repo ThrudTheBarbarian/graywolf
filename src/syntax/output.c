@@ -57,45 +57,47 @@ static char SccsId[] = "@(#) output.c version 1.8 7/24/91" ;
 #endif
 
 #include <string.h>
-#include "globals.h"
+
 #include <yalecad/base.h>
 #include <yalecad/message.h>
 #include <yalecad/hash.h>
 #include <yalecad/buster.h>
+#include <yalecad/ytime.h>
 
-// YcurTime() is not declared in any of the above
-extern char *YcurTime( INT * );
+#include <globals.h>
 
 #define EXPECTEDNUMNETS         10009
-static int objectS = 0 ;       /* number of objects read */
-static int celltypeS ;         /* current cell type */
-static int stdcellS = 0 ;      /* number of standard cells */
-static int macroS = 0 ;        /* number of macro cells */
-static int numinstanceS = 0 ;  /* number of macro instances */
-static int padS = 0 ;          /* number of pad cells */
-static int netS = 0 ;          /* number of nets */
-static int equivS = 0 ;        /* number of equivalent pins */
-static int unequivS = 0 ;      /* number of unequivalent pins */
-static int pinS = 0 ;          /* number of pins */
-static int impS = 0 ;          /* number of implicit feeds */
-static int portS = 0 ;         /* number of ports */
-static int minxS, minyS ;      /* bounding box of cell */
-static int maxxS, maxyS ;      /* bounding box of cell */
+static INT objectS = 0 ;       /* number of objects read */
+static INT celltypeS ;         /* current cell type */
+static INT stdcellS = 0 ;      /* number of standard cells */
+static INT macroS = 0 ;        /* number of macro cells */
+static INT numinstanceS = 0 ;  /* number of macro instances */
+static INT padS = 0 ;          /* number of pad cells */
+static INT netS = 0 ;          /* number of nets */
+static INT equivS = 0 ;        /* number of equivalent pins */
+static INT unequivS = 0 ;      /* number of unequivalent pins */
+static INT pinS = 0 ;          /* number of pins */
+static INT impS = 0 ;          /* number of implicit feeds */
+static INT portS = 0 ;         /* number of ports */
+static INT minxS, minyS ;      /* bounding box of cell */
+static INT maxxS, maxyS ;      /* bounding box of cell */
 static char current_cellS[LRECL] ; /* the current cell name */
 static char cur_pinnameS[LRECL] ;  /* current pinname */
 static BOOL count_portS ;      /* whether a pin is a port */
 static YHASHPTR netTableS ;    /* hash table for cross referencing nets */
 static DOUBLE cellAreaS = 0 ;  /* area of the macro cells */
+
 /* *************************************************************** */
-init()
+
+VOID init(VOID)
 {
     /* get ready for parsing */
     /* make hash table for nets */
     netTableS = Yhash_table_create( EXPECTEDNUMNETS ) ;
 } /* end init */
 
-addCell( celltype, cellname )
-int celltype ;
+VOID addCell( celltype, cellname )
+INT celltype ;
 char *cellname ;
 {
 
@@ -103,7 +105,7 @@ char *cellname ;
     Ysafe_free( cellname ) ;
     /* passify the user */
     if( (++objectS % 50) == 0 ){
-	sprintf( YmsgG, "Read %4d objects so far...\n", objectS ) ;
+	sprintf( YmsgG, "Read %4d objects so far...\n", (int)objectS ) ;
 	M( MSG, NULL, YmsgG ) ;
     }
 
@@ -127,10 +129,10 @@ char *cellname ;
 
 } /* end addCell */
 
-addNet( signal )
+VOID addNet( signal )
 char *signal ;
 {
-    int *data ;
+    INT *data ;
 
     if( strcmp( signal, "TW_PASS_THRU" ) == STRINGEQ ){
 	impS++ ;
@@ -138,7 +140,7 @@ char *signal ;
     }
     if(!(Yhash_search( netTableS, signal, NULL, FIND ))){
 	/* else a new net load data holder */
-	data = (int *) Ysafe_malloc( sizeof(int) ) ;
+	data = (INT *) Ysafe_malloc( sizeof(INT) ) ;
 	*data = ++netS ;
 	if( Yhash_search( netTableS, signal, (char *)data, ENTER )){
 	    sprintf( YmsgG, "Trouble adding signal:%s to hash table\n",
@@ -153,24 +155,24 @@ char *signal ;
 
 } /* end addNet */
 
-addEquiv()
+VOID addEquiv(VOID)
 {
     equivS++ ;
 } /* end addEquiv */
 
-addUnEquiv()
+VOID addUnEquiv(VOID)
 {
     unequivS++ ;
 } /* end addUnEquiv */
 
-add_instance()
+VOID add_instance(VOID)
 {
     if( celltypeS == HARDCELLTYPE || celltypeS == SOFTCELLTYPE ){
 	numinstanceS++ ;
     }
 } /* end add_instance */
 
-set_bbox( left, right, bottom, top )
+VOID set_bbox( left, right, bottom, top )
 INT left, right, bottom, top ;
 {
     minxS = left ;
@@ -179,8 +181,8 @@ INT left, right, bottom, top ;
     maxyS = top ;
 } /* end set_bbox */
 
-start_pt( x, y )
-int x, y ;
+VOID start_pt( x, y )
+INT x, y ;
 {
     Ybuster_init() ;
     Ybuster_addpt( x, y ) ;
@@ -190,8 +192,8 @@ int x, y ;
     maxyS = y ;
 } /* end start_pt */
 
-add_pt( x, y )
-int x, y ;
+VOID add_pt( x, y )
+INT x, y ;
 {
     Ybuster_addpt( x, y ) ;
     minxS = MIN( x, minxS ) ;
@@ -200,7 +202,7 @@ int x, y ;
     maxyS = MAX( y, maxyS ) ;
 } /* end add_pt */
 
-processCorners()
+VOID processCorners(VOID)
 {
     YBUSTBOXPTR bustptr ;        /* get a tile from Ybuster */
     DOUBLE this_cell ;           /* area of the current tile */
@@ -211,7 +213,8 @@ processCorners()
 	    M(ERRMSG,"processCorners",YmsgG ) ;
 	    return ;
 	}
-	while( bustptr = Ybuster() ){
+	/* Use ((...)) to avoid assignment as a condition warning */
+	while(( bustptr = Ybuster() )){
 	    l = (DOUBLE) bustptr[1].x ;
 	    r = (DOUBLE) bustptr[3].x ;
 	    b = (DOUBLE) bustptr[1].y ;
@@ -222,7 +225,7 @@ processCorners()
     }
 } /* end processCorners */
 
-check_xloc( value )
+VOID check_xloc( value )
 char *value ;
 {
     if( (strcmp( value, "L" ) != STRINGEQ ) && strcmp( value, "R" ) != STRINGEQ ){
@@ -232,7 +235,7 @@ char *value ;
     Ysafe_free( value ) ;
 } /* end check_xloc */
 
-check_yloc( value )
+VOID check_yloc( value )
 char *value ;
 {
     if( (strcmp( value, "B" ) != STRINGEQ ) && strcmp( value, "T" ) != STRINGEQ ){
@@ -242,7 +245,7 @@ char *value ;
     Ysafe_free( value ) ;
 } /* end check_xloc */
 
-check_sideplace( side )
+VOID check_sideplace( side )
 char *side ;
 {
     INT numsides ;
@@ -266,19 +269,19 @@ char *side ;
     Ysafe_free( side ) ;
 } /* end check_sideplace */
 
-set_pinname( pinname )
+VOID set_pinname( pinname )
 char *pinname ;
 {
     strcpy( cur_pinnameS, pinname ) ;
 } /* end set_pinname */
 
-check_pos( xpos, ypos ) 
-int xpos, ypos ;
+VOID check_pos( xpos, ypos ) 
+INT xpos, ypos ;
 {
 
     if( xpos < minxS || xpos > maxxS || ypos < minyS || ypos > maxyS ){
 	sprintf( YmsgG, "Pin:%s cell:%s @(%d,%d) is outside cell boundary\n",
-	    cur_pinnameS, current_cellS, xpos, ypos ) ;
+	    cur_pinnameS, current_cellS, (int)xpos, (int)ypos ) ;
 	M( ERRMSG, "check_pos", YmsgG ) ;
     }
 } /* end check_pos */
@@ -286,22 +289,22 @@ int xpos, ypos ;
 /* ***************************************************************** 
     OUTPUT routine - output the results.
    **************************************************************** */
-output()
+VOID output(VOID)
 {
     char *yctime = (char *)YcurTime(NULL);
     fprintf( fpoG, "TIMESTAMP:%s\n", yctime ) ;
     // fprintf( fpoG, "TIMESTAMP:%s\n", YcurTime(NULL) ) ;
     fprintf( fpoG, "Statistics for %s:\n", cktNameG ) ;
-    fprintf( fpoG, "num_stdcells:%d\n", stdcellS ) ;
-    fprintf( fpoG, "num_macros:%d\n", macroS ) ;
-    fprintf( fpoG, "num_instances:%d\n", numinstanceS ) ;
-    fprintf( fpoG, "num_pads:%d\n", padS ) ;
-    fprintf( fpoG, "num_nets:%d\n", netS ) ;
-    fprintf( fpoG, "num_pins:%d\n", pinS ) ;
-    fprintf( fpoG, "num_implicit_feeds:%d\n", impS ) ;
-    fprintf( fpoG, "num_equivs:%d\n", equivS ) ;
-    fprintf( fpoG, "num_unequivs:%d\n", unequivS ) ;
-    fprintf( fpoG, "num_ports:%d\n", portS ) ;
+    fprintf( fpoG, "num_stdcells:%d\n", (int)stdcellS ) ;
+    fprintf( fpoG, "num_macros:%d\n", (int)macroS ) ;
+    fprintf( fpoG, "num_instances:%d\n", (int)numinstanceS ) ;
+    fprintf( fpoG, "num_pads:%d\n", (int)padS ) ;
+    fprintf( fpoG, "num_nets:%d\n", (int)netS ) ;
+    fprintf( fpoG, "num_pins:%d\n", (int)pinS ) ;
+    fprintf( fpoG, "num_implicit_feeds:%d\n", (int)impS ) ;
+    fprintf( fpoG, "num_equivs:%d\n", (int)equivS ) ;
+    fprintf( fpoG, "num_unequivs:%d\n", (int)unequivS ) ;
+    fprintf( fpoG, "num_ports:%d\n", (int)portS ) ;
     fprintf( fpoG, "macro_area:%4.3le\n", cellAreaS ) ;
 
 } /* end output */
